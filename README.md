@@ -2,18 +2,28 @@
 
 **Permanent, decentralized, tamper-evident archive of the public space object catalog.**
 
-Orbital Witness is a pattern for public, independently operated, onchain-ready
-archives of orbital datasets. 
+Orbital Witness is a public-good mission to preserve important public datasets
+through independently operated, cryptographically verifiable archives. The goal
+is a durable historical record that does not depend on any single maintainer,
+platform, institution, or storage provider.
 
 This repository is the first witness: the daily
 Resident Space Object (RSO) catalog. The same shape can later be reused for
 near-Earth objects (NEO), conjunction events, launch records, reentry
 observations, or any other public space dataset where provenance matters.
 
-Every UTC day, the record is cut at **00:00:00 UTC**. The GitHub Action is
-scheduled for **00:15 UTC** so the run stays close to the data boundary. GitHub
-cron can start late; that is acceptable because the canonical cutoff remains
-midnight UTC.
+The project values simple and auditable infrastructure: zero runtime code
+dependencies, reproducible hashes over authority, fork-based operation,
+pseudonymous operators, and community confirmation through the 6529 network's
+TDH reputation signal for Sybil resistance.
+
+Every day, operator nodes pull the public source data, roll the catalog forward
+from the prior snapshot, hash the canonical result, and publish matching
+evidence for anyone to verify.
+
+Verification can be done through an interactive digital artwork (NFT). Attestations 
+from invididual verifications are recorded to Ethereum as a permanent public record 
+of the state of the archive.
 
 ---
 
@@ -30,15 +40,18 @@ The catalog currently tracks **50,000+** resident space objects (RSOs): active s
 
 For terminology and field definitions, see [GLOSSARY.md](GLOSSARY.md).
 
-If you want to operate an independent witness node and are new to GitHub, start with
-[OPERATOR.md](OPERATOR.md). It explains why to operate, what you need, and what
-a first successful run should look like.
+If you want to operate an independent Orbital Witness node to strengthen the
+decentralization of the network, start with [OPERATOR.md](OPERATOR.md). It
+explains what you need and what a first successful run should look like.
 
 ## Why
 
-The public space object catalog originates from a single source (U.S. Space Force, 18th Space Defense Squadron) and is mirrored by a single individual ([CelesTrak](https://celestrak.org)). There is no redundant historical archive with cryptographic proof of what the catalog said on any given date.
+The public space object catalog originates from a single source (U.S. Space Force, 18th Space Defense Squadron) and is mirrored by a single individual (at [CelesTrak](https://celestrak.org)). No decentralized source provides cryptographic proof of what the catalog said on any given date.
 
-If data is retroactively altered, reclassified, or withdrawn — which happens — nobody can independently verify what changed. This project fixes that.
+If public GP availability is restricted, missing, or changed over time, nobody
+can independently verify what changed.
+
+Orbital Witness fixes that.
 
 ## Architecture
 
@@ -86,13 +99,88 @@ network visible. The heavier wallet-confirmation flow can live in a separate
 page so the NFT stays portable across sandboxed marketplaces and collection
 sites.
 
+## Join the Operators
+
+An operator is the person or group running an independent Orbital Witness node
+to strengthen the decentralization of the network. The fork plus workflows are
+the node itself. The goal is simple: start from the same agreed baseline, run
+the same code, publish the same daily hashes, and make drift visible.
+
+The resilience comes from many independent operators, not from one blessed
+server. If one GitHub account, one workflow, one maintainer, or one future
+storage provider disappears, other operators still have the code, the data, the
+ledger, and the hashes. Matching hashes across independent forks are the signal
+that the public record is being witnessed, not merely hosted.
+
+For a detailed beginner-friendly setup path, read [OPERATOR.md](OPERATOR.md).
+
+The short version:
+
+- Create a free [Space-Track.org](https://www.space-track.org/auth/createAccount)
+  account. You'll be emailed a link to confirm your account and set your
+  password.
+- Fork this repo into your own GitHub account or organization.
+- Enable GitHub Actions and workflow write access on your fork.
+- Add `SPACETRACK_USER` and `SPACETRACK_PASS` as repository secrets.
+- Run **Validate RSO Archive** first. Then enable and run **Daily RSO Snapshot**
+  once manually to prove the scheduled producer workflow is active in your
+  fork.
+
+The live archive already has an agreed genesis day:
+
+```text
+2026-04-20
+```
+
+New operators normally do not create a fresh genesis snapshot. They validate
+the existing lineage and then continue it.
+
+There are two GitHub workflows:
+
+- **Validate RSO Archive** — read-only tests and archive validation
+- **Daily RSO Snapshot** — scheduled producer workflow with automatic catch-up
+
+Roll-forward remains available as a repository script for maintainers who need
+to catch up a node from an existing prior snapshot. See
+[ROLL_FORWARD.md](ROLL_FORWARD.md) for details:
+
+```bash
+python pipeline/snapshot.py roll-forward --start 2026-04-21 --end 2026-04-23
+```
+
+Each successful producer run writes to three places:
+
+- Git metadata: `data/YYYY/MM/DD/` plus `ledger.json`
+- Git bootstrap cache: `catalog.json.gz` for the two newest archived days
+- Release bundle: `rso-archive-YYYY-MM-DD.tar.gz`
+
+The daily `sha256` is computed from the canonical snapshot bytes, not from a
+release URL, storage URI, or upload location. Different operators can publish
+the same snapshot bytes at different locations and still agree on the same
+daily hash.
+
+The default producer settings are:
+
+```text
+STORAGE_BACKEND=github_release
+UPLOAD_POLICY=if_missing
+```
+
+The workflow schedule target is:
+
+```text
+00:15 UTC
+```
+
+GitHub schedules may start late. The canonical data cutoff remains midnight
+UTC.
+
 ## Archive Schedule
 
-The official archive baseline is **2026-04-20**. On that day, the scheduled
-workflow runs `genesis --date 2026-04-20` at 00:15 UTC, subject to normal GitHub
-cron delay, and records current `gp` as the first agreed full catalog state.
-Daily consensus snapshots after that are built from bounded `gp_history`
-deltas.
+The official archive baseline is **2026-04-20**. The baseline catalog download
+was run at exactly `2026-04-20T00:00:00Z` and recorded current `gp` as the
+first agreed full catalog state. Daily consensus snapshots after that are built
+from bounded `gp_history` deltas.
 
 The `2026-04-13` through `2026-04-19` snapshots were rehearsal artifacts. They
 live under `reports/rehearsal/` so `data/` and `ledger.json` represent only the
@@ -113,8 +201,9 @@ official archive lineage.
 | Provenance | `genesis_from_gp` or `rolling_gp_history_delta` |
 
 The snapshot cutoff is fixed at midnight UTC. A snapshot dated `2026-04-13`
-represents the catalog state as of `2026-04-13T00:00:00Z`. The GitHub Action may
-run later in the day, but the data window is already closed.
+represents the catalog state as of `2026-04-13T00:00:00Z`. The producer must run
+after that cutoff so the complete previous 24-hour UTC publication window can
+be queried.
 
 For daily operation, the pipeline starts from the previous archived snapshot and
 queries only the bounded history interval:
@@ -150,7 +239,7 @@ Current `gp` is useful as a genesis input and as an audit observation.
 
 ### Genesis Snapshot
 
-The rolling model needs an agreed starting point. The first live day should be
+The rolling model needs an agreed starting point. The first live day was
 captured as a `genesis_from_gp` snapshot from current `gp`, with the exact query
 time and query paths recorded. From that point forward, daily snapshots are
 deterministic state transitions:
@@ -159,8 +248,8 @@ deterministic state transitions:
 snapshot[D] = snapshot[D-1] + bounded_gp_history_delta[D]
 ```
 
-Historical backfills before genesis can still be useful, but they should be
-labeled as reconstructed history rather than treated as having the same
+Historical reconstructions before genesis can still be useful, but they should
+be labeled as reconstructed history rather than treated as having the same
 guarantee as the live rolling archive.
 
 A genesis snapshot records `state_as_of_utc` as the actual current-`gp`
@@ -232,7 +321,7 @@ export SPACETRACK_PASS="your-password"
 # Capture the first agreed rolling snapshot from current gp
 python pipeline/snapshot.py genesis
 
-# Official baseline day, scheduled for 2026-04-20
+# Official baseline day, captured on 2026-04-20
 python pipeline/snapshot.py genesis --date 2026-04-20
 
 # Build today's rolling snapshot from yesterday's archived snapshot
@@ -242,9 +331,7 @@ python pipeline/snapshot.py daily
 python pipeline/snapshot.py daily --date 2026-04-13
 python pipeline/snapshot.py daily --date 2026-04-12 --force
 
-# Validation experiment: replay bounded gp_history from Jan 1 to now
-# from an empty state, then compare the replayed state to current gp.
-# This validates the bounded API shape; it is not a full historical bootstrap.
+# Validation experiment; findings are documented in REPLAY_FINDINGS.md.
 python pipeline/snapshot.py replay --start 2026-01-01
 
 # Verify a stored snapshot
@@ -271,99 +358,10 @@ Useful operational knobs:
 
 ```bash
 # Defaults: range size 10000, max catalog id 339999, minimum objects 40000.
-# For long replay/backfill runs, use a larger delay to stay well below API caps.
+# For long replay/roll-forward runs, use a larger delay to stay well below API caps.
 # Satcat metadata for missing objects is queried in batches of 500 by default.
 RSO_REQUEST_DELAY=12.5 python pipeline/snapshot.py replay --start 2026-01-01
 ```
-
-### Replay Findings
-
-The Jan 1-to-current validation run confirms the API strategy, but also sets an
-important boundary on what historical backfill can prove.
-
-- Bounded 24-hour `gp_history` windows worked without the out-of-bounds
-  Space-Track error that unbounded `<cutoff` queries produced.
-- The replay processed 8.35M history rows across 103 windows using 50k
-  `NORAD_CAT_ID` chunks and a 15 second inter-request delay.
-- Starting from an empty Jan 1 state reconstructed 31,412 objects. Current `gp`
-  contained 67,052 objects at the comparison observation time, so 35,640 current
-  objects had no post-Jan-1 history rows and cannot be recovered by a
-  delta-only replay.
-- Of the 31,412 shared objects, 31,310 byte-matched current `gp`; 102 differed.
-  Those differences confirm that current `gp` is a useful audit observation but
-  not a perfect deterministic reconstruction target.
-
-Operational conclusion: use `genesis` once to create the first agreed full
-catalog from current `gp`, then use bounded `gp_history` deltas for every
-subsequent daily consensus snapshot.
-
-## Join the Operators
-
-An operator is the person or group running an independent witness node. The
-fork plus workflows are the node itself. The goal is simple: start from the
-same agreed baseline, run the same code, publish the same daily hashes, and
-make drift visible.
-
-The resilience comes from many independent operators, not from one blessed
-server. If one GitHub account, one workflow, one maintainer, or one future
-storage provider disappears, other operators still have the code, the data, the
-ledger, and the hashes. Matching hashes across independent forks are the signal
-that the public record is being witnessed, not merely hosted.
-
-For a detailed beginner-friendly setup path, read [OPERATOR.md](OPERATOR.md).
-
-The short version:
-
-- Create a free [Space-Track.org](https://www.space-track.org/auth/createAccount) account.
-- Fork this repo into your own GitHub account or organization.
-- Enable GitHub Actions and workflow write access on your fork.
-- Add `SPACETRACK_USER` and `SPACETRACK_PASS` as repository secrets.
-- Run **Validate RSO Archive** first. The scheduled **Daily RSO Snapshot**
-  workflow can then continue the chain automatically. If the fork is behind, it
-  backfills missing dates before the current daily snapshot; manual dispatch is
-  only needed if you want the first run immediately.
-
-The live archive already has an agreed genesis day:
-
-```text
-2026-04-20
-```
-
-New operators normally do not create a fresh genesis snapshot. They validate
-the existing lineage and then continue it.
-
-There are three workflows:
-
-- **Validate RSO Archive** — read-only tests and archive validation
-- **Daily RSO Snapshot** — scheduled producer workflow with automatic catch-up
-- **Backfill RSO Archive** — manual producer workflow for bounded date ranges
-
-Each successful producer run writes to two places:
-
-- Git metadata: `data/YYYY/MM/DD/` plus `ledger.json`
-- Git bootstrap cache: `catalog.json.gz` for the two newest archived days
-- Release bundle: `rso-archive-YYYY-MM-DD.tar.gz`
-
-The daily `sha256` is computed from the canonical snapshot bytes, not from a
-release URL, storage URI, or upload location. Different operators can publish
-the same snapshot bytes at different locations and still agree on the same
-daily hash.
-
-The default producer settings are:
-
-```text
-STORAGE_BACKEND=github_release
-UPLOAD_POLICY=if_missing
-```
-
-The workflow schedule target is:
-
-```text
-00:15 UTC
-```
-
-GitHub schedules may start late. The canonical data cutoff remains midnight
-UTC.
 
 ## Data Structure
 
@@ -389,13 +387,6 @@ the previous snapshot without first owning any release assets. Older full
 catalog bytes live in release assets named `rso-archive-YYYY-MM-DD.tar.gz`.
 Each bundle contains `catalog.json.gz`, `manifest.json`, any daily audit/delta
 artifacts, and a deterministic `release-manifest.json`.
-
-Pre-baseline rehearsal releases can be marked as GitHub prereleases without
-changing the archive data:
-
-```bash
-GH_TOKEN=... python pipeline/snapshot.py mark-prerelease --start 2026-04-13 --end 2026-04-19
-```
 
 ### Manifest Example
 
@@ -464,7 +455,7 @@ python -m unittest discover -s tests
 ## Roadmap
 
 - [x] Daily rolling snapshot pipeline
-- [x] Backfill from an existing prior-day base snapshot
+- [x] Roll forward from an existing prior-day base snapshot
 - [x] Local hash verification
 - [x] Refactor daily snapshots to midnight UTC rolling `gp_history` deltas
 - [x] Add current `gp` visibility audit and missing/reappeared state

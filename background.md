@@ -23,7 +23,10 @@ The public catalog of every tracked artificial object in Earth orbit originates 
 - No tamper-evident chain of custody
 - No guarantee of continued public access
 
-If data is retroactively altered, reclassified, or withdrawn — which happens for national security reasons — nobody can independently verify what changed. CelesTrak is already struggling with bandwidth (jumped from ~125 GB/day to ~330 GB/day in early 2026) and enforcing aggressive rate limiting.
+If public GP availability is restricted, missing, or changed over time, nobody
+can independently verify what changed without a daily historical record.
+CelesTrak is already struggling with bandwidth (jumped from ~125 GB/day to
+~330 GB/day in early 2026) and enforcing aggressive rate limiting.
 
 ### Why It Matters
 
@@ -76,10 +79,10 @@ Git commit (Phase 1) → Arweave upload (Phase 2) → Ethereum event (Phase 3)
 
 The daily snapshot is defined by a **fixed cutoff timestamp**, not by when the query runs. The refined design uses `00:00:00 UTC` as the canonical cutoff. A snapshot dated `2026-04-13` means "the catalog state as of `2026-04-13T00:00:00Z`."
 
-The GitHub Action should be scheduled for **00:15 UTC**. The data boundary
-remains a clean UTC day. GitHub cron can start late, but a near-midnight target
-keeps the archive closer to the cutoff while preserving the fixed
-`00:00:00 UTC` consensus boundary.
+The GitHub Action is scheduled for **00:15 UTC**, after the complete previous
+UTC day has closed. The data boundary remains a clean UTC day. GitHub cron can
+start late, but a near-midnight target keeps the archive closer to the cutoff
+while preserving the fixed `00:00:00 UTC` consensus boundary.
 
 **Why the change matters**: The original design tried to reconstruct each day with `gp_history CREATION_DATE/<cutoff` over the full catalog. That is mathematically clean but operationally impossible at current scale: without a lower bound, each range can ask Space-Track for decades of historical element sets and hit response limits. The refined design uses a stateful daily merge:
 
@@ -113,7 +116,10 @@ object; it should not be used as a daily consensus input.
 
 ### Genesis and Rolling State
 
-The rolling model needs an agreed starting point. The first live day should be captured as a `genesis_from_gp` snapshot from the current `gp` endpoint, with the exact query time and query paths recorded. From that point forward, the canonical archive is a deterministic state machine:
+The rolling model needs an agreed starting point. The first live day was
+captured as a `genesis_from_gp` snapshot from the current `gp` endpoint, with
+the exact query time and query paths recorded. From that point forward, the
+canonical archive is a deterministic state machine:
 
 1. Load the prior archived snapshot.
 2. Query `gp_history` for `previous_cutoff <= CREATION_DATE < current_cutoff`.
@@ -123,20 +129,21 @@ The rolling model needs an agreed starting point. The first live day should be c
 6. Sort by `NORAD_CAT_ID`.
 7. Canonicalize and hash.
 
-Historical backfills before genesis can still be useful, but they should be labeled as reconstructed history rather than treated as having the same guarantee as the live rolling archive.
+Historical reconstructions before genesis can still be useful, but they should
+be labeled as reconstructed history rather than treated as having the same
+guarantee as the live rolling archive.
 
 A genesis snapshot is the exception to the midnight boundary: it records
 `state_as_of_utc` as the actual current-`gp` observation time. The first daily
 snapshot after genesis starts its bounded `gp_history` window from that observed
 timestamp, then later snapshots use normal midnight-to-midnight UTC windows.
 
-The official archive baseline date is **2026-04-20**. The 2026-04-20 scheduled
-run should execute `genesis --date 2026-04-20` at 00:15 UTC, subject to normal
-GitHub cron delay, making that current-`gp` observation the first consensus
-state. The 2026-04-13 genesis snapshot captured during development is a
-rehearsal baseline only. It is useful for practicing daily roll-forward and
-audit behavior during the week before
-launch, but it should not be described as the permanent archive baseline.
+The official archive baseline date is **2026-04-20**. The baseline catalog
+download was run at exactly `2026-04-20T00:00:00Z`, making that current-`gp`
+observation the first consensus state. The 2026-04-13 genesis snapshot captured
+during development is a rehearsal baseline only. It is useful for practicing
+daily roll-forward and audit behavior during the week before launch, but it
+should not be described as the permanent archive baseline.
 
 ### Current GP Is Audit Input, Not Consensus Input
 
@@ -194,40 +201,64 @@ Multiple independent operators pull the same data, serialize it canonically (sor
 |-------|---------|------|------------|
 | Git repo | Phase 1 working storage, code, ledger | Free (public repo) | As long as GitHub exists |
 | Arweave | Permanent data archive | ~$0.12/day ($44/year) one-time | 200+ years (endowment model) |
-| Ethereum L1 | Hash attestation, weekly Merkle roots | ~$5/week (~$260/year) | Forever |
+| Ethereum L1 | Append-only hash/location attestations | Gas-dependent | Forever |
 | The NFT | Verification dashboard | Hosted on Arweave | Permanent |
 
 ### Ethereum Contract Design
 
-The contract is intentionally minimal — an append-only ledger. It does NOT validate data, resolve disputes, or enforce correctness. The verification happens client-side in the NFT artwork.
+The contract is intentionally minimal: an append-only attestation log. It does
+not publish archives, validate source data, resolve disputes, calculate TDH, or
+choose the canonical hash. Verification and weighting happen in clients,
+indexers, and the NFT artwork.
+
+The current design uses one relayer-friendly write function:
 
 ```solidity
-// Daily: events only (cheap)
-event DayArchived(
-    uint256 indexed dayNum,
-    address indexed submitter,
-    bytes32 dataHash,
-    string arweaveTxId,
-    uint32 objectCount
-);
-
-// Multiple wallets can confirm the same hash
-// Each confirmation is recorded with the submitter's address
-// The NFT aggregates TDH (Total Days Held) to weight submissions
-mapping(uint256 => mapping(bytes32 => address[])) public confirmations;
-
-// Weekly: stored on-chain (more expensive, but queryable forever)
-struct WeekSummary {
-    bytes32 merkleRoot;     // keccak256 of the week's 7 daily hashes
-    bytes32 winningHash;    // highest-TDH-backed hash
-    uint64  totalTDH;       // sum of confirming wallets' TDH
-    uint16  confirmerCount; // number of unique confirming wallets
-    uint16  objectCount;    // tracked objects that day
-}
-mapping(uint256 => WeekSummary) public weeks;
+attestArchive(
+    ArchiveAttestation calldata attestation,
+    bytes calldata signature
+)
 ```
 
-**Why events for daily, storage for weekly**: Reading events (`eth_getLogs`) is free but has practical RPC pagination limits over large block ranges. Reading storage (`eth_call`) is free and instant with no range limits. The NFT reads weekly summaries from storage (fast, full history) and current-week details from events (narrow block range, trivial).
+Operators sign an EIP-712 `ArchiveAttestation` offchain. Anyone can submit the
+signed attestation onchain: the signer, a relayer, a GitHub Action, another
+operator, or a future archival service. The contract recovers the signer from
+the signature and records that signer as the attester; `msg.sender` is only the
+gas payer / courier.
+
+An attestation says:
+
+```text
+For archive date D, I attest to catalog hash H, previous hash P,
+manifest hash M, code version C, and optionally location U whose bundle hashes
+to B.
+```
+
+Hash-only attestations use an empty URI and zero bundle hash. Hash-plus-location
+attestations use the same function with a non-empty URI and nonzero bundle
+hash.
+
+The event should contain enough data for an indexer or NFT to reconstruct the
+witness history:
+
+```solidity
+event ArchiveAttested(
+    address indexed attester,
+    address indexed submitter,
+    uint32 indexed date,
+    bytes32 catalogHash,
+    bytes32 previousCatalogHash,
+    bytes32 manifestHash,
+    bytes32 codeVersionHash,
+    bytes32 bundleHash,
+    bytes32 uriHash,
+    string uri
+);
+```
+
+There is intentionally no `WeekSummary`, `finalizeWeek`, contract-level winning
+hash, or weekly Merkle-root storage in v1. The contract is the raw witness log;
+clients and indexers group attestations by date and hash.
 
 **Why no on-chain validation**: Smart contracts cannot reach the internet. They can't fetch from Arweave, can't hash external data, can't verify anything outside the EVM. An oracle (like Chainlink) would reintroduce centralized trust. The verification belongs in the viewer's browser.
 
@@ -236,12 +267,12 @@ mapping(uint256 => WeekSummary) public weeks;
 The 6529 ecosystem has **TDH (Total Days Held)** — a reputation metric computed as token holdings × days held. It's already used for governance (SZN11's first meme card was selected by TDH plurality). TDH can't be manufactured quickly because the time dimension is the Sybil defense.
 
 **How it works**:
-1. Anyone can submit `confirmDay(dayNum, dataHash)` to the contract
-2. The contract records the submitter's address alongside their submission
-3. Multiple addresses submitting the same hash pile up
-4. The NFT reads all confirmations, looks up each address's TDH (via seize.io API), sums TDH per unique hash
-5. The highest-TDH-backed hash wins for display purposes
-6. Confirming holders add their TDH weight to an existing submission — even small TDH helps
+1. Operators or holders sign archive attestations.
+2. Anyone can submit a signed attestation to the contract.
+3. The contract records the recovered signer as the attester.
+4. Indexers and the NFT group attestations by archive date and catalog hash.
+5. The NFT looks up each attester's TDH (via seize.io API) and sums TDH per unique hash.
+6. The highest-TDH-backed hash wins for display purposes.
 
 **Attack resistance**: An attacker submitting a fake hash has low/zero TDH. The legitimate hash from established community members always outweighs it. Even if an attacker buys cards to inflate TDH, the *days held* component means they'd need months before their TDH matters. By then, the community notices.
 
@@ -251,15 +282,15 @@ The 6529 ecosystem has **TDH (Total Days Held)** — a reputation metric compute
 
 1. **The NFT itself** (HTML/JS on Arweave, rendered in iframe on 6529.io/OpenSea): Read-only verification client and visualization layer. No wallet needed. Fetches commitments from Ethereum via public RPC, fetches compact archive metadata from Arweave, verifies lightweight hashes and checkpoints in the browser, and renders the witness chain as an orbital status view. Full catalog hashing can be offered as an on-demand path because the compressed catalog is large enough that every iframe render should not decompress and hash it by default.
 
-2. **The confirmation dApp** (separate HTML page, also on Arweave): Linked from the NFT. This is where holders connect their wallet and submit `confirmDay` transactions. Shows the current day's hash, lets them verify against Arweave data, one-button confirm.
+2. **The attestation dApp** (separate HTML page, also on Arweave): Linked from the NFT. This is where holders connect their wallet, sign an EIP-712 archive attestation, and either submit it directly or hand it to a relayer. Shows the current day's hash, lets them verify against Arweave data, one-button attest.
 
 **Why the split**: NFT iframes on platforms like 6529.io and OpenSea are sandboxed — they can't access `window.ethereum` (wallet injection). The art is read-only by design. The dApp page lives at a separate URL (e.g., `om.pub/rso`) where wallet connection works normally.
 
 **Viewing IS verification**: Every time someone opens the NFT, their browser independently checks the public commitments it can safely verify in that context. No wallet, no account, no trust. The more people view the art, the more eyes are on the archive chain; deeper full-data verification remains available as an intentional action.
 
-### Daily Diff (Future Phase)
+### Daily Delta and Audit
 
-Not implemented yet, but architecturally planned. The daily pipeline will compute two related artifacts:
+Implemented. The daily pipeline writes two related artifacts:
 
 1. A deterministic `delta.json` from the closed `gp_history` window.
 2. A time-sampled `audit.json` from current `gp`.
@@ -268,7 +299,8 @@ Not implemented yet, but architecturally planned. The daily pipeline will comput
 
 `audit.json` records visibility observations: objects in the archive that are missing from current `gp` and objects that reappeared after being missing. This catches scenarios that hash-only verification misses without letting retrieval-time absence change the canonical catalog.
 
-The NFT artwork would add a "seismograph" visualization: a rolling waveform of daily catalog volatility. Flat = normal. Spike = something unusual. An object disappearing triggers a visual alert.
+Future work can add richer field-level diffs and NFT visualization for daily
+catalog volatility, missing objects, and reappearances.
 
 ---
 
@@ -290,7 +322,7 @@ The NFT artwork would add a "seismograph" visualization: a rolling waveform of d
 
 ### What Doesn't Exist (Our Gap)
 
-Nobody is doing:
+Nobody (we could find) is doing:
 - Daily automated archival of the GP catalog to permanent decentralized storage
 - Computing/publishing the daily diff of the space object catalog
 - Using an NFT as both verification client and community coordination mechanism
@@ -305,7 +337,7 @@ Nobody is doing:
 - [x] `pipeline/snapshot.py` — Zero-dependency Python script (stdlib only)
   - `genesis` command: captures the first agreed rolling snapshot from current `gp`
   - `daily` command: builds a rolling midnight-UTC snapshot from the prior archived snapshot plus bounded `gp_history` deltas
-  - `backfill` command: builds rolling snapshots from an existing prior-day base snapshot
+  - `roll-forward` command: builds rolling snapshots from an existing prior-day base snapshot
   - `replay` command: replays bounded `gp_history` from an empty state and compares the result to current `gp`
   - `verify` command: re-hashes stored snapshot and compares to manifest
   - `next-date` command: reports the next missing archive date for automated catch-up
@@ -315,7 +347,6 @@ Nobody is doing:
   - Canonical JSON serialization for deterministic hashing
   - gzip compression, manifest generation, running ledger, `delta.json`, `audit.json`, and `visibility_state.json`
 - [x] `.github/workflows/daily-snapshot.yml` — Runs at 00:15 UTC daily and catches up missing dates
-- [x] `.github/workflows/backfill.yml` — Manually triggered for date ranges
 - [x] `.github/workflows/validate-archive.yml` — Read-only tests and archive validation
 - [x] `README.md` with architecture overview and setup instructions
 - [x] Zero external dependencies (no pip install, no requirements.txt, no required GitHub CLI)
@@ -370,17 +401,17 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 
 ### To Build (Phase 3 — Ethereum)
 
-- [ ] Solidity contract: daily events + weekly summary structs
+- [ ] Solidity contract: one `attestArchive` function plus `ArchiveAttested` events
 - [ ] Contract deployment to Ethereum mainnet
-- [ ] Pipeline step: emit `DayArchived` event after Arweave upload
-- [ ] Weekly Merkle root computation and `finalizeWeek` call
+- [ ] Pipeline step: generate EIP-712 attestation payloads after archive publication
+- [ ] Optional relayer path for sponsored submission of signed attestations
 - [ ] Contract verified on Etherscan, immutable, no owner functions
 
 ### To Build (Phase 4 — NFT)
 
 - [ ] NFT artwork (HTML/JS): orbital ring visualization, 30-day rolling view
-- [ ] Reads weekly summaries from contract storage (full history)
-- [ ] Reads current week events from contract (daily detail)
+- [ ] Reads attestation index generated from contract events
+- [ ] Verifies selected `ArchiveAttested` events with targeted RPC calls
 - [ ] Fetches data from Arweave, re-hashes client-side
 - [ ] Four-source cross-check display per day (Space-Track, CelesTrak, Arweave, Ethereum)
 - [ ] TDH lookup for weighting (via seize.io API)
@@ -392,17 +423,17 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 - [ ] Standalone HTML page (hosted on Arweave or om.pub/rso)
 - [ ] Wallet connect (MetaMask/Rabby/WalletConnect)
 - [ ] Shows current day's hash computed from Arweave data
-- [ ] One-button `confirmDay` transaction submission
+- [ ] EIP-712 attestation signing and submission or relay handoff
 - [ ] Displays confirmer leaderboard (TDH-weighted)
 
-### To Build (Phase 6 — Daily Diff and Audit Visualization)
+### To Build (Phase 6 — Rich Diff and Audit Visualization)
 
-- [ ] Diff computation: objects added/updated/carried-forward vs previous day
+- [x] Delta summary: objects added/updated/carried-forward vs previous day
 - [x] Audit computation: missing from current `gp`, reappeared in current `gp`
+- [ ] Rich field-level diff computation for changed objects
 - [ ] Diagnostic metadata for unusual missing-object cases, if practice data shows it is needed
-- [ ] Diff archived alongside raw snapshot
-- [ ] On-chain event fields: `objectsAdded`, `objectsUpdated`, `auditAnomalyCount`
-- [ ] NFT seismograph visualization layer
+- [ ] Include diff/audit summary in offchain index and NFT view
+- [ ] NFT visualization layer for diff/audit activity
 
 ---
 
@@ -410,7 +441,7 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 
 ### Why Ethereum mainnet, not an L2
 
-The project's thesis is "no single point of failure." Base L2 is operated by Coinbase — a corporate dependency. Ethereum mainnet has no single operator. Cost is manageable (~$260/year for daily events + weekly storage writes). Philosophical consistency matters for credibility.
+The project's thesis is "no single point of failure." Base L2 is operated by Coinbase — a corporate dependency. Ethereum mainnet has no single operator. Attestation costs depend on gas and participation, but relayed signatures let the signer and gas payer be different addresses. Philosophical consistency matters for credibility.
 
 ### Why not ZK proofs
 
@@ -432,9 +463,13 @@ CelesTrak's GP data updates roughly every 2 hours. A confirming holder opening t
 
 Smart contracts can't reach the internet. They can't fetch Arweave data or compute hashes of external content. An oracle would reintroduce centralized trust. The contract is a dumb append-only ledger. The NFT's JavaScript is the smart verification layer — thousands of independent browsers are a better oracle than any single service.
 
-### Why events for daily, storage for weekly
+### Why append-only attestation events
 
-Events are permanent on Ethereum but querying them over large block ranges requires paginated `eth_getLogs` calls with RPC provider limits. Storage mappings are readable instantly via `eth_call` with no range limits. Weekly summaries in storage give the NFT instant access to full project history. Current-week daily detail comes from events (narrow block range, trivial to query).
+Events are permanent on Ethereum and are the natural shape for an append-only
+witness log. Querying them over large block ranges requires pagination, so
+indexers can publish compact JSON read models for the NFT. The NFT can browse
+the index and use targeted RPC calls only when a viewer wants to verify a
+specific attestation event.
 
 ---
 
@@ -445,7 +480,6 @@ rso-archive/
 ├── .github/
 │   └── workflows/
 │       ├── daily-snapshot.yml    # Cron: 00:15 UTC daily
-│       ├── backfill.yml          # Manual trigger
 │       └── validate-archive.yml  # Read-only validation
 ├── pipeline/
 │   └── snapshot.py               # The entire pipeline (zero deps)

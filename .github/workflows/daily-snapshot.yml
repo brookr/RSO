@@ -20,7 +20,7 @@ on:
           - auto
           - daily
           - genesis
-      force:
+      overwrite:
         description: "Overwrite an existing snapshot for the selected date."
         required: false
         default: false
@@ -92,7 +92,7 @@ jobs:
             fi
 
             args=(pipeline/snapshot.py "$command" --date "$snapshot_date")
-            if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            if [ "${{ github.event.inputs.overwrite }}" = "true" ]; then
               args+=(--force)
             fi
             python "${args[@]}"
@@ -103,8 +103,8 @@ jobs:
               echo "Date catch-up only supports mode=auto."
               exit 1
             fi
-            BACKFILL_END="$(python pipeline/snapshot.py previous-date --date "$END_DATE")"
-            python pipeline/snapshot.py backfill --start "$START_DATE" --end "$BACKFILL_END"
+            ROLL_FORWARD_END="$(python pipeline/snapshot.py previous-date --date "$END_DATE")"
+            python pipeline/snapshot.py roll-forward --start "$START_DATE" --end "$ROLL_FORWARD_END"
             run_one_snapshot "$END_DATE"
           else
             run_one_snapshot "$END_DATE"
@@ -146,7 +146,7 @@ jobs:
         run: |
           set -euo pipefail
           args=(pipeline/snapshot.py publish --start "$RSO_SNAPSHOT_START_DATE" --end "$RSO_SNAPSHOT_END_DATE" --use-existing-bundle)
-          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+          if [ "${{ github.event.inputs.overwrite }}" = "true" ]; then
             args+=(--force)
           fi
           python "${args[@]}"
