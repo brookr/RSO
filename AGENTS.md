@@ -1,9 +1,9 @@
 # Agent Instructions
 
-# Context
+## Context
 
 For full context on this project, see background.md
 
-# Coding Standards
+## Coding Standards
 
 NO Dependencies. Use only stdlib.

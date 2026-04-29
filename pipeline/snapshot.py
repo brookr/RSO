@@ -33,7 +33,7 @@ SPACETRACK_LOGIN = f"{SPACETRACK_BASE}/ajaxauth/login"
 SPACETRACK_QUERY = f"{SPACETRACK_BASE}/basicspacedata/query"
 
 # Space-Track guideline: max 30 req/min and 300 req/hr. The default leaves
-# plenty of margin for daily runs. For months of replay/backfill, set
+# plenty of margin for daily runs. For months of replay/roll-forward, set
 # RSO_REQUEST_DELAY=12.5 to stay below the hourly limit.
 REQUEST_DELAY = float(os.environ.get("RSO_REQUEST_DELAY", "2.5"))
 CATALOG_RANGE_SIZE = int(os.environ.get("RSO_CATALOG_RANGE_SIZE", "10000"))
@@ -940,7 +940,7 @@ def process_daily(args, client):
     previous_manifest_path = snapshot_dir(previous) / "manifest.json"
     if not previous_manifest_path.exists():
         raise SnapshotError(
-            f"Missing prior snapshot {previous}. Run genesis first or backfill from an existing base."
+            f"Missing prior snapshot {previous}. Run genesis first or roll forward from an existing base."
         )
 
     base_records = load_snapshot(previous)
@@ -992,14 +992,14 @@ def process_daily(args, client):
         print(f"\n  DONE. Hash: {manifest['sha256']}")
 
 
-def process_backfill(args, client):
+def process_roll_forward(args, client):
     start = parse_date(args.start)
     end = parse_date(args.end)
     if end < start:
         raise SnapshotError("--end must be on or after --start")
 
     total_days = (end - start).days + 1
-    print(f"\nBackfilling {total_days} days: {args.start} to {args.end}")
+    print(f"\nRolling forward {total_days} days: {args.start} to {args.end}")
     print("Mode: prior snapshot plus bounded gp_history deltas")
 
     previous = previous_date_str(args.start)
@@ -1064,7 +1064,7 @@ def process_backfill(args, client):
         state_records = data
         current += timedelta(days=1)
 
-    print(f"\nBackfill complete: {archived} days archived, {skipped} skipped")
+    print(f"\nRoll-forward complete: {archived} days archived, {skipped} skipped")
 
 
 def compare_record_sets(replay_records, current_gp_records, sample_size=25):
@@ -2297,12 +2297,12 @@ def main():
     )
     add_common_snapshot_args(daily_parser)
 
-    backfill_parser = subparsers.add_parser(
-        "backfill", help="Build rolling snapshots from an existing prior snapshot"
+    roll_forward_parser = subparsers.add_parser(
+        "roll-forward", help="Roll forward snapshots from an existing prior snapshot"
     )
-    backfill_parser.add_argument("--start", required=True, help="Start date (YYYY-MM-DD)")
-    backfill_parser.add_argument("--end", required=True, help="End date inclusive (YYYY-MM-DD)")
-    add_common_snapshot_args(backfill_parser)
+    roll_forward_parser.add_argument("--start", required=True, help="Start date (YYYY-MM-DD)")
+    roll_forward_parser.add_argument("--end", required=True, help="End date inclusive (YYYY-MM-DD)")
+    add_common_snapshot_args(roll_forward_parser)
 
     replay_parser = subparsers.add_parser(
         "replay",
@@ -2372,8 +2372,8 @@ def main():
         help="Build deterministic release bundles and optionally publish them",
     )
     publish_parser.add_argument("--date", help="Single archive date (YYYY-MM-DD)")
-    publish_parser.add_argument("--start", help="Start date for release backfill (YYYY-MM-DD)")
-    publish_parser.add_argument("--end", help="End date for release backfill (YYYY-MM-DD)")
+    publish_parser.add_argument("--start", help="Start date for release range (YYYY-MM-DD)")
+    publish_parser.add_argument("--end", help="End date for release range (YYYY-MM-DD)")
     publish_parser.add_argument(
         "--storage-backend",
         choices=sorted(STORAGE_BACKENDS),
@@ -2527,8 +2527,8 @@ def main():
             process_genesis(args, client)
         elif args.command == "daily":
             process_daily(args, client)
-        elif args.command == "backfill":
-            process_backfill(args, client)
+        elif args.command == "roll-forward":
+            process_roll_forward(args, client)
         elif args.command == "replay":
             process_replay(args, client)
     finally:

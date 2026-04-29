@@ -13,9 +13,10 @@ The public space object catalog is important, but fragile:
 - One person mirrors it publicly at CelesTrak.
 - Without multiple independent archives, later edits or removals are hard to prove.
 
-Operating a witness node means you keep your own copy of the code, run the same
-daily snapshot logic, and publish the same hash chain from your own GitHub
-fork. If many operators get the same result independently, the archive is being
+Operating an independent Orbital Witness node strengthens the decentralization
+of the network. It means you keep your own fork of the code, run the same daily
+snapshot logic, and publish the same hash chain from your own GitHub account.
+If many operators get the same result independently, the archive is being
 witnessed, not merely hosted.
 
 ## What you need
@@ -26,19 +27,8 @@ Minimum:
 - A free Space-Track account
 - Permission to enable GitHub Actions on your fork
 
-Helpful but optional:
-
-- Git installed on your laptop
-- Python 3.10+ if you want to validate or inspect locally
-
-Important distinction:
-
-- A **fork** is your copy of this repo on GitHub.
-- A **clone** is a copy of your fork on your laptop.
-
-You can operate with GitHub Actions only. A local clone is still useful because
-it lets you inspect files, run validation, and understand what the workflows
-actually wrote.
+A fork is all you need. No local clone is necessary for normal operation,
+because GitHub Actions can run the node entirely inside your fork.
 
 The intended setup path is deliberately short: fork the repo, enable Actions,
 add the two Space-Track secrets, and let the scheduled workflow run. The latest
@@ -70,7 +60,8 @@ its own release bundles.
 
 ### 1. Fork the repository
 
-On GitHub, open this repo and press **Fork**.
+On GitHub, open this repo and press **Fork**. You can accept the default fork
+settings.
 
 That creates your operator copy at:
 
@@ -78,23 +69,7 @@ That creates your operator copy at:
 https://github.com/YOUR_USERNAME/RSO
 ```
 
-### 2. Clone your fork
-
-Optional for GitHub-only operation, but recommended:
-
-```bash
-git clone git@github.com:YOUR_USERNAME/RSO.git
-cd RSO
-```
-
-If you use HTTPS instead of SSH:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/RSO.git
-cd RSO
-```
-
-### 3. Enable GitHub Actions
+### 2. Enable GitHub Actions
 
 In your fork:
 
@@ -102,7 +77,8 @@ In your fork:
 Settings -> Actions -> General
 ```
 
-Enable Actions.
+Under **Actions permissions**, choose **Allow all actions and reusable
+workflows**.
 
 Then check workflow write access:
 
@@ -113,7 +89,11 @@ Settings -> Actions -> General -> Workflow permissions
 Choose read/write access if GitHub offers it. The daily workflow needs to commit
 archive metadata back into your fork.
 
-### 4. Add your Space-Track credentials
+### 3. Add your Space-Track credentials
+
+Create a free [Space-Track.org](https://www.space-track.org/auth/createAccount)
+account. Space-Track will email you a link to confirm your account and set your
+password.
 
 In your fork:
 
@@ -128,10 +108,11 @@ SPACETRACK_USER
 SPACETRACK_PASS
 ```
 
-These are the only required secrets for the current GitHub-release operator
-path.
+Use the email address you signed up with as `SPACETRACK_USER`. Use the password
+you created during Space-Track signup as `SPACETRACK_PASS`. These are the only
+required secrets for the current GitHub-release operator path.
 
-### 5. Run the validator first
+### 4. Run the validator first
 
 Before pulling live data, prove your fork can run the read-only checks. The
 validator also confirms that the latest retained `catalog.json.gz` files are
@@ -140,10 +121,68 @@ present and match their manifests.
 On GitHub:
 
 ```text
-Actions -> Validate RSO Archive -> Run workflow
+top navigation bar -> Actions -> Validate RSO Archive -> Run workflow
 ```
 
-Expected result: green.
+After clicking **Run workflow**, leave **Use workflow from** set to branch
+`main`.
+
+Expected result: green, usually complete in less than a minute.
+
+### 5. Enable and run the daily snapshot
+
+GitHub disables scheduled workflows by default in forks. This is easy to miss.
+In your fork, go to:
+
+```text
+top navigation bar -> Actions -> Daily RSO Snapshot
+```
+
+If GitHub shows:
+
+```text
+This scheduled workflow is disabled because scheduled workflows are disabled by default in forks.
+```
+
+Click **Enable workflow**.
+
+Then run it manually once. This is not optional; it proves the producer workflow
+is enabled and can write archive data into your fork.
+
+On GitHub:
+
+```text
+top navigation bar -> Actions -> Daily RSO Snapshot -> Run workflow
+```
+
+Use:
+
+```text
+Use workflow from = main
+mode = auto
+date = blank, unless you deliberately want one specific date
+overwrite = checked for this first run
+```
+
+After that first successful run, leave **overwrite** unchecked for normal daily
+operation. The workflow may complete in 30 seconds, or it may take 5 minutes or
+more depending on Space-Track response time and whether your fork needs to catch
+up.
+
+Expected result:
+
+- workflow succeeds
+- a new or refreshed `data/YYYY/MM/DD/manifest.json` appears for the run date
+- `ledger.json` updates
+- `catalog.json.gz` remains committed for the two newest archived days
+- a matching release asset appears
+
+That proves your fork can:
+
+- read the prior snapshot
+- apply a bounded `gp_history` delta
+- write the new manifest/audit files
+- publish the release bundle
 
 ### 6. Understand the official genesis
 
@@ -159,43 +198,7 @@ data/2026/04/20/manifest.json
 
 That document is the agreed `genesis_from_gp` baseline for the live archive.
 
-### 7. Run the next daily roll-forward
-
-After Actions are enabled, the scheduled workflow should run automatically each
-day. If your fork is behind, it starts at the next missing date, backfills
-through yesterday, and then runs the current daily snapshot. You can also start
-the first run manually instead of waiting for the next 00:15 UTC schedule.
-
-On GitHub:
-
-```text
-Actions -> Daily RSO Snapshot -> Run workflow
-```
-
-Use:
-
-```text
-mode = auto
-date = blank, unless you deliberately want one specific date
-force = false unless deliberately rebuilding an existing date
-```
-
-Expected result:
-
-- workflow succeeds
-- a new `data/YYYY/MM/DD/manifest.json` appears for the next day
-- `ledger.json` updates
-- `catalog.json.gz` remains committed for the two newest archived days
-- a matching release asset appears
-
-That proves your fork can:
-
-- read the prior snapshot
-- apply a bounded `gp_history` delta
-- write the new manifest/audit files
-- publish the release bundle
-
-### 8. Compare with another operator
+### 7. Compare with another operator
 
 For the same date, compare:
 
@@ -214,17 +217,17 @@ Matching hashes across forks are the real success condition.
 - `Releases`: where the full daily bundle is published
 - `reports/rehearsal/`: pre-baseline practice data, separate from the official lineage
 
-## The two outputs to remember
+## The outputs to remember
 
-Every successful producer run writes to two places:
+Every successful producer run writes to three places:
 
 - Git metadata: `data/` and `ledger.json`
+- Git bootstrap cache: `catalog.json.gz` for the two newest archived days
 - Release bundle: `rso-archive-YYYY-MM-DD.tar.gz`
 
-Git also keeps a rolling cache of the newest two `catalog.json.gz` files. Older
-full catalogs are pruned from Git after their deterministic release bundles are
-built. That split keeps the repo small while making new forks able to continue
-the chain without manual bootstrapping.
+Older full catalogs are pruned from Git after their deterministic release
+bundles are built. That split keeps the repo small while making new forks able
+to continue the chain without manual bootstrapping.
 
 The daily hash comes from the canonical snapshot bytes, not from the release
 URL or storage location. Different operators can publish the same bytes in
@@ -237,7 +240,14 @@ Most first-run failures are one of these:
 - Actions not enabled
 - Workflow permissions still read-only
 - `SPACETRACK_USER` or `SPACETRACK_PASS` missing
-- A date already exists and needs `force = true`
+- A date already exists and needs **overwrite** checked during a deliberate
+  rebuild
 
 If the daily workflow can read Space-Track but fails on `git push`, check
 workflow write permissions first.
+
+Your fork can also be forked by others as long as it preserves these
+conventions: the archive metadata stays in `data/`, the two newest catalogs
+remain available for bootstrap, and the workflows keep committing the daily
+hash chain. Share it with friends, and star the upstream repo so other operators
+can find the canonical project.
