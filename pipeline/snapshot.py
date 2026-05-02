@@ -8,6 +8,7 @@ the closed UTC window before the snapshot cutoff.
 """
 
 import argparse
+import base64
 import io
 import gzip
 import hashlib
@@ -48,6 +49,22 @@ RELEASE_OUTPUT_DIR = Path(__file__).parent.parent / ".release"
 
 STORAGE_BACKENDS = frozenset({"none", "github_release", "arweave", "ipfs_pinata"})
 UPLOAD_POLICIES = frozenset({"never", "if_missing", "always_mirror"})
+ARWEAVE_GATEWAY_DEFAULT = "https://arweave.net"
+ARWEAVE_INLINE_DATA_LIMIT = 12 * 1024 * 1024
+ARWEAVE_MAX_CHUNK_SIZE = 256 * 1024
+ARWEAVE_MIN_CHUNK_SIZE = 32 * 1024
+ARWEAVE_CHUNK_UPLOAD_RETRIES = int(os.environ.get("ARWEAVE_CHUNK_UPLOAD_RETRIES", "5"))
+ARWEAVE_CHUNK_UPLOAD_RETRY_DELAY = float(
+    os.environ.get("ARWEAVE_CHUNK_UPLOAD_RETRY_DELAY", "40")
+)
+ARWEAVE_TRANSIENT_CHUNK_ERRORS = frozenset(
+    {
+        "data_root_not_found",
+        "exceeds_disk_pool_size_limit",
+        "not_joined",
+        "timeout",
+    }
+)
 RELEASE_ARTIFACT_FILENAMES = (
     "catalog.json.gz",
     "manifest.json",
@@ -350,6 +367,21 @@ def write_json(path, payload):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2, sort_keys=True)
         f.write("\n")
+
+
+def read_json_if_exists(path, default=None):
+    if not path.exists():
+        return default
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return default
+
+
+def env_flag(name):
+    value = os.environ.get(name, "")
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def query_gp_history_ranges(
@@ -1610,6 +1642,465 @@ def build_or_fetch_release_bundle(current_date_str, output_dir=None, min_count=M
         return download_release_bundle_to_file(current_date_str, output_dir=output_dir, repo=repo)
 
 
+def storage_receipt_path(current_date_str):
+    return snapshot_dir(current_date_str) / "storage.json"
+
+
+def load_storage_receipt(current_date_str):
+    receipt = read_json_if_exists(storage_receipt_path(current_date_str), default={})
+    if isinstance(receipt, dict):
+        return receipt
+    return {}
+
+
+def record_storage_destination(bundle, destination, payload):
+    receipt = load_storage_receipt(bundle["date"])
+    receipt.update(
+        {
+            "date": bundle["date"],
+            "asset_name": bundle["asset_name"],
+            "bundle_bytes": bundle["bytes"],
+            "bundle_sha256": bundle["bundle_sha256"],
+            "catalog_sha256": bundle["catalog_sha256"],
+            "manifest_sha256": bundle["manifest_sha256"],
+            "updated_at": utc_stamp(),
+        }
+    )
+    destinations = receipt.get("destinations")
+    if not isinstance(destinations, dict):
+        destinations = {}
+    destinations[destination] = payload
+    receipt["destinations"] = destinations
+    write_json(storage_receipt_path(bundle["date"]), receipt)
+
+
+def b64url_encode(data):
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def b64url_decode(value):
+    padding = "=" * ((4 - len(value) % 4) % 4)
+    return base64.urlsafe_b64decode((value + padding).encode("ascii"))
+
+
+def sha256_bytes(data):
+    return hashlib.sha256(data).digest()
+
+
+def sha384_bytes(data):
+    return hashlib.sha384(data).digest()
+
+
+def arweave_gateway():
+    return os.environ.get("ARWEAVE_GATEWAY", ARWEAVE_GATEWAY_DEFAULT).rstrip("/")
+
+
+def arweave_request(
+    method,
+    path,
+    payload=None,
+    headers=None,
+    allow_http_errors=False,
+    allow_not_found=False,
+):
+    url = path if path.startswith("http://") or path.startswith("https://") else f"{arweave_gateway()}{path}"
+    request_headers = {
+        "Accept": "application/json",
+        "User-Agent": f"rso-archive/{PIPELINE_VERSION}",
+    }
+    if headers:
+        request_headers.update(headers)
+
+    data = None
+    if payload is not None:
+        if isinstance(payload, (bytes, bytearray)):
+            data = bytes(payload)
+        else:
+            data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+            request_headers["Content-Type"] = "application/json"
+
+    req = urllib.request.Request(url, data=data, headers=request_headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=180) as resp:
+            body = resp.read()
+            content_type = resp.headers.get("Content-Type", "")
+            status = resp.status
+    except urllib.error.HTTPError as exc:
+        if allow_not_found and exc.code == 404:
+            return 404, None
+        detail = exc.read().decode("utf-8", errors="replace")
+        if allow_http_errors:
+            try:
+                return exc.code, json.loads(detail)
+            except json.JSONDecodeError:
+                return exc.code, detail
+        raise SnapshotError(f"Arweave API {method} {url} failed ({exc.code}): {detail}") from exc
+
+    if not body:
+        return status, None
+    if "application/json" in content_type or body[:1] in (b"{", b"["):
+        return status, json.loads(body)
+    return status, body.decode("utf-8", errors="replace")
+
+
+def arweave_wallet_jwk():
+    raw = os.environ.get("ARWEAVE_JWK") or os.environ.get("ARWEAVE_WALLET_JSON")
+    if not raw:
+        return None
+    try:
+        jwk = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise SnapshotError("ARWEAVE_JWK is not valid JSON") from exc
+    required = {"kty", "n", "e", "d", "p", "q", "dp", "dq", "qi"}
+    if not isinstance(jwk, dict) or not required.issubset(jwk):
+        raise SnapshotError("ARWEAVE_JWK is missing required RSA JWK fields")
+    if jwk.get("kty") != "RSA":
+        raise SnapshotError("ARWEAVE_JWK must be an RSA key")
+    return jwk
+
+
+def arweave_wallet_address(jwk):
+    return b64url_encode(sha256_bytes(b64url_decode(jwk["n"])))
+
+
+def arweave_int_to_buffer(value):
+    buffer = bytearray(32)
+    for index in range(len(buffer) - 1, -1, -1):
+        byte = value % 256
+        buffer[index] = byte
+        value = (value - byte) // 256
+    return bytes(buffer)
+
+
+def arweave_chunk_data(data):
+    chunks = []
+    rest = data
+    cursor = 0
+
+    while len(rest) >= ARWEAVE_MAX_CHUNK_SIZE:
+        chunk_size = ARWEAVE_MAX_CHUNK_SIZE
+        next_chunk_size = len(rest) - ARWEAVE_MAX_CHUNK_SIZE
+        if 0 < next_chunk_size < ARWEAVE_MIN_CHUNK_SIZE:
+            chunk_size = (len(rest) + 1) // 2
+        chunk = rest[:chunk_size]
+        cursor += len(chunk)
+        chunks.append(
+            {
+                "data_hash": sha256_bytes(chunk),
+                "min_byte_range": cursor - len(chunk),
+                "max_byte_range": cursor,
+            }
+        )
+        rest = rest[chunk_size:]
+
+    chunks.append(
+        {
+            "data_hash": sha256_bytes(rest),
+            "min_byte_range": cursor,
+            "max_byte_range": cursor + len(rest),
+        }
+    )
+    return chunks
+
+
+def arweave_generate_leaves(chunks):
+    leaves = []
+    for chunk in chunks:
+        leaves.append(
+            {
+                "type": "leaf",
+                "id": sha256_bytes(
+                    sha256_bytes(chunk["data_hash"])
+                    + sha256_bytes(arweave_int_to_buffer(chunk["max_byte_range"]))
+                ),
+                "data_hash": chunk["data_hash"],
+                "min_byte_range": chunk["min_byte_range"],
+                "max_byte_range": chunk["max_byte_range"],
+            }
+        )
+    return leaves
+
+
+def arweave_hash_branch(left, right):
+    if right is None:
+        return left
+    return {
+        "type": "branch",
+        "id": sha256_bytes(
+            sha256_bytes(left["id"])
+            + sha256_bytes(right["id"])
+            + sha256_bytes(arweave_int_to_buffer(left["max_byte_range"]))
+        ),
+        "byte_range": left["max_byte_range"],
+        "max_byte_range": right["max_byte_range"],
+        "left_child": left,
+        "right_child": right,
+    }
+
+
+def arweave_build_layers(nodes):
+    while len(nodes) > 1:
+        next_layer = []
+        for index in range(0, len(nodes), 2):
+            left = nodes[index]
+            right = nodes[index + 1] if index + 1 < len(nodes) else None
+            next_layer.append(arweave_hash_branch(left, right))
+        nodes = next_layer
+    return nodes[0]
+
+
+def arweave_array_flatten(values):
+    flattened = []
+    for value in values:
+        if isinstance(value, list):
+            flattened.extend(arweave_array_flatten(value))
+        else:
+            flattened.append(value)
+    return flattened
+
+
+def arweave_resolve_branch_proofs(node, proof=b""):
+    if node["type"] == "leaf":
+        return {
+            "offset": node["max_byte_range"] - 1,
+            "proof": proof + node["data_hash"] + arweave_int_to_buffer(node["max_byte_range"]),
+        }
+
+    partial_proof = (
+        proof
+        + node["left_child"]["id"]
+        + node["right_child"]["id"]
+        + arweave_int_to_buffer(node["byte_range"])
+    )
+    return [
+        arweave_resolve_branch_proofs(node["left_child"], partial_proof),
+        arweave_resolve_branch_proofs(node["right_child"], partial_proof),
+    ]
+
+
+def arweave_generate_proofs(root):
+    proofs = arweave_resolve_branch_proofs(root)
+    if isinstance(proofs, list):
+        return arweave_array_flatten(proofs)
+    return [proofs]
+
+
+def arweave_generate_transaction_chunks(data):
+    chunks = arweave_chunk_data(data)
+    leaves = arweave_generate_leaves(chunks)
+    root = arweave_build_layers(leaves)
+    proofs = arweave_generate_proofs(root)
+
+    last_chunk = chunks[-1]
+    if last_chunk["max_byte_range"] - last_chunk["min_byte_range"] == 0:
+        chunks = chunks[:-1]
+        proofs = proofs[:-1]
+
+    return {
+        "data_root": root["id"],
+        "chunks": chunks,
+        "proofs": proofs,
+    }
+
+
+def arweave_deep_hash(item):
+    if isinstance(item, (list, tuple)):
+        acc = sha384_bytes(b"list" + str(len(item)).encode("utf-8"))
+        for value in item:
+            acc = sha384_bytes(acc + arweave_deep_hash(value))
+        return acc
+    data = bytes(item)
+    return sha384_bytes(
+        sha384_bytes(b"blob" + str(len(data)).encode("utf-8")) + sha384_bytes(data)
+    )
+
+
+def mgf1_sha256(seed, length):
+    output = bytearray()
+    counter = 0
+    while len(output) < length:
+        output.extend(hashlib.sha256(seed + counter.to_bytes(4, "big")).digest())
+        counter += 1
+    return bytes(output[:length])
+
+
+def rsa_pss_sign_sha256(jwk, message, salt_length=32):
+    modulus = int.from_bytes(b64url_decode(jwk["n"]), "big")
+    private_exponent = int.from_bytes(b64url_decode(jwk["d"]), "big")
+    mod_bits = modulus.bit_length()
+    em_bits = mod_bits - 1
+    em_len = (em_bits + 7) // 8
+    hash_length = hashlib.sha256().digest_size
+    if em_len < hash_length + salt_length + 2:
+        raise SnapshotError("Arweave RSA key is too small for PSS signing")
+
+    message_hash = hashlib.sha256(message).digest()
+    salt = os.urandom(salt_length)
+    m_prime = (b"\x00" * 8) + message_hash + salt
+    digest = hashlib.sha256(m_prime).digest()
+    padding = b"\x00" * (em_len - salt_length - hash_length - 2)
+    data_block = padding + b"\x01" + salt
+    db_mask = mgf1_sha256(digest, em_len - hash_length - 1)
+    masked_db = bytearray(a ^ b for a, b in zip(data_block, db_mask))
+    masked_db[0] &= 0xFF >> ((8 * em_len) - em_bits)
+    encoded_message = bytes(masked_db) + digest + b"\xbc"
+
+    signature_int = pow(int.from_bytes(encoded_message, "big"), private_exponent, modulus)
+    key_length = (mod_bits + 7) // 8
+    return signature_int.to_bytes(key_length, "big")
+
+
+def arweave_tags(bundle):
+    return [
+        ("App-Name", "RSO-Archive"),
+        ("App-Version", PIPELINE_VERSION),
+        ("Content-Type", "application/gzip"),
+        ("Bundle-Name", bundle["asset_name"]),
+        ("Bundle-Format", "tar.gz"),
+        ("Archive-Date", bundle["date"]),
+        ("Catalog-SHA256", bundle["catalog_sha256"]),
+        ("Bundle-SHA256", bundle["bundle_sha256"]),
+    ]
+
+
+def arweave_tag_objects(bundle):
+    return [
+        {"name": b64url_encode(name.encode("utf-8")), "value": b64url_encode(value.encode("utf-8"))}
+        for name, value in arweave_tags(bundle)
+    ]
+
+
+def arweave_signature_payload(transaction):
+    tag_list = []
+    for tag in transaction["tags"]:
+        tag_list.append([b64url_decode(tag["name"]), b64url_decode(tag["value"])])
+    return arweave_deep_hash(
+        [
+            str(transaction["format"]).encode("utf-8"),
+            b64url_decode(transaction["owner"]),
+            b64url_decode(transaction["target"]),
+            transaction["quantity"].encode("utf-8"),
+            transaction["reward"].encode("utf-8"),
+            b64url_decode(transaction["last_tx"]),
+            tag_list,
+            transaction["data_size"].encode("utf-8"),
+            b64url_decode(transaction["data_root"]),
+        ]
+    )
+
+
+def arweave_wallet_balance(address):
+    _, balance = arweave_request("GET", f"/wallet/{address}/balance")
+    if not isinstance(balance, str) or not balance.isdigit():
+        raise SnapshotError(f"Arweave balance endpoint returned invalid payload: {balance!r}")
+    return int(balance)
+
+
+def arweave_build_transaction(bundle, jwk):
+    bundle_bytes = Path(bundle["path"]).read_bytes()
+    chunk_plan = arweave_generate_transaction_chunks(bundle_bytes)
+    force_chunk_upload = env_flag("ARWEAVE_FORCE_CHUNK_UPLOAD")
+    inline_data = len(bundle_bytes) <= ARWEAVE_INLINE_DATA_LIMIT and not force_chunk_upload
+    _, price = arweave_request("GET", f"/price/{len(bundle_bytes)}")
+    _, anchor = arweave_request("GET", "/tx_anchor")
+    if not isinstance(price, str) or not price.isdigit():
+        raise SnapshotError(f"Arweave price endpoint returned invalid payload: {price!r}")
+    if not isinstance(anchor, str) or not anchor:
+        raise SnapshotError(f"Arweave tx_anchor endpoint returned invalid payload: {anchor!r}")
+    address = arweave_wallet_address(jwk)
+    balance = arweave_wallet_balance(address)
+    reward = int(price)
+    if balance < reward:
+        raise SnapshotError(
+            f"Arweave wallet {address} has {balance} winston, below required reward {reward}"
+        )
+
+    transaction = {
+        "format": 2,
+        "id": "",
+        "last_tx": anchor,
+        "owner": jwk["n"],
+        "tags": arweave_tag_objects(bundle),
+        "target": "",
+        "quantity": "0",
+        "data": b64url_encode(bundle_bytes) if inline_data else "",
+        "data_size": str(len(bundle_bytes)),
+        "data_root": b64url_encode(chunk_plan["data_root"]),
+        "reward": price,
+        "signature": "",
+    }
+    signature = rsa_pss_sign_sha256(jwk, arweave_signature_payload(transaction), salt_length=32)
+    transaction["signature"] = b64url_encode(signature)
+    transaction["id"] = b64url_encode(sha256_bytes(signature))
+    return {
+        "transaction": transaction,
+        "bundle_bytes": bundle_bytes,
+        "chunk_plan": chunk_plan,
+        "inline_data": inline_data,
+        "wallet_address": address,
+    }
+
+
+def arweave_chunk_payload(transaction, chunk_plan, bundle_bytes, chunk_index):
+    proof = chunk_plan["proofs"][chunk_index]
+    chunk = chunk_plan["chunks"][chunk_index]
+    return {
+        "data_root": transaction["data_root"],
+        "data_size": transaction["data_size"],
+        "data_path": b64url_encode(proof["proof"]),
+        "offset": str(proof["offset"]),
+        "chunk": b64url_encode(bundle_bytes[chunk["min_byte_range"] : chunk["max_byte_range"]]),
+    }
+
+
+def arweave_submit_transaction(upload):
+    transaction = upload["transaction"]
+    status, response = arweave_request("POST", "/tx", payload=transaction)
+    if status not in (200, 208):
+        raise SnapshotError(
+            f"Arweave transaction submission failed for {transaction['id']}: {response}"
+        )
+
+
+def arweave_submit_chunks(upload):
+    total_chunks = len(upload["chunk_plan"]["chunks"])
+    for chunk_index in range(total_chunks):
+        payload = arweave_chunk_payload(
+            upload["transaction"],
+            upload["chunk_plan"],
+            upload["bundle_bytes"],
+            chunk_index,
+        )
+        for attempt in range(ARWEAVE_CHUNK_UPLOAD_RETRIES + 1):
+            status, response = arweave_request(
+                "POST",
+                "/chunk",
+                payload=payload,
+                allow_http_errors=True,
+            )
+            if status == 200:
+                break
+            if not arweave_chunk_upload_retryable(response):
+                raise SnapshotError(
+                    f"Arweave chunk upload failed for {upload['transaction']['id']} "
+                    f"chunk {chunk_index + 1}/{total_chunks}: {response}"
+                )
+            if attempt == ARWEAVE_CHUNK_UPLOAD_RETRIES:
+                raise SnapshotError(
+                    f"Arweave chunk upload did not settle for {upload['transaction']['id']} "
+                    f"chunk {chunk_index + 1}/{total_chunks}: {response}"
+                )
+            time.sleep(ARWEAVE_CHUNK_UPLOAD_RETRY_DELAY)
+
+
+def arweave_chunk_upload_retryable(response):
+    if isinstance(response, dict):
+        error = str(response.get("error", ""))
+    else:
+        error = str(response)
+    return error in ARWEAVE_TRANSIENT_CHUNK_ERRORS
+
+
 def github_release_assets(tag, repo=None):
     release = github_release_payload(tag, repo=repo, allow_missing=True)
     if release is None:
@@ -1633,16 +2124,19 @@ def release_notes(bundle):
     return "\n".join(lines) + "\n"
 
 
-def github_create_release(bundle, repo, notes):
+def github_create_release(bundle, repo, notes, target_commitish=None):
+    payload = {
+        "tag_name": bundle["tag"],
+        "name": bundle["title"],
+        "body": notes,
+        "prerelease": bool(bundle.get("prerelease")),
+    }
+    if target_commitish:
+        payload["target_commitish"] = target_commitish
     return github_request(
         "POST",
         github_api_url(repo, "/releases"),
-        payload={
-            "tag_name": bundle["tag"],
-            "name": bundle["title"],
-            "body": notes,
-            "prerelease": bool(bundle.get("prerelease")),
-        },
+        payload=payload,
         token_required=True,
     )
 
@@ -1682,35 +2176,205 @@ def github_upload_release_asset(release, bundle):
     )
 
 
-def publish_github_release(bundle, repo=None, upload_policy="if_missing", force=False):
+def publish_github_release(
+    bundle,
+    repo=None,
+    upload_policy="if_missing",
+    force=False,
+    target_commitish=None,
+):
     resolved_repo = resolve_github_repo(repo)
     release = github_release_payload(bundle["tag"], repo=resolved_repo, allow_missing=True)
     asset = find_release_asset(release, bundle["asset_name"])
     asset_exists = asset is not None
+    release_url = f"https://github.com/{resolved_repo}/releases/tag/{bundle['tag']}"
 
     if asset_exists and not force and not bundle.get("prerelease"):
         print(f"  SKIP: {bundle['tag']} already has {bundle['asset_name']}")
-        return {"status": "skipped", "reason": "asset_exists", **bundle}
+        result = {
+            "status": "skipped",
+            "reason": "asset_exists",
+            "repo": resolved_repo,
+            "release_url": release.get("html_url", release_url) if release else release_url,
+            "asset_url": asset.get("browser_download_url") if asset else None,
+            **bundle,
+        }
+        record_storage_destination(
+            bundle,
+            "github_release",
+            {
+                "status": result["status"],
+                "repo": resolved_repo,
+                "tag": bundle["tag"],
+                "release_url": result["release_url"],
+                "asset_name": bundle["asset_name"],
+                "asset_url": result["asset_url"],
+            },
+        )
+        return result
 
     notes = release_notes(bundle)
 
     if release is None:
-        release = github_create_release(bundle, resolved_repo, notes)
-        github_upload_release_asset(release, bundle)
+        release = github_create_release(
+            bundle,
+            resolved_repo,
+            notes,
+            target_commitish=target_commitish,
+        )
+        uploaded_asset = github_upload_release_asset(release, bundle)
         print(f"  CREATED: {bundle['tag']} with {bundle['asset_name']}")
-        return {"status": "created", **bundle}
+        result = {
+            "status": "created",
+            "repo": resolved_repo,
+            "release_url": release.get("html_url", release_url),
+            "asset_url": uploaded_asset.get("browser_download_url") if isinstance(uploaded_asset, dict) else None,
+            **bundle,
+        }
+        record_storage_destination(
+            bundle,
+            "github_release",
+            {
+                "status": result["status"],
+                "repo": resolved_repo,
+                "tag": bundle["tag"],
+                "release_url": result["release_url"],
+                "asset_name": bundle["asset_name"],
+                "asset_url": result["asset_url"],
+            },
+        )
+        return result
 
     if asset_exists and not force and bundle.get("prerelease"):
         github_update_release(release, bundle, resolved_repo, notes)
         print(f"  UPDATED: {bundle['tag']} release metadata")
-        return {"status": "metadata_updated", **bundle}
+        result = {
+            "status": "metadata_updated",
+            "repo": resolved_repo,
+            "release_url": release.get("html_url", release_url),
+            "asset_url": asset.get("browser_download_url") if asset else None,
+            **bundle,
+        }
+        record_storage_destination(
+            bundle,
+            "github_release",
+            {
+                "status": result["status"],
+                "repo": resolved_repo,
+                "tag": bundle["tag"],
+                "release_url": result["release_url"],
+                "asset_name": bundle["asset_name"],
+                "asset_url": result["asset_url"],
+            },
+        )
+        return result
 
     if asset_exists:
         github_delete_release_asset(asset, resolved_repo)
-    github_upload_release_asset(release, bundle)
+    uploaded_asset = github_upload_release_asset(release, bundle)
     github_update_release(release, bundle, resolved_repo, notes)
     print(f"  UPLOADED: {bundle['asset_name']} to {bundle['tag']}")
-    return {"status": "uploaded", **bundle}
+    result = {
+        "status": "uploaded",
+        "repo": resolved_repo,
+        "release_url": release.get("html_url", release_url),
+        "asset_url": uploaded_asset.get("browser_download_url") if isinstance(uploaded_asset, dict) else None,
+        **bundle,
+    }
+    record_storage_destination(
+        bundle,
+        "github_release",
+        {
+            "status": result["status"],
+            "repo": resolved_repo,
+            "tag": bundle["tag"],
+            "release_url": result["release_url"],
+            "asset_name": bundle["asset_name"],
+            "asset_url": result["asset_url"],
+        },
+    )
+    return result
+
+
+def publish_arweave_bundle(bundle, upload_policy="if_missing", force=False):
+    jwk = arweave_wallet_jwk()
+    if jwk is None:
+        print("  SKIP: ARWEAVE_JWK not set; Arweave upload disabled")
+        return {"status": "skipped", "reason": "missing_wallet", **bundle}
+
+    existing = load_storage_receipt(bundle["date"]).get("destinations", {}).get("arweave")
+    if (
+        isinstance(existing, dict)
+        and existing.get("bundle_sha256") == bundle["bundle_sha256"]
+        and not force
+        and upload_policy != "always_mirror"
+    ):
+        print(f"  SKIP: storage.json already records Arweave TX {existing.get('transaction_id')}")
+        return {
+            "status": "skipped",
+            "reason": "receipt_exists",
+            "transaction_id": existing.get("transaction_id"),
+            **bundle,
+        }
+
+    upload = arweave_build_transaction(bundle, jwk)
+    transaction = upload["transaction"]
+    upload_mode = "inline" if upload["inline_data"] else "chunked"
+    total_chunks = len(upload["chunk_plan"]["chunks"])
+    print(f"  Arweave mode: {upload_mode} ({total_chunks} chunks)")
+    arweave_submit_transaction(upload)
+    if not upload["inline_data"]:
+        arweave_submit_chunks(upload)
+
+    status_code, tx_status = arweave_request(
+        "GET",
+        f"/tx/{transaction['id']}/status",
+        allow_not_found=True,
+    )
+    tx_url = f"{arweave_gateway()}/{transaction['id']}"
+    destination = {
+        "status": "submitted",
+        "gateway": arweave_gateway(),
+        "bundle_sha256": bundle["bundle_sha256"],
+        "transaction_id": transaction["id"],
+        "transaction_url": tx_url,
+        "wallet_address": upload["wallet_address"],
+        "reward_winston": transaction["reward"],
+        "anchor": transaction["last_tx"],
+        "upload_mode": upload_mode,
+        "chunk_count": total_chunks,
+        "submitted_at": utc_stamp(),
+        "status_code": status_code,
+        "status_response": tx_status,
+    }
+    record_storage_destination(bundle, "arweave", destination)
+    print(
+        f"  SUBMITTED: {bundle['asset_name']} to Arweave as {transaction['id']}"
+    )
+    return {"status": "submitted", "transaction_id": transaction["id"], "transaction_url": tx_url, **bundle}
+
+
+def publish_arweave_bundle_nonfatal(bundle, upload_policy="if_missing", force=False):
+    try:
+        return publish_arweave_bundle(
+            bundle,
+            upload_policy=upload_policy,
+            force=force,
+        )
+    except SnapshotError as exc:
+        error = str(exc)
+        print(f"  WARNING: Arweave upload failed; continuing with GitHub Release: {error}")
+        record_storage_destination(
+            bundle,
+            "arweave",
+            {
+                "status": "failed",
+                "bundle_sha256": bundle["bundle_sha256"],
+                "failed_at": utc_stamp(),
+                "error": error,
+            },
+        )
+        return {"status": "failed", "reason": "arweave_upload_failed", "error": error, **bundle}
 
 
 def resolve_publish_dates(args):
@@ -1726,6 +2390,7 @@ def resolve_publish_dates(args):
 def process_publish(args):
     storage_backend = args.storage_backend or os.environ.get("STORAGE_BACKEND", "github_release")
     upload_policy = args.upload_policy or os.environ.get("UPLOAD_POLICY", "if_missing")
+    target_commitish = args.target_commitish or os.environ.get("RSO_RELEASE_TARGET_COMMITISH")
 
     if storage_backend not in STORAGE_BACKENDS:
         raise SnapshotError(
@@ -1767,13 +2432,31 @@ def process_publish(args):
             print("  SKIP: upload disabled; bundle built for hash-only attestation")
             results.append({"status": "skipped", "reason": "upload_disabled", **bundle})
         elif storage_backend == "github_release":
+            github_result = publish_github_release(
+                bundle,
+                repo=args.repo,
+                upload_policy=upload_policy,
+                force=args.force,
+                target_commitish=target_commitish,
+            )
+            results.append({"destination": "github_release", **github_result})
+            arweave_result = publish_arweave_bundle_nonfatal(
+                bundle,
+                upload_policy=upload_policy,
+                force=args.force,
+            )
+            if arweave_result.get("reason") != "missing_wallet":
+                results.append({"destination": "arweave", **arweave_result})
+        elif storage_backend == "arweave":
             results.append(
-                publish_github_release(
-                    bundle,
-                    repo=args.repo,
-                    upload_policy=upload_policy,
-                    force=args.force,
-                )
+                {
+                    "destination": "arweave",
+                    **publish_arweave_bundle(
+                        bundle,
+                        upload_policy=upload_policy,
+                        force=args.force,
+                    ),
+                }
             )
         else:
             raise SnapshotError(
@@ -2416,6 +3099,14 @@ def main():
         "--prerelease",
         action="store_true",
         help="Create or update GitHub releases as prereleases",
+    )
+    publish_parser.add_argument(
+        "--target-commitish",
+        default=None,
+        help=(
+            "Commit SHA or branch for new GitHub release tags; defaults to "
+            "RSO_RELEASE_TARGET_COMMITISH when set."
+        ),
     )
 
     prune_parser = subparsers.add_parser(
