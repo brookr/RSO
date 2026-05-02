@@ -256,9 +256,8 @@ event ArchiveAttested(
 );
 ```
 
-There is intentionally no `WeekSummary`, `finalizeWeek`, contract-level winning
-hash, or weekly Merkle-root storage in v1. The contract is the raw witness log;
-clients and indexers group attestations by date and hash.
+The contract is intentionally just the raw witness log. Clients and indexers
+group attestations by date and hash.
 
 **Why no on-chain validation**: Smart contracts cannot reach the internet. They can't fetch from Arweave, can't hash external data, can't verify anything outside the EVM. An oracle (like Chainlink) would reintroduce centralized trust. The verification belongs in the viewer's browser.
 
@@ -346,16 +345,18 @@ Nobody (we could find) is doing:
   - `hydrate-catalogs` command: restores local full catalogs from release bundles when repairing or migrating a checkout
   - Canonical JSON serialization for deterministic hashing
   - gzip compression, manifest generation, running ledger, `delta.json`, `audit.json`, and `visibility_state.json`
-- [x] `.github/workflows/daily-snapshot.yml` — Runs at 00:15 UTC daily and catches up missing dates
-- [x] `.github/workflows/validate-archive.yml` — Read-only tests and archive validation
+- [x] `.github/workflows/daily-snapshot.yml` — Runs at 00:15 UTC daily, syncs code, prepares `node`, and catches up missing dates
+- [x] `.github/workflows/validate-archive.yml` — Read-only tests on `main` and archive validation on `node`
 - [x] `README.md` with architecture overview and setup instructions
 - [x] Zero external dependencies (no pip install, no requirements.txt, no required GitHub CLI)
 
-The canonical Git tree keeps manifests, deltas, audits, visibility state,
-`ledger.json`, and a rolling two-day cache of `catalog.json.gz`. Older full
-catalog bytes are pruned from Git after deterministic
-`rso-archive-YYYY-MM-DD.tar.gz` release bundles are built. This keeps normal
-Git history small while making a fresh fork self-starting.
+The canonical operator state lives on a `node` branch. That branch keeps
+manifests, deltas, audits, visibility state, `ledger.json`, and a rolling
+two-day cache of `catalog.json.gz`. Older full catalog bytes are pruned from
+Git after deterministic `rso-archive-YYYY-MM-DD.tar.gz` release bundles are
+built. The default `main` branch stays focused on code, docs, and workflow
+controllers so forks can sync upstream code without overwriting generated node
+state.
 
 ### Done (Phase 1.1 — Deterministic Rolling Snapshot)
 
@@ -395,9 +396,9 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 
 ### To Build (Phase 2 — Arweave)
 
-- [ ] Arweave upload step in pipeline (via Irys/Bundlr CLI or arweave-js)
-- [ ] Arweave TX ID recorded in manifest and ledger
-- [ ] Pipeline uploads compressed snapshot to Arweave after git commit
+- [x] Optional Arweave upload step in the publish pipeline
+- [x] Per-day `storage.json` receipt records Arweave TX ID and publish destinations
+- [x] Pipeline can upload the deterministic release bundle to Arweave after git commit
 
 ### To Build (Phase 3 — Ethereum)
 
@@ -479,8 +480,8 @@ specific attestation event.
 rso-archive/
 ├── .github/
 │   └── workflows/
-│       ├── daily-snapshot.yml    # Cron: 00:15 UTC daily
-│       └── validate-archive.yml  # Read-only validation
+│       ├── daily-snapshot.yml    # Controller on main; processes node
+│       └── validate-archive.yml  # Tests on main, archive validation on node
 ├── pipeline/
 │   └── snapshot.py               # The entire pipeline (zero deps)
 ├── data/
@@ -500,7 +501,7 @@ rso-archive/
 
 Full daily catalogs are published in GitHub Release bundles and later move to
 Arweave permanent storage. The newest two full catalogs are also retained in
-Git as a bootstrap cache.
+Git on `node` as a bootstrap cache.
 
 ### Design Lesson: Self-Starting Forks
 
@@ -508,7 +509,8 @@ A rolling archive needs the prior full catalog bytes, not only the prior hash.
 If all full catalogs are pruned from Git, a new fork inherits the metadata
 chain but may need an external release bundle before its first daily run.
 
-The current design keeps the newest two `catalog.json.gz` files in the repo:
+The current design keeps the newest two `catalog.json.gz` files on each node
+branch:
 
 - `ledger.json` and `manifest.json` provide the public hash chain.
 - The newest retained catalog lets the next daily run start from local state.
@@ -516,9 +518,12 @@ The current design keeps the newest two `catalog.json.gz` files in the repo:
   retried runs.
 - Older full catalogs move to release bundles and later permanent storage.
 
-This makes the normal operator path self-starting: fork the repo, enable
-Actions, add Space-Track secrets, and the scheduled workflow can catch up and
-continue the chain without manual bootstrapping.
+This makes the normal operator path self-starting: fork the repo with all
+branches so the upstream `node` branch is copied, enable Actions, add
+Space-Track secrets, and the scheduled workflow can update `node`, catch up,
+and continue the chain without manual bootstrapping. If a fork copies only
+`main`, the workflow can still create `node` and import archive state from the
+upstream `node` branch on its first run.
 
 ---
 

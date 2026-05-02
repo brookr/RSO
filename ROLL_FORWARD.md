@@ -1,7 +1,7 @@
 # Roll Forward
 
 `roll-forward` builds missing daily snapshots from a known prior archive state.
-It is the operational catch-up command for this repository.
+It is the operational catch-up command for a node branch.
 
 It does not reconstruct history from nothing. It starts with the full catalog
 from the day before `--start`, applies one bounded `gp_history` publication
@@ -9,8 +9,8 @@ window, writes that day's snapshot, then repeats until `--end`.
 
 ## When To Use It
 
-Use `roll-forward` when a node has a valid archived base day but is missing one
-or more later days.
+Use `roll-forward` on `node` when a node has a valid archived base day but is
+missing one or more later days.
 
 Common cases:
 
@@ -61,7 +61,8 @@ Each step writes the same artifacts as a normal daily run:
 - `catalog.json.gz`
 
 The daily workflow uses this same command internally when a fork needs to catch
-up before producing the current day's snapshot.
+up before producing the current day's snapshot. The workflow performs that work
+on the `node` branch, not on `main`.
 
 ## Commands
 
