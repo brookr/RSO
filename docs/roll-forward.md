@@ -109,5 +109,5 @@ there.
 
 `replay` starts from an empty state and was used as a validation experiment for
 bounded `gp_history` behavior. Replay is documented separately in
-[REPLAY_FINDINGS.md](REPLAY_FINDINGS.md), and it is not a substitute for normal
+[replay-findings.md](replay-findings.md), and it is not a substitute for normal
 roll-forward operation.
