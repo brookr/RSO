@@ -1,11 +1,18 @@
-# Attestation Design
+# RSO Attestation Design
 
-This document is the build source for the attestation dApp, relayer, and
-Ethereum contract.
+This document is the RSO profile and integration design for the generic
+Document Chain protocol.
 
-The goal is to let RSO Meme Card holders confirm archive publications without
-paying gas, while preserving a direct paid path for anyone else and protecting
-the OW treasury from repeated sponsored submissions.
+Generic protocol concerns — `DocBlock`, EIP-712 attestation shape, contract
+events, EIP-1271 support, duplicate prevention, and neutral reference event
+models — live in the sibling [`doc-chain`](../../doc-chain) repo. This repo
+owns the RSO-specific profile: archive validation, holder sponsorship, TDH
+scoring, NFT/dApp flow, and relayer policy.
+
+The RSO-specific goal is to let RSO Meme Card holders confirm archive
+publications without paying gas, while preserving a direct paid path for
+anyone else and protecting the OW treasury from repeated sponsored
+submissions.
 
 ## Roles
 
@@ -13,13 +20,13 @@ the OW treasury from repeated sponsored submissions.
 |-----------|----------------|
 | Static dApp | Reads archive data, checks wallet status, asks wallet to sign, submits to relayer or contract |
 | Relayer | Verifies eligibility and artifact integrity, pays gas for approved sponsored submissions |
-| Contract | Verifies signatures, prevents duplicates, emits append-only attestation events |
+| DocChain contract | Verifies signatures, prevents duplicates, emits append-only attestation events |
 | OW treasury | Funds limited relayer hot wallets |
 
-The contract is deployed on Ethereum L1 mainnet. All holder lookups, TDH
-checks, and signature verification target mainnet directly. The protocol does
-not span chains: there is no L2 deployment, no bridge, and no cross-chain
-attestation.
+The DocChain contract should be deployed on Ethereum L1 mainnet. All holder
+lookups, TDH checks, and signature verification target mainnet directly. The
+protocol does not span chains: there is no L2 deployment, no bridge, and no
+cross-chain attestation.
 
 The dApp should be static and hostable by every node operator fork. It does not
 need a node-local backend. It submits directly from the browser to one or more
@@ -28,18 +35,88 @@ relayer endpoints.
 ## User Flow
 
 ```text
-1. User opens attestation dApp from any node fork.
-2. User connects wallet.
-3. dApp checks current RSO Meme Card holdings.
-4. dApp checks card-specific TDH through 6529 API or prenode data.
-5. dApp verifies the selected archive artifact locally where practical.
-6. User signs an EIP-712 archive attestation.
-7. If signer is eligible for sponsorship, dApp POSTs to relayer.
-8. If signer is not eligible, dApp offers direct contract submission.
+1. User opens the NFT or verification viewer.
+2. User scrolls to any archive day and asks the NFT/viewer to validate it.
+3. NFT/viewer loads that day's document metadata and validates the chain edge.
+4. NFT/viewer opens the attestation dApp with the exact values to sign.
+5. User connects wallet in the dApp.
+6. dApp checks current RSO Meme Card holdings.
+7. dApp checks card-specific TDH through 6529 API or prenode data.
+8. User signs an EIP-712 document attestation.
+9. If signer is eligible for sponsorship, dApp POSTs to relayer.
+10. If signer is not eligible, dApp offers direct contract submission.
 ```
+
+The NFT/viewer is the archive browsing, verification, and candidate-selection
+surface. It should let a user scroll back to any retained or indexed archive
+day, load that day's metadata, validate the document hash and parent link, and
+then prepare the corresponding chain-edge claim. Because NFT iframes cannot
+reliably access wallet injection, the dApp is the signing and submission
+surface. The dApp receives the `DocBlock` fields (`docChainId`, `docRef`,
+`parentHash`, `contentHash`) and optional `uri` from the
+NFT/viewer, displays the claim, and asks the wallet to sign it.
 
 The dApp holder/TDH checks are for UX and routing. The relayer must repeat all
 sponsorship checks before paying gas.
+
+## Deployable Projects
+
+Keep the RSO attestation system as four deployable projects, plus vendored
+Document Chain reference code:
+
+```text
+nft/         static NFT/viewer, published to Arweave
+dapp/        static wallet signing/submission app
+indexer/     static attestation index generator
+relayer/     long-running backend for sponsored gas
+vendor/docchain/  pinned stdlib-only helpers from ../doc-chain
+```
+
+The NFT and dApp are separate static sites. The NFT is the read-only archive
+viewer embedded by NFT platforms. The dApp is the wallet-enabled signing and
+submission page opened from the NFT/viewer. GitHub Pages is acceptable for
+development and operator forks; the canonical NFT/viewer should also be
+published to Arweave.
+
+The indexer should not be a required live service. It can run from GitHub
+Actions, read contract logs, and publish compact JSON pages that the NFT uses
+for normal browsing. A scheduled indexer run every five minutes is a reasonable
+starting point; manual dispatch should also be available for deploys and
+repairs.
+
+The NFT should treat that static index as its durable browse cache, then add a
+small **Recent** overlay from public RPC:
+
+```text
+1. Load the static index.
+2. Read latestIndexedBlock from the index metadata.
+3. Estimate the block for a short recent window, e.g. the last 10 minutes.
+4. Query DocumentAttested logs from max(recentWindowStart, latestIndexedBlock + 1)
+   to the current head.
+5. Merge matching logs into an in-memory Recent set.
+6. Repeat lightly while open, for example once per minute.
+```
+
+Recent logs are onchain events that have not yet been folded into the static
+index. Because the static index is expected to refresh every five to ten
+minutes, the NFT should only poll a small recent block range. If the static
+index is stale enough that the bounded recent window would miss events, the NFT
+should show the index as stale and wait for the next refresh rather than scan a
+large public-RPC range. The dApp remains the immediate confirmation surface
+after submission; the NFT does not rely on cross-window callbacks from the dApp.
+
+The relayer is the only backend that must be continuously available because it
+holds a hot-wallet key and submits sponsored transactions. It should start as a
+small long-running service with explicit logs, quota state, monitoring, and key
+rotation. A Cloudflare Worker can be useful later as a front door, cache, or
+rate limiter, but the signer/hot-wallet service should remain an explicitly
+operated backend.
+
+The generic contract source and deployment metadata live in `../doc-chain`.
+When RSO needs generic log decoding or `DocBlock` helpers, copy a pinned
+stdlib-only reference module from `../doc-chain/reference/docchain/` into
+`vendor/docchain/` by reviewed PR. Do not install it with pip or fetch it at
+runtime.
 
 ## Sponsorship Eligibility
 
@@ -50,7 +127,8 @@ A relayer-sponsored submission requires:
 - signer has non-zero card-specific TDH for that card
 - signer has remaining sponsored quota for the archive day
 - attestation is not a duplicate
-- URI resolves to bytes that match the signed hash claims
+- if `uri != ""`, URI resolves to bytes that match the signed DocBlock claims
+- if `uri == ""`, the profile metadata validates the signed chain edge
 - signer is not blacklisted
 - hourly and daily relayer budgets are not exhausted
 
@@ -79,10 +157,10 @@ quota = min(
 eligible only if card_specific_TDH > 0
 ```
 
-Quota is counted by signer and archive date:
+Quota is counted by signer, document chain, and UTC archive day:
 
 ```text
-sponsoredCount[signer][archiveDate]
+sponsoredCount[signer][docChainId][quotaDay]
 ```
 
 Do not count quota by URI or hash. Otherwise a signer could drain gas by
@@ -118,170 +196,170 @@ sponsored capacity is available immediately at the boundary. Refills must
 still respect the loss-acceptance ceiling above; the goal is to land at the
 ceiling at 00:00 UTC, not to exceed it.
 
-## Attestation Payload
+## RSO DocChain Profile
 
-Use EIP-712 typed data. The attestation should bind to the chain, verifying
-contract, archive date, consensus hash, publication URI, and signature
-deadline.
-
-### Domain Separator
-
-To prevent cross-chain replay attacks (e.g., testnet signatures replayed on mainnet), the EIP-712 domain separator must explicitly include the `chainId` and `verifyingContract`:
-
-```solidity
-struct EIP712Domain {
-    string name;              // "Orbital Witness"
-    string version;           // "1"
-    uint256 chainId;          // 1 (Ethereum mainnet); Sepolia (11155111) only for staging
-    address verifyingContract; // Address of the deployed attestation contract
-}
-```
-
-*Note: The `version` field follows EIP-712 best practice for long-lived protocols. It costs nothing to include and gives the project a clean way to deploy a v2 of the attestation struct later — alongside or in place of v1 — without manual disambiguation. Worth keeping for a multi-decade project even if v2 never ships.*
-
-
-Suggested payload fields:
-
-```solidity
-struct ArchiveAttestation {
-    uint32 archiveDate;      // YYYYMMDD or days since Unix epoch
-    bytes32 catalogHash;     // SHA-256 canonical catalog bytes
-    bytes32 bundleHash;      // SHA-256 release bundle bytes
-    bytes32 uriHash;         // keccak256(bytes(uri))
-    string uri;              // emitted in event for discoverability
-    uint256 deadline;        // timestamp after which the signature expires
-}
-```
-
-Use both date and hash. Date preserves archive-day semantics. Hash preserves
-the consensus object. URI identifies the specific publication being attested.
-
-### Deadline Enforcement
-
-Both the contract and every relayer MUST reject any attestation whose
-`deadline` has passed. The contract is the authoritative check; the relayer
-performs the same check earlier so it does not pay gas on transactions the
-contract will reject:
-
-- **Contract:** revert if `block.timestamp > deadline`. This makes signatures
-  uncloggable — no relayer or third party can park a stale signature and
-  replay it later.
-- **Relayer:** reject before paying gas if the deadline is already past, and
-  reject if the deadline is too close to the current head (e.g., less than
-  60 seconds remaining) to avoid paying gas on a transaction that will
-  expire between simulation and inclusion.
-
-dApps should set `deadline` conservatively: long enough to survive a normal
-relayer queue (minutes), short enough that a divested or compromised wallet
-cannot be replayed days later (hours, not days).
-
-## Contract Events
-
-The contract must emit an append-only event for every successful attestation. This event provides enough data for indexers to reconstruct the state without heavy contract reads.
-
-```solidity
-event ArchiveAttested(
-    address indexed attester,
-    address indexed submitter,
-    uint32 indexed date,
-    bytes32 catalogHash,
-    bytes32 bundleHash,
-    bytes32 uriHash,
-    string uri
-);
-```
-
-### Event Sufficiency & Read Model
-
-The `ArchiveAttested` event must be sufficient for the NFT, indexers, and operator tooling to reconstruct witness history without depending on heavy contract read APIs. 
-
-From events alone, an indexer can reconstruct:
-- Every archive date that has attestations
-- Every attester for each date
-- Who paid gas for each submission (`submitter`)
-- Every candidate `catalogHash` for a given date
-- Each bundle hash and URI attested for that candidate
-- Hash-only attestations where `uri == ""` and `bundleHash == 0x0`
-- Duplicate-prevention identity by recomputing the attestation key
-- Fork/dispute state by grouping multiple hashes for the same date
-
-The event is therefore enough to build an off-chain read model (index):
+The generic payload, EIP-712 domain, event shape, EIP-1271 behavior, deadline
+checks, URI size cap, duplicate rule, and neutral event read model are defined
+in the sibling [`doc-chain`](../../doc-chain) repo. RSO uses that generic
+protocol with one profile:
 
 ```text
-date
-  catalogHash candidate
+docChainId = keccak256("https://om.pub/rso/docchain/v1")
+```
+
+The profile URI is the human-readable source of the RSO profile rules. The
+onchain `docChainId` is only the `bytes32` hash of that URI, so RSO clients,
+indexers, relayers, and viewers must carry the profile URI in config or docs.
+
+RSO fills the generic `DocBlock` as follows:
+
+```solidity
+struct DocBlock {
+    bytes32 docChainId;     // keccak256("https://om.pub/rso/docchain/v1")
+    uint64 docRef;          // UTC snapshot-boundary timestamp
+    bytes32 parentHash;     // prior RSO DocBlock blockHash; 0x0 for baseline
+    bytes32 contentHash;    // SHA-256 of canonical catalog JSON bytes
+}
+```
+
+The DocChain contract computes and emits:
+
+```text
+blockHash = hashStruct(DocBlock)
+```
+
+The important linkage is `parentHash -> blockHash`. Because `parentHash` is
+inside the block being hashed, changing a historical RSO document changes that
+block hash and every descendant block hash.
+
+For RSO v1:
+
+- `docRef` is the UTC Unix timestamp for the snapshot's `00:00:00Z`
+  boundary. RSO indexers decode it into the human archive date.
+- `contentHash` is SHA-256 of the canonical catalog JSON bytes defined by
+  [`snapshot-spec.md`](snapshot-spec.md) and [`verification.md`](verification.md).
+- `parentHash` is the previous RSO `blockHash`, not the previous catalog hash.
+- the official baseline snapshot dated `2026-04-20` uses `bytes32(0)` as
+  `parentHash`.
+- `uri == ""` is the default holder confirmation path: it attests the RSO
+  block without endorsing one storage location.
+- `uri != ""` additionally claims that the location resolves to bytes matching
+  the RSO profile rules for `contentHash`.
+
+The NFT/viewer prepares these exact `DocBlock` values after validating a
+selected archive day. The dApp should display and sign those values; it should
+not ask the attestor to pick an arbitrary bundle before it can produce a
+signature. If a URI is present, the dApp can display it and the relayer must
+validate it before paying gas.
+
+## RSO Canonicality
+
+DocChain records signed claims; it does not decide which branch is canonical.
+For RSO, canonicality is an RSO profile rule:
+
+```text
+canonical branch = branch with the most eligible card-specific TDH
+                   measured at each attestation's Ethereum block time
+```
+
+Indexers group `DocumentAttested` events by `docChainId`, `docRef`, and
+`blockHash`, then walk parent links to build branches. For each attestation,
+the RSO resolver looks up the attester's card-specific TDH at the time of the
+Ethereum block that included the event. Historical TDH can come from 6529's
+published Arweave snapshots or the 6529 node today; a future composable TDH
+oracle can replace that source without changing the DocChain contract.
+
+Current holdings and current TDH are still useful for sponsorship UX and
+relayer eligibility. They are not the durable branch weight. Durable branch
+weight uses historical TDH at attestation block time, so a later sale or
+transfer does not rewrite old votes.
+
+The RSO static index should publish the resolved RSO view, not just generic
+events:
+
+```text
+docRef
+  blockHash
+    parentHash
+    contentHash
     attestors[]
-    submitters[]
+    historicalTdhWeight
     locations[uriHash]
-      uri
-      bundleHash
-      attestors[]
 ```
 
-The contract does not need to expose large paginated date reads for normal NFT rendering. The index can be generated purely from logs and published as JSON pages. The NFT can then use the index for browsing and make targeted RPC calls only when the user wants proof for a specific event or day.
-
-
-## Smart Contract Wallet Support (EIP-1271)
-
-To support smart contract wallets (e.g., Safe multisigs, account abstraction wallets), the signature verification must implement [EIP-1271](https://eips.ethereum.org/EIPS/eip-1271). Both the relayer off-chain and the verifying contract on-chain should call `isValidSignature(hash, signature)` alongside standard `ecrecover` logic.
-
-## Duplicate Rule
-
-Contract-level uniqueness:
-
-```text
-attested[signer][archiveDate][catalogHash][uriHash] = true
-```
-
-Implementation can store a packed key:
-
-```solidity
-bytes32 key = keccak256(
-    abi.encode(signer, archiveDate, catalogHash, uriHash)
-);
-```
-
-This allows a signer to attest distinct publications for the same day, such as
-Arweave and IPFS copies, while blocking repeated attestations to the same
-publication.
+The vendored `vendor/docchain/` code should only handle generic event models
+and decoding helpers. RSO-specific parent validation, TDH lookup, branch
+scoring, sponsorship, and archive validation stay in this repository.
 
 ## Relayer URI Validation
 
 Before paying gas, the relayer must validate that the submitted URI matches the
-signed hash claims.
+signed DocBlock claims.
+
+For hash-only attestations where `uri == ""`, skip URI fetching and continue
+with profile metadata validation, duplicate, quota, and transaction-simulation
+checks. A hash-only attestation signs the chain edge without endorsing any
+specific publication location.
 
 Bundle layout, file roles, and canonical hashing rules are defined in
 [`snapshot-spec.md`](snapshot-spec.md) and [`verification.md`](verification.md).
 The steps below are the relayer-side application of that spec; if the two
 disagree, the snapshot/verification specs are authoritative for bundle format.
 
+For `keccak256("https://om.pub/rso/docchain/v1")`, the validation profile is:
+
+- `docRef` is the UTC Unix timestamp for the RSO snapshot boundary
+- `parentHash` is the previous RSO `blockHash`, or `bytes32(0)` for the
+  baseline snapshot
+- `contentHash` is SHA-256 of the canonical catalog JSON bytes
+- snapshot metadata must bind the current `blockHash`, `parentHash`, and
+  `contentHash`
+- direct-document URIs must resolve to canonical catalog bytes whose SHA-256 is
+  `contentHash`
+- release-bundle URIs must contain the canonical bundle inventory from
+  [`snapshot-spec.md`](snapshot-spec.md)
+- `manifest.json` `sha256` must equal `contentHash`
+- decompressed `catalog.json.gz` bytes must hash to `contentHash`
+
 For each request:
 
-1. Recover signer from EIP-712 signature. (Support EIP-1271 `isValidSignature` for smart contract wallets).
-2. Check allowed URI scheme and host. **SSRF Protection:** Reject any URIs resolving to private/internal IP ranges (e.g., RFC1918 `10.0.0.0/8`, `192.168.0.0/16`, link-local `169.254.0.0/16`, IPv6 ULA, or loopback).
-3. Fetch artifact with strict size, timeout, and redirect limits.
-4. Compute `bundleHash` of the downloaded bytes. Halt immediately if it does not match the signature to prevent processing malicious or oversized payloads.
-5. Extract contents if the artifact is a bundle.
-6. **Strict Allowlist:** Reject the bundle immediately if it contains files outside the canonical bundle inventory defined in [`snapshot-spec.md`](snapshot-spec.md). Anything not in that spec — executables, HTML, surprise artifacts — is an immediate reject.
-7. Verify `manifest.sha256 == catalogHash`.
-8. Decompress `catalog.json.gz` using a streamed reader with a strict decompression byte limit (e.g., 150MB max) to prevent Zip-Bomb Denial-of-Service attacks.
-9. Verify canonical catalog bytes hash to `catalogHash`.
-10. Check duplicate and sponsorship quota.
-11. Simulate the transaction with `eth_call` against the latest block to
-    catch duplicates, expired deadlines, and other revert conditions before
-    paying gas.
+1. Apply the generic DocChain preflight checks from
+   [`doc-chain/docs/protocol.md`](../../doc-chain/docs/protocol.md): signature
+   verification for EOAs and EIP-1271 wallets, deadline enforcement, URI byte
+   cap, and duplicate simulation.
+2. If `uri != ""`, validate the location: check allowed URI scheme and host,
+   reject any URI resolving to private/internal IP ranges, fetch the artifact
+   with strict size, timeout, and redirect limits, determine whether it is a
+   direct document or release bundle, and verify the artifact bytes against
+   `contentHash`.
+3. If the fetched artifact is a bundle, extract contents and apply the strict
+   allowlist. Reject the bundle immediately if it contains files outside the
+   canonical bundle inventory defined in [`snapshot-spec.md`](snapshot-spec.md).
+   Anything not in that spec — executables, HTML, surprise artifacts — is an
+   immediate reject.
+4. For a fetched RSO release bundle, verify `manifest.sha256 == contentHash`,
+   decompress `catalog.json.gz` using a streamed reader with a strict
+   decompression byte limit (e.g., 150MB max), and verify the canonical catalog
+   bytes hash to `contentHash`.
+5. Validate `parentHash -> blockHash` against the `docChainId` profile. For
+    RSO v1, this means the selected snapshot metadata must identify
+    `parentHash` as the prior RSO block hash, except for the baseline snapshot.
+6. Check sponsorship quota.
+7. Simulate the transaction with `eth_call` against the latest block to
+    catch any remaining revert conditions before paying gas.
 
     *Residual race:* `eth_call` reads committed state, not the public mempool.
     If two relayers simulate in the same block window, both can pass and both
-    can submit; only the first wins on-chain and the loser eats base fees.
+    can submit; only the first wins onchain and the loser eats base fees.
     Public mempool inspection (`eth_subscribe newPendingTransactions`) is not
     a reliable mitigation on mainnet — a meaningful share of transactions
     arrive via private orderflow and never appear publicly. The collision
     rate should be low in practice given per-wallet quotas and short
     deadlines; if it turns out to be material, the answer is a shared
     coordination cache (e.g., Redis) across project-blessed relayers keyed on
-    `(signer, archiveDate, catalogHash, uriHash)`, not mempool watching.
-12. Submit transaction only after all checks pass.
+    `(attester, blockHash, uriHash)`, not
+    mempool watching.
+8. Submit transaction only after all checks pass.
 
 Allowed URI types should start narrow:
 
@@ -300,14 +378,15 @@ exhausted, the dApp should offer direct contract submission.
 
 Direct submissions:
 
-- use the same EIP-712 payload
+- use the same generic DocChain EIP-712 payload
 - are paid by the attestor
-- are subject to the same contract duplicate rule
 - should not require relayer-specific quota checks
 
-The contract can remain neutral: it verifies signatures and rejects duplicates.
 Sponsorship policy lives in relayers because relayers are the components that
-spend treasury gas.
+spend treasury gas. Direct submissions remain ordinary DocChain claims; off-chain
+RSO readers still decide whether the artifact, URI, and digest satisfy the RSO
+profile. Sponsored submissions carry the extra signal that a relayer already
+performed those RSO checks before paying gas.
 
 ## Relayer Decentralization
 
@@ -371,7 +450,7 @@ hot-wallet rotation, and day-to-day operator obligations live in
 readers of this design will never run a relayer.
 
 A funded relayer that misbehaves can be defunded by stopping treasury
-top-ups; its on-chain attestations remain visible like any other event, and
+top-ups; its onchain attestations remain visible like any other event, and
 defunding is reversible. Defunding does not remove the relayer from the
 dApp's published list — that is a code-update question handled upstream as
 described under "Relayer Decentralization."
@@ -388,5 +467,6 @@ This design reduces:
 - relayer censorship as a single point of failure
 
 It does not by itself prove Space-Track source truth. It proves that identified
-wallets made signed claims about a specific archive date, hash, and publication
-URI, and that sponsored claims passed relayer integrity and eligibility checks.
+wallets made signed claims about a specific document chain, timestamp, hash,
+and publication URI, and that sponsored claims passed relayer integrity and
+eligibility checks.

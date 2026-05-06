@@ -16,7 +16,7 @@
 
 ## Next
 
-- Ethereum contract for hash attestation
+- Integrate the generic DocChain contract from sibling `doc-chain`
 - Daily diff computation for objects added, updated, and carried forward
 - TDH-weighted community confirmations
 - Dynamic NFT artwork for 6529 The Memes

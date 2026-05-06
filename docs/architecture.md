@@ -18,7 +18,7 @@ Witness pipeline
         |
         +--> GitHub Release bundle
         +--> optional Arweave upload
-        +--> future Ethereum attestation
+        +--> planned Ethereum DocChain attestation
 ```
 
 Every day, operator nodes pull bounded public source data, roll the catalog
@@ -47,7 +47,7 @@ own archive history.
 | Git `node` branch | Public metadata, ledger, latest bootstrap catalogs |
 | GitHub Releases | Deterministic full daily bundles |
 | Arweave | Optional permanent bundle storage |
-| Ethereum | Planned append-only hash attestation log |
+| Ethereum | Planned append-only DocChain attestation log |
 | NFT client | Planned verification and visualization dashboard |
 
 The daily consensus object is the SHA-256 of the canonical catalog bytes, not a
@@ -67,7 +67,7 @@ Phase 1 is live:
 
 Planned phases:
 
-- Ethereum attestation contract
+- Ethereum DocChain attestation using the generic sibling `doc-chain` repo
 - dynamic NFT verification artwork
 - richer daily diff and audit visualization
 - reusable witness template for other datasets

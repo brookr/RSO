@@ -24,7 +24,7 @@ For anyone building tools that produce, consume, or verify the archive.
 - [Architecture](architecture.md) — how the pieces fit together
 - [Snapshot specification](snapshot-spec.md) — bundle layout and
   canonical hashing rules; authoritative for bundle format
-- [Attestation design](attestation-design.md) — EIP-712 contract,
+- [Attestation design](attestation-design.md) — RSO's DocChain profile,
   relayer rules, dApp behaviour
 - [Verification](verification.md) — how to verify a daily archive
 

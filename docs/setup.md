@@ -240,8 +240,8 @@ roughly be:
 
 For background on what a relayer is, the funding models, and what's
 expected of treasury-funded relayers, see [`operator.md`](operator.md).
-For protocol details — payload format, validation pipeline, deadline
-enforcement, etc. — see [`attestation-design.md`](attestation-design.md).
+For RSO profile details — DocBlock validation, sponsorship policy, deadline
+handling, etc. — see [`attestation-design.md`](attestation-design.md).
 
 A node operator can run a relayer alongside their archive node, but
 nothing is shared between them automatically. They are separate services

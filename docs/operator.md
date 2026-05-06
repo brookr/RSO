@@ -76,17 +76,17 @@ witnessing.
 
 A healthy relayer:
 
-- accepts EIP-712-signed `ArchiveAttestation` payloads over HTTPS
+- accepts EIP-712-signed DocChain `DocumentAttestation` payloads over HTTPS
 - runs the full validation pipeline from
-  [`attestation-design.md`](attestation-design.md): signature recovery,
-  URI fetch with SSRF guards, hash matching, decompression caps, duplicate
-  and quota checks
+  [`attestation-design.md`](attestation-design.md): signature verification,
+  RSO `DocBlock` validation, URI fetch with SSRF guards, hash matching,
+  decompression caps, duplicate and quota checks
 - submits accepted attestations to the mainnet contract from a hot wallet
 - never charges the attestor for rejections; rejection reasons go back to
   the dApp
 
 If validation fails, the relayer returns a structured error and pays no
-gas. If validation passes, the on-chain `ArchiveAttested` event is the
+gas. If validation passes, the onchain `DocumentAttested` event is the
 public receipt.
 
 ## Branches (node operators)
@@ -143,7 +143,7 @@ can ignore them, but most are good practice anyway.
 - **Uptime.** No formal SLA, but sustained outages mean the dApp routes
   around you and treasury support follows.
 - **Log retention.** Keep your own logs of accepted and rejected requests
-  long enough to debug incidents. The on-chain event stream is the public
+  long enough to debug incidents. The onchain event stream is the public
   record; your private logs are for ops.
 - **Capacity caps.** Configure the daily/hourly/per-wallet caps per the
   attestation design, and don't quietly raise them. If you need more
