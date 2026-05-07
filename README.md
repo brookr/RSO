@@ -3,37 +3,39 @@
 **A daily, independently witnessed, tamper-evident archive of the public space
 object catalog.**
 
-Every day, operator nodes pull the public Resident Space Object catalog from
+Every day, decentralized operator nodes pull the public Resident Space Object catalog from
 Space-Track, roll it forward from the prior snapshot, hash the canonical bytes,
 and publish evidence anyone can verify.
 
 ## 10-Second Version
 
-- **What:** historical snapshots of tracked artificial objects in Earth orbit
-- **Why:** today's public catalog has fragile centralized access and weak public
+- **Why bother:** today's public catalog has fragile centralized access and weak public
   history
+- **What's preserved:** historical snapshots of tracked artificial objects in Earth orbit
 - **How:** many fork-based nodes run the same zero-dependency pipeline and
   compare SHA-256 hashes
 - **Current output:** Git metadata on each `node` branch plus deterministic
   GitHub Release bundles
-- **Next layers:** Arweave permanence, Ethereum attestations, and NFT-based
+- **Permanent layers:** Arweave permanence, Ethereum attestations, and NFT-based
   verification/visualization
 
 ## Start Here
 
 | Goal | Read |
 |------|------|
-| Run your own node | [OPERATOR.md](OPERATOR.md) |
-| Understand the architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
-| Understand the snapshot rules | [docs/SNAPSHOT_SPEC.md](docs/SNAPSHOT_SPEC.md) |
-| Verify a daily archive | [docs/VERIFICATION.md](docs/VERIFICATION.md) |
-| Develop locally | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) |
-| Catch up a node | [ROLL_FORWARD.md](ROLL_FORWARD.md) |
-| Learn the terms | [GLOSSARY.md](GLOSSARY.md) |
+| Set up a node | [docs/setup.md](docs/setup.md) |
+| Operator overview and relayer policy | [docs/operator.md](docs/operator.md) |
+| Understand the architecture | [docs/architecture.md](docs/architecture.md) |
+| Understand the snapshot rules | [docs/snapshot-spec.md](docs/snapshot-spec.md) |
+| Build attestations | [docs/attestation-design.md](docs/attestation-design.md) |
+| Verify a daily archive | [docs/verification.md](docs/verification.md) |
+| Develop locally | [docs/development.md](docs/development.md) |
+| Catch up a node | [docs/roll-forward.md](docs/roll-forward.md) |
+| Learn the Science | [docs/glossary.md](docs/glossary.md) |
 
 ## The Core Idea
 
-The public catalog comes from one source, Space-Track, and is mirrored publicly
+The public catalog comes from one source, Space-Track (US Space Force), and is mirrored publicly
 by one long-running individual effort, CelesTrak. If public GP availability is
 restricted, edited, missing, or changed over time, independent historical proof
 is hard.
@@ -82,7 +84,8 @@ copied. After that, do not use GitHub's **Sync fork** button as normal
 maintenance; the daily workflow updates `main` from upstream and applies the
 code to `node` without overwriting node-generated archive state.
 
-See [OPERATOR.md](OPERATOR.md) for the exact setup path.
+See [docs/setup.md](docs/setup.md) for the exact setup path, and
+[docs/operator.md](docs/operator.md) for the operator overview.
 
 ## What A Daily Run Publishes
 
@@ -114,7 +117,7 @@ or Arweave transaction ID.
 5. Run **Validate RSO Archive**.
 6. Enable and manually run **Daily RSO Snapshot** once.
 
-Detailed instructions: [OPERATOR.md](OPERATOR.md).
+Detailed instructions: [docs/setup.md](docs/setup.md).
 
 ## Quick Verify
 
@@ -122,17 +125,18 @@ Detailed instructions: [OPERATOR.md](OPERATOR.md).
 python3 pipeline/snapshot.py verify --date 2026-05-01
 ```
 
-More verification options: [docs/VERIFICATION.md](docs/VERIFICATION.md).
+More verification options: [docs/verification.md](docs/verification.md).
 
 ## Project Docs
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Snapshot specification](docs/SNAPSHOT_SPEC.md)
-- [Verification](docs/VERIFICATION.md)
-- [Development](docs/DEVELOPMENT.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Prior art and acknowledgments](docs/ACKNOWLEDGMENTS.md)
-- [Full design background](background.md)
+- [Architecture](docs/architecture.md)
+- [Snapshot specification](docs/snapshot-spec.md)
+- [Attestation design](docs/attestation-design.md)
+- [Verification](docs/verification.md)
+- [Development](docs/development.md)
+- [Roadmap](docs/roadmap.md)
+- [Prior art and acknowledgments](docs/acknowledgments.md)
+- [Full design background](docs/background.md)
 
 ## License
 

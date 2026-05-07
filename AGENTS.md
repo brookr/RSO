@@ -2,7 +2,7 @@
 
 ## Context
 
-For full context on this project, see background.md
+For full context on this project, see docs/background.md
 
 ## Coding Standards
 

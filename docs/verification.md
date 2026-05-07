@@ -28,7 +28,7 @@ Example:
 ```bash
 tar -xzf rso-archive-2026-05-01.tar.gz catalog.json.gz
 gunzip -k catalog.json.gz
-sha256sum catalog.json
+sha256sum catalog.json  # macOS: shasum -a 256 catalog.json
 ```
 
 ## What To Compare Across Operators

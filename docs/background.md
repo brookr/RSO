@@ -32,6 +32,7 @@ CelesTrak is already struggling with bandwidth (jumped from ~125 GB/day to
 
 - **Kessler Syndrome forensics**: Reconstructing trajectories after a collision requires the historical record
 - **Accountability**: "What did we know, and when did we know it?" about orbital events
+- **Machine-learning training data**: A verified history of how published orbital trajectories change over time can support models that learn catalog-update patterns, anomaly signals, propagation error, and operational data quality
 - **Institutional fragility**: CelesTrak is one person's mission. The MPC runs on 5-year NASA grants. Space-Track could restrict access at any time
 - **The OMM transition**: The legacy TLE format runs out of 5-digit catalog numbers around July 2026 (~69999). Objects after that can only be represented in OMM format. This archive will be one of the few complete OMM-format historical records spanning the transition
 
@@ -39,17 +40,24 @@ CelesTrak is already struggling with bandwidth (jumped from ~125 GB/day to
 
 ## Scope
 
-### Season 1 (Current)
+### Round 1 (Current)
 
-**One dataset**: Space-Track GP catalog (artificial objects — satellites, rocket bodies, debris). ~50,000+ tracked Resident Space Objects (RSOs).
+**One dataset**: Space-Track GP catalog (artificial objects — satellites,
+rocket bodies, debris). About 35,000 active RSOs and 68,000+ historical RSOs
+are currently tracked in the data.
 
-### Season 2 (Future, Separate NFT)
+### Round 2 (Future, Separate NFT)
 
-NEO (Near-Earth Object) data — CNEOS Sentry risk table, fireball/bolide data, MPC NEA orbital elements. Same architecture, separate contract, separate archive.
+NEO (Near-Earth Object) data — CNEOS Sentry risk table, fireball/bolide data,
+MPC NEA orbital elements. Same architecture, shared generic document-chain
+attestation contract, separate archive and NFT experience.
 
 ### Terminology Note
 
-**Do not call artificial objects "NEOs."** NEO = Near-Earth Object = natural bodies (asteroids, comets). The Space Force catalog tracks RSOs = Resident Space Objects = artificial hardware. The project name avoids this confusion: "RSO Archive" for Season 1, potential "NEO Archive" for Season 2.
+The correct term for artificial objects in Earth orbit is RSO: Resident Space
+Object. NEO means Near-Earth Object and refers to natural bodies such as
+asteroids and comets. The project naming keeps that distinction clear: "RSO
+Archive" for Round 1, potential "NEO Archive" for Round 2.
 
 ---
 
@@ -191,7 +199,10 @@ The split is intentional:
 
 ### The Hash IS the Consensus Object
 
-Multiple independent operators pull the same data, serialize it canonically (sorted keys, no whitespace, ASCII-only), and compute SHA-256. If they pulled the same data, their hashes match automatically. The hash — not an Arweave URI, not a transaction ID — is what operators submit to the Ethereum contract.
+Multiple independent operators pull the same data, serialize it canonically
+(sorted keys, no whitespace, ASCII-only), and compute SHA-256. If they pulled
+the same data, their hashes match automatically. The hash — not an Arweave URI,
+not a transaction ID — is what gets attested to through the Ethereum contract.
 
 **Important**: Arweave transaction IDs are NOT content-addressed. Two people uploading identical bytes get different TX IDs (the ID includes the signer's key and a nonce). IPFS CIDs are content-addressed but IPFS doesn't guarantee persistence. So: Arweave for storage, SHA-256 for consensus, Ethereum for attestation.
 
@@ -201,89 +212,95 @@ Multiple independent operators pull the same data, serialize it canonically (sor
 |-------|---------|------|------------|
 | Git repo | Phase 1 working storage, code, ledger | Free (public repo) | As long as GitHub exists |
 | Arweave | Permanent data archive | ~$0.12/day ($44/year) one-time | 200+ years (endowment model) |
-| Ethereum L1 | Append-only hash/location attestations | Gas-dependent | Forever |
+| Ethereum L1 | Append-only document-chain attestations | Gas-dependent | Forever |
 | The NFT | Verification dashboard | Hosted on Arweave | Permanent |
 
-### Ethereum Contract Design
+### Ethereum Attestation Design
 
-The contract is intentionally minimal: an append-only attestation log. It does
-not publish archives, validate source data, resolve disputes, calculate TDH, or
-choose the canonical hash. Verification and weighting happen in clients,
-indexers, and the NFT artwork.
+The reusable Ethereum protocol now lives in the sibling `doc-chain` repo. RSO
+uses it as a generic append-only witness log rather than owning a bespoke
+contract in this repository.
 
-The current design uses one relayer-friendly write function:
+DocChain records EIP-712 signed `DocumentAttestation` claims over a hash-linked
+`DocBlock`. The generic typed-data, signature, deadline, duplicate, and event
+rules are defined in the sibling `doc-chain` repo.
 
 ```solidity
-attestArchive(
-    ArchiveAttestation calldata attestation,
-    bytes calldata signature
-)
+struct DocBlock {
+    bytes32 docChainId;
+    uint64 docRef;
+    bytes32 parentHash;
+    bytes32 contentHash;
+}
 ```
 
-Operators sign an EIP-712 `ArchiveAttestation` offchain. Anyone can submit the
-signed attestation onchain: the signer, a relayer, a GitHub Action, another
-operator, or a future archival service. The contract recovers the signer from
-the signature and records that signer as the attester; `msg.sender` is only the
-gas payer / courier.
-
-An attestation says:
+For RSO v1:
 
 ```text
-For archive date D, I attest to catalog hash H, previous hash P,
-manifest hash M, code version C, and optionally location U whose bundle hashes
-to B.
+docChainId = keccak256("https://om.pub/rso/docchain/v1")
+docRef = UTC Unix timestamp for the snapshot boundary
+parentHash = previous RSO DocBlock blockHash, or bytes32(0) for baseline
+contentHash = SHA-256(canonical catalog JSON bytes)
 ```
 
-Hash-only attestations use an empty URI and zero bundle hash. Hash-plus-location
-attestations use the same function with a non-empty URI and nonzero bundle
-hash.
+The DocChain contract computes `blockHash = hashStruct(DocBlock)` and emits an
+append-only event. It does not publish archives, validate source data, resolve
+disputes, calculate TDH, or choose the canonical RSO branch.
 
-The event should contain enough data for an indexer or NFT to reconstruct the
-witness history:
+Hash-only attestations use an empty URI. Hash-plus-location attestations use a
+non-empty URI. The empty-URI path is the default holder confirmation path: the
+signer attests the RSO DocBlock without endorsing a specific storage location.
 
-```solidity
-event ArchiveAttested(
-    address indexed attester,
-    address indexed submitter,
-    uint32 indexed date,
-    bytes32 catalogHash,
-    bytes32 previousCatalogHash,
-    bytes32 manifestHash,
-    bytes32 codeVersionHash,
-    bytes32 bundleHash,
-    bytes32 uriHash,
-    string uri
-);
-```
+Each `docChainId` names an off-chain validation profile implemented in docs,
+relayers, indexers, viewers, and operator tooling. If RSO changes its
+validation rules incompatibly, it gets a new versioned `docChainId`.
 
-The contract is intentionally just the raw witness log. Clients and indexers
-group attestations by date and hash.
-
-**Why no on-chain validation**: Smart contracts cannot reach the internet. They can't fetch from Arweave, can't hash external data, can't verify anything outside the EVM. An oracle (like Chainlink) would reintroduce centralized trust. The verification belongs in the viewer's browser.
+Protocol details belong in `doc-chain`; this repository defines how RSO fills
+the generic `DocBlock` and how RSO clients score competing branches.
 
 ### Sybil Resistance: TDH Weighting
 
-The 6529 ecosystem has **TDH (Total Days Held)** — a reputation metric computed as token holdings × days held. It's already used for governance (SZN11's first meme card was selected by TDH plurality). TDH can't be manufactured quickly because the time dimension is the Sybil defense.
+The 6529 ecosystem has **TDH (Total Days Held)**, a reputation metric computed as token holdings times days held. It is already used for governance. TDH cannot be manufactured quickly because the time dimension is the Sybil defense.
 
-**How it works**:
-1. Operators or holders sign archive attestations.
+For RSO, TDH is the profile-specific canonicality rule layered on top of
+DocChain:
+
+1. Operators or holders sign DocChain attestations.
 2. Anyone can submit a signed attestation to the contract.
-3. The contract records the recovered signer as the attester.
-4. Indexers and the NFT group attestations by archive date and catalog hash.
-5. The NFT looks up each attester's TDH (via seize.io API) and sums TDH per unique hash.
-6. The highest-TDH-backed hash wins for display purposes.
+3. The contract verifies the signature and records the named attester.
+4. RSO indexers group events by `docChainId`, `docRef`, and `blockHash`,
+   then walk `parentHash` links to build branches.
+5. The RSO resolver looks up each attester's card-specific TDH at the Ethereum
+   block time of the attestation event.
+6. The branch with the most eligible historical card-specific TDH is canonical
+   for RSO display.
 
-**Attack resistance**: An attacker submitting a fake hash has low/zero TDH. The legitimate hash from established community members always outweighs it. Even if an attacker buys cards to inflate TDH, the *days held* component means they'd need months before their TDH matters. By then, the community notices.
+Historical TDH can come from 6529's published Arweave snapshots or the 6529
+node today. A future composable TDH oracle could replace that lookup without
+changing the DocChain contract.
+
+**Attack resistance**: An attacker submitting a fake branch has low or zero
+eligible TDH. Even if an attacker buys cards to inflate future TDH, the days
+held component means they cannot rewrite historical branch weight quickly.
 
 ### The NFT Verification Client
 
 **Two components, clean separation**:
 
-1. **The NFT itself** (HTML/JS on Arweave, rendered in iframe on 6529.io/OpenSea): Read-only verification client and visualization layer. No wallet needed. Fetches commitments from Ethereum via public RPC, fetches compact archive metadata from Arweave, verifies lightweight hashes and checkpoints in the browser, and renders the witness chain as an orbital status view. Full catalog hashing can be offered as an on-demand path because the compressed catalog is large enough that every iframe render should not decompress and hash it by default.
+1. **The NFT itself** (HTML/JS on Arweave, rendered in iframe on 6529.io/OpenSea): Read-only verification client and visualization layer. No wallet needed. Fetches commitments from Ethereum via public RPC, fetches compact archive metadata from Arweave, verifies lightweight hashes and checkpoints in the browser, and renders the witness chain as an orbital status view. A holder can scroll back to any retained or indexed archive day, ask the NFT/viewer to validate that day's document and parent link, then attest the selected DocBlock. Full catalog hashing can be offered as an on-demand path because the compressed catalog is large enough that every iframe render should not decompress and hash it by default. When a holder chooses to attest, the NFT/viewer prepares the exact DocBlock values (`docChainId`, `docRef`, `parentHash`, `contentHash`, and optional `uri`) and opens the attestation dApp with those values.
 
-2. **The attestation dApp** (separate HTML page, also on Arweave): Linked from the NFT. This is where holders connect their wallet, sign an EIP-712 archive attestation, and either submit it directly or hand it to a relayer. Shows the current day's hash, lets them verify against Arweave data, one-button attest.
+2. **The attestation dApp** (separate HTML page, also on Arweave): Linked from the NFT. This is where holders connect their wallet, review the prepared DocBlock claim, sign an EIP-712 document attestation, and either submit it directly or hand it to a relayer. The dApp is the signing/submission surface because NFT iframes cannot reliably access wallet injection.
 
 **Why the split**: NFT iframes on platforms like 6529.io and OpenSea are sandboxed — they can't access `window.ethereum` (wallet injection). The art is read-only by design. The dApp page lives at a separate URL (e.g., `om.pub/rso`) where wallet connection works normally.
+
+**Attestation index**: Contract events are indexed into static JSON pages for
+normal NFT browsing. The index can be rebuilt by a scheduled GitHub Action
+(for example every five minutes). While the NFT is open, it can query public
+RPC for `DocumentAttested` logs from a small recent window, such as the last 10
+minutes, and merge those events into a **Recent** overlay. Recent events are
+onchain but not yet folded into the static index; if the static index is stale,
+the NFT should wait for the next index refresh rather than scan a large public
+RPC range.
 
 **Viewing IS verification**: Every time someone opens the NFT, their browser independently checks the public commitments it can safely verify in that context. No wallet, no account, no trust. The more people view the art, the more eyes are on the archive chain; deeper full-data verification remains available as an intentional action.
 
@@ -394,7 +411,7 @@ latest-publication reconstruction from `gp_history`. The canonical archive
 therefore preserves its own deterministic rule: latest public `gp_history`
 publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 
-### To Build (Phase 2 — Arweave)
+### Done (Phase 2 — Arweave)
 
 - [x] Optional Arweave upload step in the publish pipeline
 - [x] Per-day `storage.json` receipt records Arweave TX ID and publish destinations
@@ -402,8 +419,8 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 
 ### To Build (Phase 3 — Ethereum)
 
-- [ ] Solidity contract: one `attestArchive` function plus `ArchiveAttested` events
-- [ ] Contract deployment to Ethereum mainnet
+- [ ] Integrate the generic DocChain contract from the sibling `doc-chain` repo
+- [ ] DocChain contract deployment to Ethereum mainnet
 - [ ] Pipeline step: generate EIP-712 attestation payloads after archive publication
 - [ ] Optional relayer path for sponsored submission of signed attestations
 - [ ] Contract verified on Etherscan, immutable, no owner functions
@@ -412,7 +429,7 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 
 - [ ] NFT artwork (HTML/JS): orbital ring visualization, 30-day rolling view
 - [ ] Reads attestation index generated from contract events
-- [ ] Verifies selected `ArchiveAttested` events with targeted RPC calls
+- [ ] Verifies selected `DocumentAttested` events with targeted RPC calls
 - [ ] Fetches data from Arweave, re-hashes client-side
 - [ ] Four-source cross-check display per day (Space-Track, CelesTrak, Arweave, Ethereum)
 - [ ] TDH lookup for weighting (via seize.io API)
@@ -423,7 +440,7 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 
 - [ ] Standalone HTML page (hosted on Arweave or om.pub/rso)
 - [ ] Wallet connect (MetaMask/Rabby/WalletConnect)
-- [ ] Shows current day's hash computed from Arweave data
+- [ ] Shows the selected DocBlock prepared by the NFT/viewer
 - [ ] EIP-712 attestation signing and submission or relay handoff
 - [ ] Displays confirmer leaderboard (TDH-weighted)
 
@@ -458,9 +475,9 @@ Arweave TX IDs include the signer's key and nonce — two people uploading ident
 
 ### Why CelesTrak can't be used for live confirmation
 
-CelesTrak's GP data updates roughly every 2 hours. A confirming holder opening the NFT hours after the operator's pull would get different data from CelesTrak (updated since capture). This breaks hash comparison. Instead, confirmers verify the Arweave copy (immutable, identical bytes every time) against the on-chain hash. Operators verify source-to-archive; confirmers verify archive integrity.
+CelesTrak's GP data updates roughly every 2 hours. A confirming holder opening the NFT hours after the operator's pull would get different data from CelesTrak (updated since capture). This breaks hash comparison. Instead, confirmers verify the Arweave copy (immutable, identical bytes every time) against the onchain hash. Operators verify source-to-archive; confirmers verify archive integrity.
 
-### Why the contract doesn't validate on-chain
+### Why the contract doesn't validate onchain
 
 Smart contracts can't reach the internet. They can't fetch Arweave data or compute hashes of external content. An oracle would reintroduce centralized trust. The contract is a dumb append-only ledger. The NFT's JavaScript is the smart verification layer — thousands of independent browsers are a better oracle than any single service.
 

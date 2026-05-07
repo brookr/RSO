@@ -54,11 +54,17 @@ The command then performs deterministic state transitions:
            + gp_history rows from 2026-04-28T00:00:00Z through 2026-04-29T00:00:00Z
 ```
 
-Each step writes the same artifacts as a normal daily run:
+Each step writes the core snapshot artifacts needed to extend the hash chain:
 
 - `manifest.json`
 - `delta.json`
 - `catalog.json.gz`
+
+Roll-forward does not write `audit.json` or `visibility_state.json`. Those
+files are current-`gp` observations from the time a normal daily run executes;
+backfilling them during catch-up would mix historical archive dates with later
+observation times. The audit files are useful operational context, but they are
+not consensus inputs.
 
 The daily workflow uses this same command internally when a fork needs to catch
 up before producing the current day's snapshot. The workflow performs that work
@@ -109,5 +115,5 @@ there.
 
 `replay` starts from an empty state and was used as a validation experiment for
 bounded `gp_history` behavior. Replay is documented separately in
-[REPLAY_FINDINGS.md](REPLAY_FINDINGS.md), and it is not a substitute for normal
+[replay-findings.md](replay-findings.md), and it is not a substitute for normal
 roll-forward operation.
