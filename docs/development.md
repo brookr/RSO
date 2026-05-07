@@ -63,7 +63,8 @@ RSO_REQUEST_DELAY=12.5 python3 pipeline/snapshot.py replay --start 2026-01-01
 
 ## Related Docs
 
-- [Operator guide](../OPERATOR.md)
-- [Roll-forward guide](../ROLL_FORWARD.md)
-- [Replay findings](../REPLAY_FINDINGS.md)
-- [Glossary](../GLOSSARY.md)
+- [Operator guide](operator.md)
+- [Operator setup](setup.md)
+- [Roll-forward guide](roll-forward.md)
+- [Replay findings](replay-findings.md)
+- [Glossary](glossary.md)

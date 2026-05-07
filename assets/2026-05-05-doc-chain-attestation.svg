@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1774" height="887" viewBox="0 0 1774 887">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#09131d"/>
+      <stop offset="0.55" stop-color="#07101a"/>
+      <stop offset="1" stop-color="#0b1722"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="42%" cy="48%" r="55%">
+      <stop offset="0" stop-color="#12313a" stop-opacity="0.55"/>
+      <stop offset="0.45" stop-color="#0d2430" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#07101a" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="gridSmall" width="58" height="58" patternUnits="userSpaceOnUse">
+      <path d="M58 0H0V58" fill="none" stroke="#1b2a36" stroke-width="1" opacity="0.45"/>
+    </pattern>
+    <pattern id="gridLarge" width="116" height="116" patternUnits="userSpaceOnUse">
+      <path d="M116 0H0V116" fill="none" stroke="#263847" stroke-width="1.2" opacity="0.38"/>
+    </pattern>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      .title {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 30px;
+        font-weight: 500;
+        fill: #f4f7fb;
+      }
+      .small {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 18px;
+        font-weight: 500;
+        fill: #aab7c5;
+      }
+      .pillText {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 19px;
+        font-weight: 800;
+      }
+      .cyan {
+        stroke: #62e0df;
+      }
+      .cyanFill {
+        fill: #62e0df;
+      }
+      .cyanText {
+        fill: #62e0df;
+      }
+      .orange {
+        stroke: #ffa432;
+      }
+      .orangeText {
+        fill: #ffa432;
+      }
+      .paper {
+        stroke: #d6e4f3;
+      }
+      .mutedStroke {
+        stroke: #51708b;
+      }
+    </style>
+  </defs>
+
+  <rect width="1774" height="1774" fill="url(#bg)"/>
+  <rect width="1774" height="1774" fill="url(#glow)"/>
+  <rect width="1774" height="1774" fill="url(#gridSmall)"/>
+  <rect width="1774" height="1774" fill="url(#gridLarge)"/>
+
+  <!-- Existing document chain -->
+  <g transform="translate(72 356)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path class="paper" d="M0 0H66L96 30V125H0Z" stroke-width="3"/>
+    <path class="paper" d="M66 0V30H96" stroke-width="3"/>
+    <path class="paper" d="M18 44H55M18 63H75M18 83H72" stroke-width="3"/>
+    <circle cx="86" cy="114" r="20" fill="#07101a" class="cyan" stroke-width="3"/>
+    <path d="M76 114l8 8 16-19" class="cyan" stroke-width="3"/>
+  </g>
+  <g transform="translate(232 356)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path class="paper" d="M0 0H66L96 30V125H0Z" stroke-width="3"/>
+    <path class="paper" d="M66 0V30H96" stroke-width="3"/>
+    <path class="paper" d="M18 44H55M18 63H75M18 83H72" stroke-width="3"/>
+    <circle cx="86" cy="114" r="20" fill="#07101a" class="cyan" stroke-width="3"/>
+    <path d="M76 114l8 8 16-19" class="cyan" stroke-width="3"/>
+  </g>
+  <g transform="translate(391 356)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path class="paper" d="M0 0H66L96 30V125H0Z" stroke-width="3"/>
+    <path class="paper" d="M66 0V30H96" stroke-width="3"/>
+    <path class="paper" d="M18 44H55M18 63H75M18 83H72" stroke-width="3"/>
+    <circle cx="86" cy="114" r="20" fill="#07101a" class="cyan" stroke-width="3"/>
+    <path d="M76 114l8 8 16-19" class="cyan" stroke-width="3"/>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" class="cyan" stroke-width="3.5">
+    <g transform="translate(172.5 405)">
+      <rect x="0" y="4" width="31" height="18" rx="9"/>
+      <rect x="24" y="4" width="31" height="18" rx="9"/>
+    </g>
+    <g transform="translate(332 405)">
+      <rect x="0" y="4" width="31" height="18" rx="9"/>
+      <rect x="24" y="4" width="31" height="18" rx="9"/>
+    </g>
+  </g>
+  <text x="278" y="558" text-anchor="middle" class="title">Existing Doc Chain</text>
+
+  <!-- Arrow to new document -->
+  <path d="M521 420H607" fill="none" class="cyan" stroke-width="3" stroke-linecap="round"/>
+  <path d="M594 406l15 14-15 14" fill="none" class="cyan" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- New document -->
+  <g transform="translate(653 357)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0 0H70L100 30V132H0Z" stroke="#ffa432" stroke-width="3"/>
+    <path d="M70 0V30H100" stroke="#ffa432" stroke-width="3"/>
+    <path d="M18 45H58M18 64H78M18 84H75" stroke="#ffa432" stroke-width="3"/>
+    <circle cx="99" cy="120" r="22" fill="#07101a" stroke="#ffa432" stroke-width="3"/>
+    <path d="M99 108v24M87 120h24" stroke="#ffa432" stroke-width="3"/>
+  </g>
+  <text x="713" y="558" text-anchor="middle" class="title">New Document</text>
+
+  <!-- Arrow to hash -->
+  <path d="M809 420H897" fill="none" class="cyan" stroke-width="3" stroke-linecap="round"/>
+  <path d="M884 406l15 14-15 14" fill="none" class="cyan" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Hash mark -->
+  <g transform="translate(932 349)" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#softGlow)">
+    <path d="M1 26V4Q1 0 5 0h22" class="cyan" stroke-width="3"/>
+    <path d="M126 0h22q4 0 4 4v26" class="cyan" stroke-width="3"/>
+    <path d="M152 115v22q0 4-4 4h-22" class="cyan" stroke-width="3"/>
+    <path d="M27 141H5q-4 0-4-4v-22" class="cyan" stroke-width="3"/>
+    <path d="M54 30L38 116" class="cyan" stroke-width="7"/>
+    <path d="M112 30L96 116" class="cyan" stroke-width="7"/>
+    <path d="M34 59H125" class="cyan" stroke-width="7"/>
+    <path d="M27 88H118" class="cyan" stroke-width="7"/>
+  </g>
+  <text x="1008" y="558" text-anchor="middle" class="title">Doc Hash</text>
+
+  <!-- Arrow to contract -->
+  <path d="M1108 420H1195" fill="none" class="cyan" stroke-width="3" stroke-linecap="round"/>
+  <path d="M1182 406l15 14-15 14" fill="none" class="cyan" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Contract card -->
+  <g transform="translate(1218 232)">
+    <rect x="0" y="0" width="202" height="466" rx="18" fill="#111e2a" stroke="#58738e" stroke-width="2.5"/>
+    <g transform="translate(101 88)" stroke-linejoin="round">
+      <polygon points="0,-68 -44,4 0,-18 44,4" fill="#d6e4f3" opacity="0.95"/>
+      <polygon points="0,-18 -44,4 0,31 44,4" fill="#8fa7bd" opacity="0.95"/>
+      <polygon points="0,43 -44,16 0,82 44,16" fill="#d6e4f3" opacity="0.88"/>
+      <path d="M0-68v50M0 31v51" stroke="#07101a" stroke-width="2.2" opacity="0.28"/>
+      <path d="M-44 4L0 31 44 4" fill="none" stroke="#07101a" stroke-width="2.2" opacity="0.25"/>
+    </g>
+    <g transform="translate(22 178)">
+      <rect width="158" height="43" rx="8" fill="#10202d" stroke="#506c86" stroke-width="2"/>
+      <text x="79" y="28" text-anchor="middle" class="pillText cyanText">docChainId</text>
+    </g>
+    <g transform="translate(22 234)">
+      <rect width="158" height="43" rx="8" fill="#10202d" stroke="#506c86" stroke-width="2"/>
+      <text x="79" y="28" text-anchor="middle" class="pillText cyanText">docRef</text>
+    </g>
+    <g transform="translate(22 290)">
+      <rect width="158" height="43" rx="8" fill="#10202d" stroke="#506c86" stroke-width="2"/>
+      <text x="79" y="28" text-anchor="middle" class="pillText cyanText">parentHash</text>
+    </g>
+    <g transform="translate(22 346)">
+      <rect width="158" height="43" rx="8" fill="#10202d" stroke="#506c86" stroke-width="2"/>
+      <text x="79" y="28" text-anchor="middle" class="pillText cyanText">contentHash</text>
+    </g>
+    <g transform="translate(22 402)">
+      <rect width="158" height="43" rx="8" fill="#10202d" stroke="#506c86" stroke-width="2"/>
+      <text x="79" y="28" text-anchor="middle" class="pillText cyanText">[ ... ]</text>
+    </g>
+  </g>
+  <text x="1319" y="736" text-anchor="middle" class="title">Append-Only Contract</text>
+
+  <!-- Event emit -->
+  <path d="M1436 420h120" fill="none" stroke="#ffa432" stroke-width="3" stroke-linecap="round" stroke-dasharray="10 12"/>
+  <path d="M1556 420h45l13-41 18 82 18-41h60" fill="none" stroke="#ffa432" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="1710" cy="420" r="12" fill="none" stroke="#ffa432" stroke-width="4"/>
+  <text x="1625" y="498" text-anchor="middle" class="title">Event Emits</text>
+  <text x="1625" y="527" text-anchor="middle" class="small">Who saw what, when they saw it</text>
+</svg>
