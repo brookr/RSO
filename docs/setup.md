@@ -101,7 +101,6 @@ Optional:
 
 ```text
 ARWEAVE_JWK
-ARWEAVE_FORCE_CHUNK_UPLOAD
 RSO_WORKFLOW_UPDATE_TOKEN
 ```
 
@@ -109,10 +108,8 @@ If you want your fork to publish to Arweave automatically during the
 normal daily workflow, add `ARWEAVE_JWK` as a repository secret containing
 the full Arweave wallet JSON. If that secret is present, the node uploads
 to Arweave alongside the GitHub Release bundle. No separate workflow is
-needed. Small bundles go in one inline Arweave transaction; larger bundles
-automatically use Arweave chunk upload. If you want to force chunk upload
-for testing before the bundle naturally exceeds the inline limit, set
-`ARWEAVE_FORCE_CHUNK_UPLOAD` to `true`.
+needed. Arweave uploads always use chunked transaction data, so operators
+do not need to configure bundle-size or gateway-body-limit knobs.
 
 The default `GITHUB_TOKEN` can update normal code files, but GitHub may
 reject self-updates to `.github/workflows/*`. If you want your fork to

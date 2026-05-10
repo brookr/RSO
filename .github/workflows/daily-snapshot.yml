@@ -242,7 +242,6 @@ jobs:
 
       - name: Publish release archives
         env:
-          ARWEAVE_FORCE_CHUNK_UPLOAD: ${{ secrets.ARWEAVE_FORCE_CHUNK_UPLOAD }}
           ARWEAVE_JWK: ${{ secrets.ARWEAVE_JWK }}
           GH_TOKEN: ${{ github.token }}
         run: |
