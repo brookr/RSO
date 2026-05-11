@@ -50,7 +50,6 @@ RELEASE_OUTPUT_DIR = Path(__file__).parent.parent / ".release"
 STORAGE_BACKENDS = frozenset({"none", "github_release", "arweave", "ipfs_pinata"})
 UPLOAD_POLICIES = frozenset({"never", "if_missing", "always_mirror"})
 ARWEAVE_GATEWAY_DEFAULT = "https://arweave.net"
-ARWEAVE_INLINE_DATA_LIMIT = 12 * 1024 * 1024
 ARWEAVE_MAX_CHUNK_SIZE = 256 * 1024
 ARWEAVE_MIN_CHUNK_SIZE = 32 * 1024
 ARWEAVE_CHUNK_UPLOAD_RETRIES = int(os.environ.get("ARWEAVE_CHUNK_UPLOAD_RETRIES", "5"))
@@ -1999,8 +1998,6 @@ def arweave_wallet_balance(address):
 def arweave_build_transaction(bundle, jwk):
     bundle_bytes = Path(bundle["path"]).read_bytes()
     chunk_plan = arweave_generate_transaction_chunks(bundle_bytes)
-    force_chunk_upload = env_flag("ARWEAVE_FORCE_CHUNK_UPLOAD")
-    inline_data = len(bundle_bytes) <= ARWEAVE_INLINE_DATA_LIMIT and not force_chunk_upload
     _, price = arweave_request("GET", f"/price/{len(bundle_bytes)}")
     _, anchor = arweave_request("GET", "/tx_anchor")
     if not isinstance(price, str) or not price.isdigit():
@@ -2023,7 +2020,7 @@ def arweave_build_transaction(bundle, jwk):
         "tags": arweave_tag_objects(bundle),
         "target": "",
         "quantity": "0",
-        "data": b64url_encode(bundle_bytes) if inline_data else "",
+        "data": "",
         "data_size": str(len(bundle_bytes)),
         "data_root": b64url_encode(chunk_plan["data_root"]),
         "reward": price,
@@ -2036,7 +2033,7 @@ def arweave_build_transaction(bundle, jwk):
         "transaction": transaction,
         "bundle_bytes": bundle_bytes,
         "chunk_plan": chunk_plan,
-        "inline_data": inline_data,
+        "inline_data": False,
         "wallet_address": address,
     }
 
@@ -2306,6 +2303,8 @@ def publish_arweave_bundle(bundle, upload_policy="if_missing", force=False):
     if (
         isinstance(existing, dict)
         and existing.get("bundle_sha256") == bundle["bundle_sha256"]
+        and existing.get("status") == "submitted"
+        and existing.get("transaction_id")
         and not force
         and upload_policy != "always_mirror"
     ):

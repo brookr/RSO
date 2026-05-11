@@ -1,5 +1,4 @@
 import json
-import os
 import tarfile
 import tempfile
 import unittest
@@ -217,7 +216,80 @@ class ReleaseBundleTests(unittest.TestCase):
         finally:
             snapshot.arweave_wallet_jwk = original_wallet
 
-    def test_publish_arweave_uses_chunk_upload_when_not_inline(self):
+    def test_publish_arweave_retries_failed_receipt_without_force(self):
+        bundle_path = self.root / "bundle.tar.gz"
+        bundle_path.write_bytes(b"bundle-bytes")
+        bundle = {
+            "date": "2026-04-18",
+            "asset_name": "rso-archive-2026-04-18.tar.gz",
+            "bytes": bundle_path.stat().st_size,
+            "bundle_sha256": "a" * 64,
+            "catalog_sha256": "b" * 64,
+            "manifest_sha256": "c" * 64,
+            "path": str(bundle_path),
+        }
+        snapshot.record_storage_destination(
+            bundle,
+            "arweave",
+            {
+                "status": "failed",
+                "bundle_sha256": "a" * 64,
+                "error": "previous failure",
+            },
+        )
+        calls = []
+        original_wallet = snapshot.arweave_wallet_jwk
+        original_build = snapshot.arweave_build_transaction
+        original_request = snapshot.arweave_request
+        try:
+            snapshot.arweave_wallet_jwk = lambda: {"kty": "RSA"}
+            snapshot.arweave_build_transaction = lambda bundle, jwk: {
+                "transaction": {
+                    "id": "tx123",
+                    "reward": "99",
+                    "last_tx": "anchor123",
+                    "data_root": "root123",
+                    "data_size": str(bundle_path.stat().st_size),
+                },
+                "bundle_bytes": b"bundle-bytes",
+                "chunk_plan": {
+                    "data_root": b"root",
+                    "chunks": [{"min_byte_range": 0, "max_byte_range": 12}],
+                    "proofs": [{"offset": 11, "proof": b"proof"}],
+                },
+                "inline_data": False,
+                "wallet_address": "addr123",
+            }
+
+            def fake_request(
+                method,
+                path,
+                payload=None,
+                headers=None,
+                allow_http_errors=False,
+                allow_not_found=False,
+            ):
+                calls.append((method, path))
+                if method == "POST" and path == "/tx":
+                    return 200, {}
+                if method == "POST" and path == "/chunk":
+                    return 200, {}
+                if method == "GET" and path == "/tx/tx123/status":
+                    return 404, None
+                raise AssertionError((method, path, payload))
+
+            snapshot.arweave_request = fake_request
+            result = snapshot.publish_arweave_bundle(bundle, upload_policy="if_missing", force=False)
+
+            self.assertEqual(result["status"], "submitted")
+            self.assertEqual(result["transaction_id"], "tx123")
+            self.assertEqual(calls, [("POST", "/tx"), ("POST", "/chunk"), ("GET", "/tx/tx123/status")])
+        finally:
+            snapshot.arweave_wallet_jwk = original_wallet
+            snapshot.arweave_build_transaction = original_build
+            snapshot.arweave_request = original_request
+
+    def test_publish_arweave_uses_chunk_upload(self):
         bundle = {
             "date": "2026-04-18",
             "asset_name": "rso-archive-2026-04-18.tar.gz",
@@ -345,7 +417,7 @@ class ReleaseBundleTests(unittest.TestCase):
             snapshot.arweave_request = original_request
             snapshot.rsa_pss_sign_sha256 = original_sign
 
-    def test_arweave_force_chunk_upload_env_disables_inline_data(self):
+    def test_arweave_build_transaction_uses_chunk_upload(self):
         bundle_path = self.root / "bundle.tar.gz"
         bundle_path.write_bytes(b"small-bundle")
         bundle = {
@@ -359,10 +431,7 @@ class ReleaseBundleTests(unittest.TestCase):
         }
         original_request = snapshot.arweave_request
         original_sign = snapshot.rsa_pss_sign_sha256
-        original_force = os.environ.get("ARWEAVE_FORCE_CHUNK_UPLOAD")
         try:
-            os.environ["ARWEAVE_FORCE_CHUNK_UPLOAD"] = "true"
-
             def fake_request(
                 method,
                 path,
@@ -400,10 +469,60 @@ class ReleaseBundleTests(unittest.TestCase):
         finally:
             snapshot.arweave_request = original_request
             snapshot.rsa_pss_sign_sha256 = original_sign
-            if original_force is None:
-                os.environ.pop("ARWEAVE_FORCE_CHUNK_UPLOAD", None)
-            else:
-                os.environ["ARWEAVE_FORCE_CHUNK_UPLOAD"] = original_force
+
+    def test_arweave_chunk_plan_splits_large_bundle(self):
+        bundle_path = self.root / "bundle.tar.gz"
+        bundle_path.write_bytes(b"x" * (snapshot.ARWEAVE_MAX_CHUNK_SIZE + 1))
+        bundle = {
+            "date": "2026-04-18",
+            "asset_name": "rso-archive-2026-04-18.tar.gz",
+            "path": str(bundle_path),
+            "bytes": bundle_path.stat().st_size,
+            "bundle_sha256": "a" * 64,
+            "catalog_sha256": "b" * 64,
+            "manifest_sha256": "c" * 64,
+        }
+        original_request = snapshot.arweave_request
+        original_sign = snapshot.rsa_pss_sign_sha256
+        try:
+            def fake_request(
+                method,
+                path,
+                payload=None,
+                headers=None,
+                allow_http_errors=False,
+                allow_not_found=False,
+            ):
+                if method == "GET" and path == f"/price/{bundle_path.stat().st_size}":
+                    return 200, "100"
+                if method == "GET" and path == "/tx_anchor":
+                    return 200, "AQAB"
+                if method == "GET" and path.startswith("/wallet/"):
+                    return 200, "100"
+                raise AssertionError((method, path, payload))
+
+            snapshot.arweave_request = fake_request
+            snapshot.rsa_pss_sign_sha256 = lambda jwk, message, salt_length=32: b"sig"
+            upload = snapshot.arweave_build_transaction(
+                bundle,
+                {
+                    "kty": "RSA",
+                    "n": "AQAB",
+                    "e": "AQAB",
+                    "d": "AQAB",
+                    "p": "AQAB",
+                    "q": "AQAB",
+                    "dp": "AQAB",
+                    "dq": "AQAB",
+                    "qi": "AQAB",
+                },
+            )
+            self.assertFalse(upload["inline_data"])
+            self.assertEqual(upload["transaction"]["data"], "")
+            self.assertGreater(len(upload["chunk_plan"]["chunks"]), 1)
+        finally:
+            snapshot.arweave_request = original_request
+            snapshot.rsa_pss_sign_sha256 = original_sign
 
     def test_arweave_chunk_upload_retries_transient_errors(self):
         calls = []
