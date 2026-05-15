@@ -76,7 +76,7 @@ witnessing.
 
 A healthy relayer:
 
-- accepts EIP-712-signed DocChain `DocumentAttestation` payloads over HTTPS
+- accepts EIP-712-signed DocChain `DocAttestation` payloads over HTTPS
 - runs the full validation pipeline from
   [`attestation-design.md`](attestation-design.md): signature verification,
   RSO `DocBlock` validation, URI fetch with SSRF guards, hash matching,

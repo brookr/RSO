@@ -221,7 +221,7 @@ The reusable Ethereum protocol now lives in the sibling `doc-chain` repo. RSO
 uses it as a generic append-only witness log rather than owning a bespoke
 contract in this repository.
 
-DocChain records EIP-712 signed `DocumentAttestation` claims over a hash-linked
+DocChain records EIP-712 signed `DocAttestation` claims over a hash-linked
 `DocBlock`. The generic typed-data, signature, deadline, duplicate, and event
 rules are defined in the sibling `doc-chain` repo.
 
@@ -237,11 +237,15 @@ struct DocBlock {
 For RSO v1:
 
 ```text
-docChainId = keccak256("https://om.pub/rso/docchain/v1")
-docRef = UTC Unix timestamp for the snapshot boundary
+docChainId = keccak256("https://om.pub/rso/doc-chain/v1")
+docRef = snapshot boundary encoded as YYYYMMDDHHMMSS in UTC
 parentHash = previous RSO DocBlock blockHash, or bytes32(0) for baseline
 contentHash = SHA-256(canonical catalog JSON bytes)
 ```
+
+For example, `2026-05-14T00:00:00Z` uses `docRef = 20260514000000`.
+RSO `docRef` values are profile-defined calendar references, not Unix
+timestamps or local times.
 
 The DocChain contract computes `blockHash = hashStruct(DocBlock)` and emits an
 append-only event. It does not publish archives, validate source data, resolve

@@ -204,7 +204,7 @@ in the sibling [`doc-chain`](../../doc-chain) repo. RSO uses that generic
 protocol with one profile:
 
 ```text
-docChainId = keccak256("https://om.pub/rso/docchain/v1")
+docChainId = keccak256("https://om.pub/rso/doc-chain/v1")
 ```
 
 The profile URI is the human-readable source of the RSO profile rules. The
@@ -215,8 +215,8 @@ RSO fills the generic `DocBlock` as follows:
 
 ```solidity
 struct DocBlock {
-    bytes32 docChainId;     // keccak256("https://om.pub/rso/docchain/v1")
-    uint64 docRef;          // UTC snapshot-boundary timestamp
+    bytes32 docChainId;     // keccak256("https://om.pub/rso/doc-chain/v1")
+    uint64 docRef;          // UTC snapshot boundary as YYYYMMDDHHMMSS
     bytes32 parentHash;     // prior RSO DocBlock blockHash; 0x0 for baseline
     bytes32 contentHash;    // SHA-256 of canonical catalog JSON bytes
 }
@@ -234,8 +234,14 @@ block hash and every descendant block hash.
 
 For RSO v1:
 
-- `docRef` is the UTC Unix timestamp for the snapshot's `00:00:00Z`
-  boundary. RSO indexers decode it into the human archive date.
+- `docRef` is the snapshot boundary encoded as `YYYYMMDDHHMMSS` in UTC. It is
+  a profile-defined reference, not a Unix timestamp.
+- RSO daily snapshots must use `00:00:00Z`, so their `docRef` values end in
+  `000000`.
+- `docRef` must be exactly 14 decimal digits and decode to a valid Gregorian
+  UTC instant with seconds `00` through `59`; leap seconds are not accepted.
+- The decoded UTC instant must match the snapshot's `state_as_of_utc` /
+  `cutoff_utc`.
 - `contentHash` is SHA-256 of the canonical catalog JSON bytes defined by
   [`snapshot-spec.md`](snapshot-spec.md) and [`verification.md`](verification.md).
 - `parentHash` is the previous RSO `blockHash`, not the previous catalog hash.
@@ -245,6 +251,13 @@ For RSO v1:
   block without endorsing one storage location.
 - `uri != ""` additionally claims that the location resolves to bytes matching
   the RSO profile rules for `contentHash`.
+
+Examples:
+
+```text
+2026-04-20T00:00:00Z -> docRef = 20260420000000
+2026-05-14T00:00:00Z -> docRef = 20260514000000
+```
 
 The NFT/viewer prepares these exact `DocBlock` values after validating a
 selected archive day. The dApp should display and sign those values; it should
@@ -306,9 +319,9 @@ Bundle layout, file roles, and canonical hashing rules are defined in
 The steps below are the relayer-side application of that spec; if the two
 disagree, the snapshot/verification specs are authoritative for bundle format.
 
-For `keccak256("https://om.pub/rso/docchain/v1")`, the validation profile is:
+For `keccak256("https://om.pub/rso/doc-chain/v1")`, the validation profile is:
 
-- `docRef` is the UTC Unix timestamp for the RSO snapshot boundary
+- `docRef` is the RSO snapshot boundary encoded as `YYYYMMDDHHMMSS` in UTC
 - `parentHash` is the previous RSO `blockHash`, or `bytes32(0)` for the
   baseline snapshot
 - `contentHash` is SHA-256 of the canonical catalog JSON bytes
