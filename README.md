@@ -23,6 +23,7 @@ and publish evidence anyone can verify.
 
 | Goal | Read |
 |------|------|
+| Understand the public value | [docs/faq.md](docs/faq.md) |
 | Set up a node | [docs/setup.md](docs/setup.md) |
 | Operator overview and relayer policy | [docs/operator.md](docs/operator.md) |
 | Understand the architecture | [docs/architecture.md](docs/architecture.md) |
