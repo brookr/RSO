@@ -470,5 +470,19 @@
     "query_strategy": "prior_snapshot_plus_bounded_gp_history_delta",
     "sha256": "24cf6ff665fb96f61f0bc8e5000791d8649357858adc6b2838f36c8e04d16dfa",
     "state_as_of_utc": "2026-05-23T00:00:00Z"
+  },
+  {
+    "archived_at": "2026-05-24T01:22:16.955342+00:00",
+    "base_snapshot_date": "2026-05-23",
+    "base_snapshot_sha256": "24cf6ff665fb96f61f0bc8e5000791d8649357858adc6b2838f36c8e04d16dfa",
+    "compressed_bytes": 11302464,
+    "date": "2026-05-24",
+    "delta_window_end_utc": "2026-05-24T00:00:00Z",
+    "delta_window_start_utc": "2026-05-23T00:00:00Z",
+    "object_count": 67690,
+    "provenance": "rolling_gp_history_delta",
+    "query_strategy": "prior_snapshot_plus_bounded_gp_history_delta",
+    "sha256": "afd61b63b5c88be641c5effb7274d28e002744bdfbfa1775ce4793ba6f109351",
+    "state_as_of_utc": "2026-05-24T00:00:00Z"
   }
 ]
