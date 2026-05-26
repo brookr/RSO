@@ -1,7 +1,7 @@
 # Orbital Witness: RSO Archive
 
-**A daily, independently witnessed, tamper-evident archive of the public space
-object catalog.**
+**A daily, independently witnessed, publicly verifiable archive of the public
+space object catalog.**
 
 Every day, decentralized operator nodes pull the public Resident Space Object catalog from
 Space-Track, roll it forward from the prior snapshot, hash the canonical bytes,
@@ -9,8 +9,8 @@ and publish evidence anyone can verify.
 
 ## 10-Second Version
 
-- **Why bother:** today's public catalog has fragile centralized access and weak public
-  history
+- **Why bother:** public orbital data should have durable, independently
+  verifiable memory outside any single service
 - **What's preserved:** historical snapshots of tracked artificial objects in Earth orbit
 - **How:** many fork-based nodes run the same zero-dependency pipeline and
   compare SHA-256 hashes
@@ -36,10 +36,16 @@ and publish evidence anyone can verify.
 
 ## The Core Idea
 
-The public catalog comes from one source, Space-Track (US Space Force), and is mirrored publicly
-by one long-running individual effort, CelesTrak. If public GP availability is
-restricted, edited, missing, or changed over time, independent historical proof
-is hard.
+The public catalog comes primarily from one source, Space-Track (US Space
+Force), and is made more accessible by individual volunteer efforts like
+[CelesTrak](https://celestrak.org/) and [KeepTrack.space](https://keeptrack.space/).
+Those services are valuable. RSO Archive depends on Space-Track and does not
+replace any of them.
+
+Public access is not the same as durable public memory. A daily, reproducible
+archive gives future users a stable artifact to cite, mirror, compare, and
+verify, even if live APIs, formats, accounts, or institutional priorities
+change.
 
 Orbital Witness fixes that by making the archive a reproducible public process:
 
