@@ -18,7 +18,8 @@ Witness pipeline
         |
         +--> GitHub Release bundle
         +--> optional Arweave upload
-        +--> planned Ethereum DocChain attestation
+        +--> optional signed DocChain artifact
+        +--> sweeper-submitted DocChain event
 ```
 
 Every day, operator nodes pull bounded public source data, roll the catalog
@@ -47,7 +48,8 @@ own archive history.
 | Git `node` branch | Public metadata, ledger, latest bootstrap catalogs |
 | GitHub Releases | Deterministic full daily bundles |
 | Arweave | Optional permanent bundle storage |
-| Ethereum | Planned append-only DocChain attestation log |
+| Ethereum | Append-only DocChain attestation log |
+| Sweeper | Funded courier for eligible signed operator attestations |
 | NFT client | Planned verification and visualization dashboard |
 
 The daily consensus object is the SHA-256 of the canonical catalog bytes, not a
@@ -57,17 +59,22 @@ daily hash.
 
 ## Current Phase
 
-Phase 1 is live:
+Live:
 
 - daily rolling snapshot pipeline
 - Git metadata and ledger
 - newest two full catalogs retained on `node`
 - deterministic GitHub Release bundles
 - optional Arweave upload with per-day `storage.json`
+- optional automatic DocChain signed artifacts from a disposable no-funds EOA
+- treasury sweeper for validated card-backed operator submissions
+- static RSO DocChain indexer with Sepolia seed support and custom deployment config
 
-Planned phases:
+Remaining production work:
 
-- Ethereum DocChain attestation using the generic sibling `doc-chain` repo
+- DocChain mainnet deployment and Etherscan verification
+- RSO Meme Card token ID configuration after card issuance
+- TDH-backed eligibility and branch scoring integration
 - dynamic NFT verification artwork
 - richer daily diff and audit visualization
 - reusable witness template for other datasets

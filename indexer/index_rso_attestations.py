@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
@@ -29,7 +30,12 @@ NETWORKS = {
         "chain_id": SEPOLIA_CHAIN_ID,
         "address": SEPOLIA_DOCCHAIN_ADDRESS,
         "from_block": SEPOLIA_DEPLOYMENT_BLOCK,
-    }
+    },
+    "custom": {
+        "chain_id": None,
+        "address": None,
+        "from_block": None,
+    },
 }
 
 
@@ -41,11 +47,15 @@ def main() -> int:
         latest_block = rpc.block_number()
         from_block = parse_block(args.from_block) if args.from_block else config["from_block"]
         to_block = resolve_to_block(args.to_block, latest_block, args.confirmations)
+        cache_path = args.cache or f"indexer/cache/{args.network}/doc-attested.jsonl"
+        checkpoint_path = args.checkpoint or f"indexer/cache/{args.network}/checkpoint.json"
+        out_path = args.out or f"indexer/generated/{args.network}/rso-docchain-index.json"
+        operator_backing = load_operator_backing(args.backing) if args.backing else None
         result = update_event_cache(
             rpc=rpc,
             address=config["address"],
-            cache_path=args.cache,
-            checkpoint_path=args.checkpoint,
+            cache_path=cache_path,
+            checkpoint_path=checkpoint_path,
             from_block=from_block,
             to_block=to_block,
             chunk_size=args.chunk_size,
@@ -54,7 +64,7 @@ def main() -> int:
             network=args.network,
             progress=progress_callback(args),
         )
-        events = filter_rso_events(load_event_cache(args.cache))
+        events = filter_rso_events(load_event_cache(cache_path))
 
         index = build_static_index(
             network=args.network,
@@ -66,14 +76,15 @@ def main() -> int:
             confirmations=args.confirmations,
             chunk_size=args.chunk_size,
             events=events,
+            operator_backing=operator_backing,
         )
-        write_json_file(Path(args.out), index)
+        write_json_file(Path(out_path), index)
         if not args.quiet:
             print(
                 f"scanned {result.chunk_count} chunks; cached "
                 f"{result.new_event_count} new RSO attestations; wrote "
                 f"{index['eventCount']} events across {index['docRefCount']} docRefs "
-                f"into {args.out}"
+                f"into {out_path}"
             )
         return 0
     except (OSError, RpcError, ValueError) as exc:
@@ -107,21 +118,59 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--progress-every-chunks", type=int, default=25)
     parser.add_argument(
         "--cache",
-        default="indexer/cache/sepolia/doc-attested.jsonl",
+        default=None,
         help="Append-only raw event cache.",
     )
     parser.add_argument(
         "--checkpoint",
-        default="indexer/cache/sepolia/checkpoint.json",
+        default=None,
         help="Scan checkpoint path.",
     )
     parser.add_argument(
         "--out",
-        default="indexer/generated/sepolia/rso-docchain-index.json",
+        default=None,
         help="Output JSON path.",
+    )
+    parser.add_argument("--chain-id", type=int, help="Chain ID for --network custom.")
+    parser.add_argument("--contract-address", help="DocChain contract address for --network custom.")
+    parser.add_argument("--deployment-block", type=int, help="First block for --network custom.")
+    parser.add_argument(
+        "--backing",
+        help="Optional JSON backing snapshot mapping operator attesters to card-specific TDH.",
     )
     parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
+
+
+def load_operator_backing(path: str) -> dict[str, int]:
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError("backing snapshot must be a JSON object")
+    if raw.get("schema") == "rso-operator-backing-snapshot-v1":
+        operators = raw.get("operators", {})
+        if not isinstance(operators, dict):
+            raise ValueError("backing snapshot operators must be a JSON object")
+        return {
+            str(operator): int(value.get("cardSpecificTdh", 0) if isinstance(value, dict) else value)
+            for operator, value in operators.items()
+        }
+    if raw.get("schema") == "rso-operator-backing-v1":
+        operators = raw.get("operators", raw.get("identities", {}))
+        if not isinstance(operators, dict):
+            raise ValueError("backing snapshot operators must be a JSON object")
+        return {
+            str(operator): int(value.get("cardSpecificTdh", 0) if isinstance(value, dict) else value)
+            for operator, value in operators.items()
+        }
+    return {
+        str(operator): int(value.get("cardSpecificTdh", 0) if isinstance(value, dict) else value)
+        for operator, value in raw.items()
+    }
+
+
+def load_identity_backing(path: str) -> dict[str, int]:
+    """Backward-compatible alias for older callers."""
+    return load_operator_backing(path)
 
 
 def network_config(args: argparse.Namespace) -> dict[str, object]:
@@ -129,7 +178,28 @@ def network_config(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("--confirmations must not be negative")
     if args.chunk_size < 1:
         raise ValueError("--chunk-size must be at least 1")
-    return NETWORKS[args.network]
+    config = dict(NETWORKS[args.network])
+    if args.network == "custom":
+        chain_id = args.chain_id or int_env("RSO_DOCCHAIN_CHAIN_ID") or int_env("DOCCHAIN_CHAIN_ID")
+        address = args.contract_address or os.environ.get("RSO_DOCCHAIN_ADDRESS") or os.environ.get("DOCCHAIN_ADDRESS")
+        from_block = (
+            args.deployment_block
+            if args.deployment_block is not None
+            else int_env("RSO_DOCCHAIN_DEPLOYMENT_BLOCK")
+        )
+        if chain_id is None:
+            raise ValueError("--chain-id or RSO_DOCCHAIN_CHAIN_ID is required for custom network")
+        if not address:
+            raise ValueError("--contract-address or RSO_DOCCHAIN_ADDRESS is required for custom network")
+        if from_block is None:
+            raise ValueError("--deployment-block or RSO_DOCCHAIN_DEPLOYMENT_BLOCK is required for custom network")
+        config.update({"chain_id": chain_id, "address": address, "from_block": from_block})
+    return config
+
+
+def int_env(name: str) -> int | None:
+    raw = os.environ.get(name)
+    return int(raw) if raw else None
 
 
 def progress_callback(args: argparse.Namespace):

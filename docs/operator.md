@@ -1,247 +1,102 @@
-# RSO Operator Guide
+# RSO Operator and Sweeper Model
 
-This guide is for anyone who wants to operate RSO infrastructure. It covers
-*why* you'd do it, the two roles available, and the operational expectations
-attached to each. The mechanical first-time setup — fork the repo, enable
-Actions, secrets, etc. — lives in [`setup.md`](setup.md).
+An RSO operator runs an archive node. The node downloads public Space-Track
+data, produces the daily archive artifact, and optionally signs a DocChain
+attestation with a disposable no-funds EOA.
 
-Questions and requests for clarification are welcome.
+A sweeper is different. It is a funded courier that gathers public signed
+attestations from known operators and submits eligible ones to the DocChain
+contract.
 
-## Why operate
+## Operator Role
 
-The public space-object catalog is important, but fragile:
+An operator node should be boring:
 
-- One source publishes it: Space-Track (relies on government funding and staff).
-- One person mirrors it publicly at CelesTrak.
-- Without multiple independent archives, later edits or removals are hard
-  to prove.
+- run the daily snapshot workflow
+- publish the release bundle
+- optionally publish a signed DocChain artifact
+- keep the disposable signing key unfunded
 
-Operating RSO infrastructure strengthens the network's decentralization. If
-many independent operators run the same daily snapshot logic and arrive at
-the same hash chain, the archive is being *witnessed*, not merely hosted.
+The operator signing key is not a personal wallet. It should hold no ETH, NFTs,
+or tokens. If it leaks, there are no funds to steal. The damage is reputational:
+an attacker could sign bad claims until the operator rotates the key and backing
+relationship.
 
-## Two roles, both called "operator"
+## Card-Backed Operator Support
 
-There are two flavours of operator, and they're independent:
+Operators do not need to connect their disposable key to a 6529 identity in RSO
+V1. Card holders back operator signing addresses directly. That lets operators
+remain pseudonymous, and lets card holders switch support as operator
+performance changes.
 
-- **Node operator.** Runs the daily archive snapshot from a fork of this
-  repo. Strengthens publication independence — every node is another
-  party producing the same canonical archive bytes from the same source.
-- **Relayer operator.** Runs an off-chain web service that pays gas for
-  RSO Meme Card holders' attestations. Strengthens attestation
-  accessibility — holders can confirm publications without paying for
-  every transaction themselves.
-
-Most operators run only one role. A node fork is a small daily GitHub
-Actions job; a relayer is a long-running web service with a hot wallet.
-They share no code.
-
-For attestation protocol details, see
-[`attestation-design.md`](attestation-design.md).
-
-## What success looks like
-
-### Node operator
-
-A healthy node run produces five visible things:
-
-1. A green workflow run in your fork's **Actions** tab
-2. A `node` branch in your fork
-3. A new daily metadata folder under `data/YYYY/MM/DD/` on `node`
-4. An updated `ledger.json` on `node`
-5. A release asset named `rso-archive-YYYY-MM-DD.tar.gz`
-
-If you also add an Arweave wallet secret, the same publish step records an
-extra `storage.json` receipt showing the GitHub Release location and Arweave
-transaction ID for that day.
-
-For a normal daily snapshot, the committed day folder should contain:
-
-- `manifest.json`
-- `delta.json`
-- `audit.json`
-- `visibility_state.json`
-
-The latest two archived days also keep `catalog.json.gz` in Git on the `node`
-branch. That small rolling cache lets the workflow read the prior full
-catalog directly from the fork before it has published any of its own
-release bundles.
-
-The real success condition is matching hashes across forks for the same
-date — same `ledger.json` hash, same `manifest.json` hash, same
-`object_count`. Independent operators reaching the same numbers is the
-witnessing.
-
-### Relayer operator
-
-A healthy relayer:
-
-- accepts EIP-712-signed DocChain `DocAttestation` payloads over HTTPS
-- runs the full validation pipeline from
-  [`attestation-design.md`](attestation-design.md): signature verification,
-  RSO `DocBlock` validation, URI fetch with SSRF guards, hash matching,
-  decompression caps, duplicate and quota checks
-- submits accepted attestations to the mainnet contract from a hot wallet
-- never charges the attestor for rejections; rejection reasons go back to
-  the dApp
-
-If validation fails, the relayer returns a structured error and pays no
-gas. If validation passes, the onchain `DocumentAttested` event is the
-public receipt.
-
-## Branches (node operators)
-
-The branch split on a node fork is intentional:
-
-- `main`: code, docs, workflows, and the lightweight controller action
-- `node`: the running node state, including `data/`, `ledger.json`,
-  generated reports, release receipts, and the latest two retained full
-  catalogs
-
-By default, the daily workflow first updates `main` from upstream
-`OMPub/RSO`, then merges the latest code into `node` while preserving
-node-generated state. That gives normal operators daily code updates
-without overwriting their own archive outputs. Standalone operators can
-disable this by setting the repository variable
-`RSO_AUTO_UPDATE_CODE=false`.
-
-After creating the fork, do **NOT** use GitHub's "**Sync fork**" button as
-a normal maintenance habit. The daily workflow already updates your fork's
-`main` from upstream and applies that code to your `node` branch without
-overwriting node-generated state. Manual fork syncs can be useful for rare
-workflow-controller updates, but do them deliberately and only on `main`;
-never use a sync or reset operation that overwrites your `node` branch.
-
-## Funding models (relayer operators)
-
-The contract is neutral and immutable: it has no admin role, no upgrade
-path, and no concept of relayer identity. Anyone can run a relayer. The
-only curated lever is who funds the hot wallet.
-
-**Self-funded.** You fund your own hot wallet, set your own caps, and
-decide who you'll sponsor (specific allowlist, all card holders, only your
-community, only yourself). You can take your relayer down whenever you
-want. No project obligations.
-
-**Treasury-funded.** OW tops up your hot wallet on the agreed schedule. In
-exchange, your relayer goes on the upstream-distributed list — so the
-average dApp user sees it — and you accept the operational expectations
-below. This is the curated subset; getting added is a conversation, not an
-automatic process.
-
-Both models share the same protocol checks. The only thing that differs is
-who's paying for gas and who's setting the policy.
-
-## Operational expectations (treasury-funded relayers)
-
-These apply to relayers on the treasury-funded list. Self-funded relayers
-can ignore them, but most are good practice anyway.
-
-- **Reachability.** A monitoring URL the project can poll, and a contact
-  channel for incidents (Discord handle, email, anything that gets
-  answered).
-- **Uptime.** No formal SLA, but sustained outages mean the dApp routes
-  around you and treasury support follows.
-- **Log retention.** Keep your own logs of accepted and rejected requests
-  long enough to debug incidents. The onchain event stream is the public
-  record; your private logs are for ops.
-- **Capacity caps.** Configure the daily/hourly/per-wallet caps per the
-  attestation design, and don't quietly raise them. If you need more
-  headroom, coordinate first.
-- **Pause readiness.** An emergency pause switch that takes the relayer
-  out of service quickly. Rare, but useful when something is clearly
-  wrong.
-- **Public-facing identity.** A short page describing who runs the relayer
-  (handle, project, contact) so users know who they're trusting. Optional
-  but appreciated.
-- **Canonical code.** Treasury-funded relayers should run the project's
-  canonical relayer codebase rather than a private reimplementation;
-  that's how the project verifies the validation pipeline is intact.
-
-## Hot wallet sizing and rotation
-
-Treat the hot wallet as a daily allowance, not a permanent balance:
-
-- The ceiling is whatever amount the funder is willing to lose if the key
-  is compromised between top-ups. For treasury-funded wallets this is set
-  by OW and reviewed periodically.
-- Top-ups happen in the hour before 00:00 UTC so the next day's sponsored
-  capacity is available right at the boundary.
-- The wallet should never exceed the ceiling. If you find yourself
-  manually adding more during the day, your caps are wrong, not your
-  ceiling.
-
-Roughly:
+Recommended V1 shape:
 
 ```text
-daily ceiling  ≈  daily attestation cap  ×  gas per attestation  ×  gas-price ceiling
+card holder -> backs operator attester
 ```
 
-If gas spikes above your assumed ceiling, your hourly cap should pause
-sponsorship until the spike subsides — preferable to draining the wallet
-early in the day.
+The daily signed attestation sets:
 
-Plan for rotation from the start. Treasury-funded relayers rotate on a
-documented schedule (TBD); self-funded relayers should still rotate
-periodically and after any signal of compromise:
+```text
+attester    disposable EOA
+onBehalfOf  normally zero for RSO V1
+```
 
-- generate the new key offline
-- pre-fund the new wallet before the swap
-- update the relayer config, drain the old wallet
-- let any in-flight transactions settle before disabling the old key
+After the daily 6529 TDH calculation, RSO computes a backing snapshot:
 
-Rotation is also the response to small anomalies: an unexpected balance
-dip, an unrecognised outbound transaction, an unplanned config change. The
-cost of rotating is low; the cost of running on a maybe-compromised key is
-the whole ceiling.
+```text
+date -> operator attester -> card-specific TDH backing
+```
 
-## What gets a relayer defunded
+The sweeper uses that snapshot before spending treasury gas. The indexer uses
+the same snapshot when reporting weighted agreement groups.
 
-Treasury funding can be paused or revoked if the relayer:
+## Sweeper Role
 
-- pays gas on attestations that fail post-hoc validation (i.e., your
-  validation pipeline is broken)
-- censors valid sponsored requests without cause
-- shows signs of key compromise or unauthorized hot-wallet drain
-- exceeds budget caps repeatedly without coordinating
-- becomes unreachable to project operators
+The sweeper:
 
-Defunding is reversible: fix the underlying issue, propose re-inclusion,
-return to the curated set. Defunding does not remove your relayer from the
-dApp's published list — that's a separate upstream code-update question.
+- reads the known operator registry
+- reads the daily operator-backing snapshot
+- ranks operators by card-specific TDH backing
+- fetches signed artifacts from operator `node` branches
+- validates signatures by simulating `attestDoc`
+- validates the signed archive bundle fingerprint and the catalog fingerprint
+- submits valid claims for selected backed operators with a funded sweeper
+  wallet
 
-## Getting added to the upstream relayer list
+The sweeper does not decide truth. If it refuses to submit a valid signature,
+the public signature can still be submitted by anyone else.
 
-The published relayer list lives in the dApp source. Adding a new entry is
-an upstream PR like any other code change, plus two extras:
+## Treasury Role
 
-- evidence the relayer is running (live URL, monitoring page)
-- agreement on who's funding the hot wallet (self vs. treasury) and, if
-  treasury, alignment on caps and rotation schedule
+The NFT treasury funds shared infrastructure:
 
-Once merged, the new endpoint propagates to operator forks on the next
-daily upstream sync — no manual action required from existing operators.
+- Arweave publishing
+- sweeper gas
+- public indexes and monitoring
 
-A relayer can also exist *off* the upstream list: an operator can add
-their own relayer to their fork's copy and serve their own users without
-any upstream coordination. Blessed-list inclusion is not a precondition
-for operating.
+The treasury should not be the only attester. Truth comes from reproducible
+daily artifacts plus independent operator signatures. The treasury only pays to
+publish eligible signatures.
 
-## Where to look when you are lost
+## Failure Modes
 
-- [`setup.md`](setup.md): mechanical first-time path
-- [`../README.md`](../README.md): full technical walkthrough and command
-  reference
-- [`glossary.md`](glossary.md): orbital-data terms and field definitions
-- [`attestation-design.md`](attestation-design.md): the attestation
-  protocol — authoritative for relayer behaviour
-- [`snapshot-spec.md`](snapshot-spec.md): bundle layout and canonical
-  hashing rules
-- [`architecture.md`](architecture.md): how the pieces fit together
-- `node` branch on your fork: your generated archive state
-- `data/YYYY/MM/DD/manifest.json`: the daily hash and provenance summary
-- `ledger.json`: rolling public hash chain
-- `Releases`: where your fork publishes full daily bundles
+If an operator key leaks:
 
-If anything in this guide disagrees with the protocol design docs, the
-design docs win.
+- remove or pause that operator in the sweeper registry
+- ask backers to move support to the new disposable EOA
+- publish the key rotation in operator docs
+
+If the sweeper fails:
+
+- signed artifacts remain public
+- another sweeper can submit them
+- anyone can submit a valid signature manually
+
+If operators disagree:
+
+- the contract records all valid claims
+- the indexer groups matching and conflicting fingerprints
+- the UI reports support behind each group
+
+Disagreement is not hidden. It is the evidence the archive is meant to surface.

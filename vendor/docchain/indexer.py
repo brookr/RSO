@@ -10,7 +10,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Iterator
 
-from .abi import DOC_ATTESTED_EVENT_TOPIC0
+from .abi import DOC_ATTESTED_EVENT_TOPIC0S
 from .logs import decode_doc_attested_log
 from .model import DocAttested
 
@@ -114,7 +114,7 @@ class EthereumRpc:
         address: str,
         from_block: int,
         to_block: int,
-        topics: list[str | None],
+        topics: list[str | list[str] | None],
     ) -> list[object]:
         self._throttle_get_logs()
         result = self.call(
@@ -179,7 +179,7 @@ def _iter_doc_attested_range(
     address: str,
     from_block: int,
     to_block: int,
-    topics: list[str | None],
+    topics: list[str | list[str] | None],
 ) -> Iterator[tuple[int, int, list[DocAttested]]]:
     try:
         logs = rpc.get_logs(address, from_block, to_block, topics)
@@ -206,10 +206,10 @@ def doc_attested_topics(
     doc_chain_id: str | None = None,
     attester: str | None = None,
     doc_ref: int | None = None,
-) -> list[str | None]:
+) -> list[str | list[str] | None]:
     """Build an `eth_getLogs` topic filter for `DocAttested`."""
     return [
-        DOC_ATTESTED_EVENT_TOPIC0,
+        list(DOC_ATTESTED_EVENT_TOPIC0S),
         normalize_bytes32(doc_chain_id) if doc_chain_id is not None else None,
         topic_address(attester) if attester is not None else None,
         topic_uint64(doc_ref) if doc_ref is not None else None,
@@ -241,7 +241,7 @@ def topic_uint64(value: int) -> str:
 
 
 def _hex_body(value: str, field: str) -> str:
-    if not isinstance(value, str) or not value.startswith("0x"):
+    if not isinstance(value, str) or not value.lower().startswith("0x"):
         raise ValueError(f"{field} must be a 0x-prefixed hex string")
     body = value[2:].lower()
     try:

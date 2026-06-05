@@ -16,24 +16,31 @@ This project lives at the intersection of the 6529 Open Metaverse (OM) community
 
 ### The Problem
 
-The public catalog of every tracked artificial object in Earth orbit originates from a **single source**: the U.S. Space Force's 18th Space Defense Squadron, distributed via Space-Track.org. It is mirrored by **one person** (Dr. T.S. Kelso at CelesTrak.org). There is:
+The public catalog of every tracked artificial object in Earth orbit comes
+primarily from one source: the U.S. Space Force, distributed through
+Space-Track.org. Independent volunteer efforts such as CelesTrak and
+KeepTrack.space make that public data more accessible, easier to use, and more
+visible.
 
-- No redundant historical archive with cryptographic proof of what the catalog said on any given date
-- No public record of daily changes (objects added, removed, orbits altered)
-- No tamper-evident chain of custody
-- No guarantee of continued public access
+Those services are valuable. RSO Archive does not replace them. The narrower
+gap is that public access is not the same as durable public memory. A daily,
+reproducible archive gives future users a stable artifact to cite, mirror,
+compare, and verify if live APIs, formats, accounts, or institutional
+priorities change.
 
-If public GP availability is restricted, missing, or changed over time, nobody
-can independently verify what changed without a daily historical record.
-CelesTrak is already struggling with bandwidth (jumped from ~125 GB/day to
-~330 GB/day in early 2026) and enforcing aggressive rate limiting.
+The public benefit is not that the archive will be useful every day. The public
+benefit is that an important public dataset has independent memory and public
+fingerprints when historical evidence matters.
 
 ### Why It Matters
 
 - **Kessler Syndrome forensics**: Reconstructing trajectories after a collision requires the historical record
 - **Accountability**: "What did we know, and when did we know it?" about orbital events
 - **Machine-learning training data**: A verified history of how published orbital trajectories change over time can support models that learn catalog-update patterns, anomaly signals, propagation error, and operational data quality
-- **Institutional fragility**: CelesTrak is one person's mission. The MPC runs on 5-year NASA grants. Space-Track could restrict access at any time
+- **Independent public memory**: Space-Track is the primary public source, and
+  community services such as CelesTrak and KeepTrack make the data more usable.
+  RSO Archive adds a narrow preservation layer: stable daily artifacts with
+  public fingerprints.
 - **The OMM transition**: The legacy TLE format runs out of 5-digit catalog numbers around July 2026 (~69999). Objects after that can only be represented in OMM format. This archive will be one of the few complete OMM-format historical records spanning the transition
 
 ---
@@ -251,12 +258,16 @@ The DocChain contract computes `blockHash = hashStruct(DocBlock)` and emits an
 append-only event. It does not publish archives, validate source data, resolve
 disputes, calculate TDH, or choose the canonical RSO branch.
 
-Hash-only attestations use an empty URI. Hash-plus-location attestations use a
-non-empty URI. The empty-URI path is the default holder confirmation path: the
-signer attests the RSO DocBlock without endorsing a specific storage location.
+Hash-only attestations use an empty URI. Hash-plus-location attestations use
+either a direct bundle URI or an RSO publication-locator data URI. The locator
+data URI uses the media type
+`application/vnd.ompub.rso.publication-locator.v1+json` and signs a compact JSON
+payload with `bundleSha256` plus one or more storage locations. The signed
+`contentHash` remains the catalog fingerprint; `bundleSha256` fixes the exact
+release bundle bytes.
 
 Each `docChainId` names an off-chain validation profile implemented in docs,
-relayers, indexers, viewers, and operator tooling. If RSO changes its
+sweepers, indexers, viewers, and operator tooling. If RSO changes its
 validation rules incompatibly, it gets a new versioned `docChainId`.
 
 Protocol details belong in `doc-chain`; this repository defines how RSO fills
@@ -269,13 +280,15 @@ The 6529 ecosystem has **TDH (Total Days Held)**, a reputation metric computed a
 For RSO, TDH is the profile-specific canonicality rule layered on top of
 DocChain:
 
-1. Operators or holders sign DocChain attestations.
+1. Operators sign DocChain attestations with disposable no-funds EOAs.
 2. Anyone can submit a signed attestation to the contract.
-3. The contract verifies the signature and records the named attester.
+3. The contract verifies the signature and records the named attester, plus
+   optional `onBehalfOf` identity metadata.
 4. RSO indexers group events by `docChainId`, `docRef`, and `blockHash`,
    then walk `parentHash` links to build branches.
-5. The RSO resolver looks up each attester's card-specific TDH at the Ethereum
-   block time of the attestation event.
+5. After the daily 6529 TDH calculation, RSO records which card holders backed
+   which operator attesters and how much card-specific TDH each operator has for
+   that day.
 6. The branch with the most eligible historical card-specific TDH is canonical
    for RSO display.
 
@@ -289,18 +302,18 @@ held component means they cannot rewrite historical branch weight quickly.
 
 ### The NFT Verification Client
 
-**Two components, clean separation**:
+**Clean separation**:
 
-1. **The NFT itself** (HTML/JS on Arweave, rendered in iframe on 6529.io/OpenSea): Read-only verification client and visualization layer. No wallet needed. Fetches commitments from Ethereum via public RPC, fetches compact archive metadata from Arweave, verifies lightweight hashes and checkpoints in the browser, and renders the witness chain as an orbital status view. A holder can scroll back to any retained or indexed archive day, ask the NFT/viewer to validate that day's document and parent link, then attest the selected DocBlock. Full catalog hashing can be offered as an on-demand path because the compressed catalog is large enough that every iframe render should not decompress and hash it by default. When a holder chooses to attest, the NFT/viewer prepares the exact DocBlock values (`docChainId`, `docRef`, `parentHash`, `contentHash`, and optional `uri`) and opens the attestation dApp with those values.
+1. **The NFT itself** (HTML/JS on Arweave, rendered in iframe on 6529.io/OpenSea): Read-only verification client and visualization layer. No wallet needed. Fetches commitments from Ethereum via public RPC, fetches compact archive metadata from Arweave, verifies lightweight hashes and checkpoints in the browser, and renders the witness chain as an orbital status view. Full catalog hashing can be offered as an on-demand path because the compressed catalog is large enough that every iframe render should not decompress and hash it by default.
 
-2. **The attestation dApp** (separate HTML page, also on Arweave): Linked from the NFT. This is where holders connect their wallet, review the prepared DocBlock claim, sign an EIP-712 document attestation, and either submit it directly or hand it to a relayer. The dApp is the signing/submission surface because NFT iframes cannot reliably access wallet injection.
+2. **Operator-signed artifacts**: Normal attestations are produced by archive nodes, not by holder wallet sessions. Operators publish signed artifacts on their `node` branches; sweepers submit eligible signatures onchain.
 
-**Why the split**: NFT iframes on platforms like 6529.io and OpenSea are sandboxed — they can't access `window.ethereum` (wallet injection). The art is read-only by design. The dApp page lives at a separate URL (e.g., `om.pub/rso`) where wallet connection works normally.
+**Why the split**: NFT iframes on platforms like 6529.io and OpenSea are sandboxed. The art is read-only by design. Witnessing happens through operator nodes and sweepers, while the NFT displays verification state and disagreement.
 
 **Attestation index**: Contract events are indexed into static JSON pages for
 normal NFT browsing. The index can be rebuilt by a scheduled GitHub Action
 (for example every five minutes). While the NFT is open, it can query public
-RPC for `DocumentAttested` logs from a small recent window, such as the last 10
+RPC for `DocAttested` logs from a small recent window, such as the last 10
 minutes, and merge those events into a **Recent** overlay. Recent events are
 onchain but not yet folded into the static index; if the static index is stale,
 the NFT should wait for the next index refresh rather than scan a large public
@@ -421,32 +434,42 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 - [x] Per-day `storage.json` receipt records Arweave TX ID and publish destinations
 - [x] Pipeline can upload the deterministic release bundle to Arweave after git commit
 
-### To Build (Phase 3 — Ethereum)
+### Built (Phase 3 — Ethereum v1 Plumbing)
 
-- [ ] Integrate the generic DocChain contract from the sibling `doc-chain` repo
+- [x] Integrate the generic DocChain contract helpers from the sibling `doc-chain` repo
+- [x] Pipeline step: generate signed EIP-712 attestation artifacts after archive publication
+- [x] Treasury sweeper path for submitting eligible signed attestations
+- [x] Static RSO DocChain indexer with Sepolia seed support and custom deployment config
+- [x] Disposable no-funds EOA signing path for operator nodes
+- [x] Sweeper consumes daily operator-backing snapshots, validates URI bundle
+  fingerprints and catalog fingerprints, simulates `attestDoc`, and funds
+  selected submissions
+
+### To Build (Phase 3.1 — Mainnet Readiness)
+
 - [ ] DocChain contract deployment to Ethereum mainnet
-- [ ] Pipeline step: generate EIP-712 attestation payloads after archive publication
-- [ ] Optional relayer path for sponsored submission of signed attestations
 - [ ] Contract verified on Etherscan, immutable, no owner functions
+- [ ] Configure RSO Meme Card token ID after card issuance
+- [ ] Add production TDH/backing snapshot generation and historical branch scoring
+- [ ] Publish canonical sweeper operator registry
+- [ ] Add production monitoring/runbook for treasury-funded sweepers
 
 ### To Build (Phase 4 — NFT)
 
 - [ ] NFT artwork (HTML/JS): orbital ring visualization, 30-day rolling view
 - [ ] Reads attestation index generated from contract events
-- [ ] Verifies selected `DocumentAttested` events with targeted RPC calls
+- [ ] Verifies selected `DocAttested` events with targeted RPC calls
 - [ ] Fetches data from Arweave, re-hashes client-side
 - [ ] Four-source cross-check display per day (Space-Track, CelesTrak, Arweave, Ethereum)
 - [ ] TDH lookup for weighting (via seize.io API)
 - [ ] Verification sequence animation on load
 - [ ] Detail panel on click (hash, Arweave TX, confirmer count, TDH backing)
 
-### To Build (Phase 5 — Confirmation dApp)
+### To Build (Phase 5 — Confirmation Views)
 
-- [ ] Standalone HTML page (hosted on Arweave or om.pub/rso)
-- [ ] Wallet connect (MetaMask/Rabby/WalletConnect)
-- [ ] Shows the selected DocBlock prepared by the NFT/viewer
-- [ ] EIP-712 attestation signing and submission or relay handoff
-- [ ] Displays confirmer leaderboard (TDH-weighted)
+- [ ] Displays confirmer leaderboard or branch-support view
+- [ ] Shows TDH-weighted branch support once historical TDH scoring is wired
+- [ ] Shows which signed operator artifacts have been swept onchain
 
 ### To Build (Phase 6 — Rich Diff and Audit Visualization)
 
@@ -463,7 +486,7 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 
 ### Why Ethereum mainnet, not an L2
 
-The project's thesis is "no single point of failure." Base L2 is operated by Coinbase — a corporate dependency. Ethereum mainnet has no single operator. Attestation costs depend on gas and participation, but relayed signatures let the signer and gas payer be different addresses. Philosophical consistency matters for credibility.
+The project's thesis is "no single point of failure." Base L2 is operated by Coinbase — a corporate dependency. Ethereum mainnet has no single operator. Attestation costs depend on gas and participation, but DocChain signatures let the signer and gas payer be different addresses. Philosophical consistency matters for credibility.
 
 ### Why not ZK proofs
 
@@ -555,7 +578,6 @@ upstream `node` branch on its first run.
 - **CelesTrak**: https://celestrak.org
 - **6529 The Memes**: https://6529.io/the-memes
 - **6529 FAQ**: https://6529.io/about/faq
-- **6529 Delegation Contract**: https://github.com/6529-Collections/nftdelegation
 - **MITRE BESTA paper**: https://www.mitre.org/sites/default/files/2021-11/prs-20-2645-blockchain-enabled-space-traffic-awareness-BESTA-discovery-of-anomalous-behavior-supporting-automated-space-traffic-management.pdf
 - **GCAT**: https://planet4589.org/space/gcat/
 - **Arweave fees**: https://ar-fees.arweave.net/

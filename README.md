@@ -16,8 +16,8 @@ and publish evidence anyone can verify.
   compare SHA-256 hashes
 - **Current output:** Git metadata on each `node` branch plus deterministic
   GitHub Release bundles
-- **Permanent layers:** Arweave permanence, Ethereum attestations, and NFT-based
-  verification/visualization
+- **Permanent layers:** Arweave permanence, automatic DocChain attestations,
+  and NFT-based verification/visualization
 
 ## Start Here
 
@@ -25,7 +25,7 @@ and publish evidence anyone can verify.
 |------|------|
 | Understand the public value | [docs/faq.md](docs/faq.md) |
 | Set up a node | [docs/setup.md](docs/setup.md) |
-| Operator overview and relayer policy | [docs/operator.md](docs/operator.md) |
+| Operator and sweeper model | [docs/operator.md](docs/operator.md) |
 | Understand the architecture | [docs/architecture.md](docs/architecture.md) |
 | Understand the snapshot rules | [docs/snapshot-spec.md](docs/snapshot-spec.md) |
 | Build attestations | [docs/attestation-design.md](docs/attestation-design.md) |
@@ -111,7 +111,8 @@ As a release asset:
 - `rso-archive-YYYY-MM-DD.tar.gz`
 
 The consensus object is the catalog SHA-256, not the release URL, storage URI,
-or Arweave transaction ID.
+or Arweave transaction ID. When an attestation points to a release bundle, it can
+also sign the exact bundle SHA-256 so mirrors can be checked byte-for-byte.
 
 ## Quick Operator Path
 
@@ -123,6 +124,8 @@ or Arweave transaction ID.
 4. Add `SPACETRACK_USER` and `SPACETRACK_PASS` as Actions secrets.
 5. Run **Validate RSO Archive**.
 6. Enable and manually run **Daily RSO Snapshot** once.
+7. Optional: add a disposable no-funds EOA secret so the same workflow
+   publishes signed DocChain attestations for sweepers.
 
 Detailed instructions: [docs/setup.md](docs/setup.md).
 

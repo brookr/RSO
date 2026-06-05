@@ -5,13 +5,12 @@ the high-level pitch and quick-start; this index is the deeper map.
 
 ## Operating
 
-For anyone running RSO infrastructure — an archive node, a relayer, or
-both.
+For anyone running RSO infrastructure — an archive node, the sweeper, or both.
 
 - [Operator guide](operator.md) — why operate, what to expect, the two
-  roles (node and relayer), funding models, operational expectations
+  roles (node and sweeper), funding models, operational expectations
 - [Setup walkthrough](setup.md) — mechanical first-time path: fork,
-  Actions, secrets, first run; optional relayer activation (TBD)
+  Actions, secrets, first run, optional attestations, and sweeper setup
 - [Roll-forward](roll-forward.md) — catching a stale node back up to
   current
 - [Replay findings](replay-findings.md) — notes from historical replay
@@ -25,7 +24,7 @@ For anyone building tools that produce, consume, or verify the archive.
 - [Snapshot specification](snapshot-spec.md) — bundle layout and
   canonical hashing rules; authoritative for bundle format
 - [Attestation design](attestation-design.md) — RSO's DocChain profile,
-  relayer rules, dApp behaviour
+  signed operator artifacts, sweeper submission, and indexer behaviour
 - [Verification](verification.md) — how to verify a daily archive
 
 ## Reference

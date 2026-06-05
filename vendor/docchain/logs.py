@@ -7,14 +7,18 @@ with JSON-RPC, pass them through this decoder, and apply profile rules later.
 
 from collections.abc import Mapping, Sequence
 
-from .abi import DOC_ATTESTED_EVENT_TOPIC0
-from .model import DocAttested
+from .abi import DOC_ATTESTED_EVENT_TOPIC0, DOC_ATTESTED_EVENT_LEGACY_TOPIC0
+from .model import ZERO_ADDRESS, DocAttested
 
 
 def decode_doc_attested_log(log: Mapping[str, object]) -> DocAttested:
     """Decode a raw JSON-RPC log object into a neutral `DocAttested` record."""
     topics = _topics(log)
-    if _word(topics[0], "topics[0]") != _word(DOC_ATTESTED_EVENT_TOPIC0, "topic0"):
+    topic0 = _word(topics[0], "topics[0]")
+    if topic0 not in (
+        _word(DOC_ATTESTED_EVENT_TOPIC0, "topic0"),
+        _word(DOC_ATTESTED_EVENT_LEGACY_TOPIC0, "topic0"),
+    ):
         raise ValueError("log is not a DocAttested event")
     if len(topics) != 4:
         raise ValueError(f"DocAttested log requires 4 topics, got {len(topics)}")
@@ -24,18 +28,29 @@ def decode_doc_attested_log(log: Mapping[str, object]) -> DocAttested:
     doc_ref = _uint64_from_word(_word(topics[3], "docRef"), "docRef")
 
     data = _data(log["data"], "data")
-    submitter = _address_from_word(_data_word(data, 0), "submitter")
-    parent_hash = _bytes32_word(_data_word(data, 1))
-    block_hash = _bytes32_word(_data_word(data, 2))
-    content_hash = _bytes32_word(_data_word(data, 3))
-    uri_hash = _bytes32_word(_data_word(data, 4))
-    uri_offset = _uint_from_word(_data_word(data, 5))
+    if topic0 == _word(DOC_ATTESTED_EVENT_TOPIC0, "topic0"):
+        on_behalf_of = _address_from_word(_data_word(data, 0), "onBehalfOf")
+        submitter = _address_from_word(_data_word(data, 1), "submitter")
+        parent_hash = _bytes32_word(_data_word(data, 2))
+        block_hash = _bytes32_word(_data_word(data, 3))
+        content_hash = _bytes32_word(_data_word(data, 4))
+        uri_hash = _bytes32_word(_data_word(data, 5))
+        uri_offset = _uint_from_word(_data_word(data, 6))
+    else:
+        on_behalf_of = ZERO_ADDRESS
+        submitter = _address_from_word(_data_word(data, 0), "submitter")
+        parent_hash = _bytes32_word(_data_word(data, 1))
+        block_hash = _bytes32_word(_data_word(data, 2))
+        content_hash = _bytes32_word(_data_word(data, 3))
+        uri_hash = _bytes32_word(_data_word(data, 4))
+        uri_offset = _uint_from_word(_data_word(data, 5))
     uri = _string_from_data(data, uri_offset)
 
     return DocAttested(
         doc_chain_id=doc_chain_id,
         attester=attester,
         doc_ref=doc_ref,
+        on_behalf_of=on_behalf_of,
         submitter=submitter,
         parent_hash=parent_hash,
         block_hash=block_hash,

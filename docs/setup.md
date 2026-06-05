@@ -1,8 +1,8 @@
 # RSO Operator Setup
 
-The mechanical first-time path for both archive nodes and (eventually)
-relayers. Conceptual context and policy decisions — *why* you'd run one,
-funding models, operational expectations — live in [`operator.md`](operator.md).
+The mechanical first-time path for archive nodes and the optional sweeper.
+Conceptual context and policy decisions — *why* you'd run one, funding models,
+operational expectations — live in [`operator.md`](operator.md).
 
 This guide is written as a detailed, beginner-friendly walkthrough.
 Questions and requests for clarification are welcome.
@@ -20,9 +20,11 @@ because GitHub Actions can run the node entirely inside your fork.
 
 The intended setup path is deliberately short: fork the repo, enable
 Actions, add the two Space-Track secrets, and let the scheduled workflow
-run. The default `main` branch is the code/controller branch. The running
-archive state lives on a `node` branch created automatically by the daily
-workflow if your fork does not already have one.
+run. Optional attestation secrets let the same workflow sign and submit
+DocChain attestations for a sweeper to submit later. The default `main` branch
+is the code/controller branch. The running archive state lives on a `node`
+branch created automatically by the daily workflow if your fork does not
+already have one.
 
 ## Setting up an archive node
 
@@ -102,6 +104,7 @@ Optional:
 ```text
 ARWEAVE_JWK
 RSO_WORKFLOW_UPDATE_TOKEN
+DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY
 ```
 
 If you want your fork to publish to Arweave automatically during the
@@ -119,6 +122,45 @@ write, then save it as `RSO_WORKFLOW_UPDATE_TOKEN`. If you do not add that
 token, normal pipeline code updates still work. Workflow controller
 changes may show a warning and require clicking GitHub's **Sync fork**
 button on `main`.
+
+### 3a. Optional: add automatic attestations
+
+Automatic attestations use a disposable Ethereum signing key. This key is
+not a personal wallet and should never hold ETH, NFTs, or tokens. It signs
+RSO DocChain claims; a separate sweeper pays gas for backed operators.
+
+Create a fresh EOA address for the node. Store the private key as the
+repository secret:
+
+```text
+DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY
+```
+
+Store the matching public address as a repository variable or secret:
+
+```text
+RSO_ATTESTER_ADDRESS
+```
+
+For RSO V1, leave `RSO_ON_BEHALF_OF_ADDRESS` unset unless you are testing a
+future DocChain profile that needs delegated identity metadata. Card holders
+back your `RSO_ATTESTER_ADDRESS` directly through the RSO backing process. If
+you rotate the disposable key, update `DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY`,
+update `RSO_ATTESTER_ADDRESS`, and ask backers to move support to the new
+operator address. No contract change is needed.
+
+Finally, configure the DocChain deployment:
+
+```text
+RSO_DOCCHAIN_ADDRESS
+RSO_DOCCHAIN_CHAIN_ID
+RSO_DOCCHAIN_DEPLOYMENT_BLOCK
+```
+
+`RSO_DOCCHAIN_ADDRESS`, `RSO_DOCCHAIN_CHAIN_ID`,
+and `RSO_DOCCHAIN_DEPLOYMENT_BLOCK` can be repository variables. The daily
+workflow skips attestation signing cleanly if any required setting is absent, so
+archive operation does not depend on this optional path.
 
 ### 4. Run the validator first
 
@@ -187,6 +229,8 @@ Expected result:
 - `catalog.json.gz` remains committed on `node` for the two newest
   archived days
 - a matching release asset appears in your fork's Releases
+- if automatic attestations are configured, `data/attestations/rso-docchain-state.json`
+  and `data/attestations/signed/YYYY-MM-DD.json` update
 
 That proves your fork can:
 
@@ -195,6 +239,7 @@ That proves your fork can:
 - apply a bounded `gp_history` delta
 - write the new manifest/audit files
 - publish the release bundle
+- optionally sign a DocChain attestation for sweepers
 
 ### 6. Understand the official genesis
 
@@ -221,28 +266,66 @@ For the same date, compare:
 
 Matching hashes across forks are the real success condition.
 
-## Setting up a relayer (optional, TBD)
+## Setting up a sweeper (optional)
 
-The relayer codebase is not yet released. When it ships, the steps will
-roughly be:
+A sweeper is a funded courier. Most node operators do not need to run one. Run a
+sweeper only if you understand that the sweeper key pays gas and must be
+treated as a limited treasury allowance.
 
-1. Provision a small server with HTTPS and a stable DNS name. (TBD)
-2. Install the canonical relayer codebase. (TBD — link will land here.)
-3. Configure mainnet RPC, 6529 API access, and quota/rate-limit storage.
+1. Clone this repo on the machine or workflow that will submit transactions.
+2. Copy `sweeper/operators.example.json` to `sweeper/operators.json` and list
+   the operator repositories to sweep.
+3. Configure mainnet RPC, DocChain, and the daily operator-backing snapshot.
 4. Generate and fund a hot wallet within the ceiling described in
    [`operator.md`](operator.md).
-5. Stand up a monitoring URL and announce a contact channel.
-6. If you want to be on the upstream-distributed list, open a PR adding
-   your endpoint to the dApp source.
+5. Run:
 
-For background on what a relayer is, the funding models, and what's
-expected of treasury-funded relayers, see [`operator.md`](operator.md).
+```text
+python3 sweeper/rso_sweeper.py \
+  --start YYYY-MM-DD \
+  --end YYYY-MM-DD \
+  --backing "data/backing/{date}.json"
+```
+
+The repository also includes a daily **Sweep RSO Attestations** GitHub Actions
+workflow. It is scheduled for one hour after the expected TDH/backing snapshot
+boundary, and it runs only when `sweeper/operators.json` exists and the
+required sweeper secrets/variables are configured. If a backing snapshot is not
+available yet, that date is skipped.
+
+Minimum sweeper environment:
+
+```text
+RSO_SWEEPER_RPC_URL
+RSO_DOCCHAIN_ADDRESS
+RSO_SWEEPER_PRIVATE_KEY
+RSO_OPERATOR_BACKING_SNAPSHOT
+```
+
+Important optional settings:
+
+```text
+RSO_SWEEPER_DRY_RUN
+RSO_SWEEPER_OPERATORS
+RSO_SWEEPER_TOP_OPERATORS
+RSO_SWEEPER_MIN_CARD_SPECIFIC_TDH
+```
+
+The default backing snapshot location is:
+
+```text
+data/backing/{date}.json
+```
+
+The default sponsorship policy funds the top 5 backed operators for each day.
+
+For background on the operator/sweeper split, see [`operator.md`](operator.md).
 For RSO profile details — DocBlock validation, sponsorship policy, deadline
 handling, etc. — see [`attestation-design.md`](attestation-design.md).
 
-A node operator can run a relayer alongside their archive node, but
-nothing is shared between them automatically. They are separate services
-with separate deployment, separate keys, and separate concerns.
+A node operator can run a sweeper alongside their archive node, but nothing is
+shared between them automatically. They are separate services with separate
+keys and separate concerns.
 
 ## If something fails
 

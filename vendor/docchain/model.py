@@ -7,6 +7,8 @@ Individual Doc Chain indexers and profilers should compose these neutral records
 from dataclasses import dataclass
 from typing import Mapping
 
+ZERO_ADDRESS = "0x" + "00" * 20
+
 
 def _field(raw: Mapping[str, object], snake_name: str, camel_name: str) -> object:
     if snake_name in raw:
@@ -31,6 +33,7 @@ class DocBlock:
 @dataclass(frozen=True)
 class DocAttestation:
     attester: str
+    on_behalf_of: str
     doc_block: DocBlock
     uri: str
     deadline: int
@@ -41,6 +44,7 @@ class DocAttested:
     doc_chain_id: str
     attester: str
     doc_ref: int
+    on_behalf_of: str
     submitter: str
     parent_hash: str
     block_hash: str
@@ -59,6 +63,7 @@ def normalize_doc_attested(raw: Mapping[str, object]) -> DocAttested:
         doc_chain_id=str(_field(raw, "doc_chain_id", "docChainId")),
         attester=str(raw["attester"]),
         doc_ref=int(_field(raw, "doc_ref", "docRef")),
+        on_behalf_of=str(_optional_field(raw, "on_behalf_of", "onBehalfOf") or ZERO_ADDRESS),
         submitter=str(raw["submitter"]),
         parent_hash=str(_field(raw, "parent_hash", "parentHash")),
         block_hash=str(_field(raw, "block_hash", "blockHash")),
