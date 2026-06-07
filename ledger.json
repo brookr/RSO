@@ -652,5 +652,33 @@
     "query_strategy": "prior_snapshot_plus_bounded_gp_history_delta",
     "sha256": "a217462bbc031ab4179e63fd3d69479d9ab69022e51d148ddc4bd7f3f7e5ec9d",
     "state_as_of_utc": "2026-06-05T00:00:00Z"
+  },
+  {
+    "archived_at": "2026-06-07T06:33:56.421281+00:00",
+    "base_snapshot_date": "2026-06-05",
+    "base_snapshot_sha256": "a217462bbc031ab4179e63fd3d69479d9ab69022e51d148ddc4bd7f3f7e5ec9d",
+    "compressed_bytes": 11379578,
+    "date": "2026-06-06",
+    "delta_window_end_utc": "2026-06-06T00:00:00Z",
+    "delta_window_start_utc": "2026-06-05T00:00:00Z",
+    "object_count": 67915,
+    "provenance": "rolling_gp_history_delta",
+    "query_strategy": "prior_snapshot_plus_bounded_gp_history_delta",
+    "sha256": "78b4e985d70815579587402e2a97a707e8032a805642168cfbf4ced89d09e0b9",
+    "state_as_of_utc": "2026-06-06T00:00:00Z"
+  },
+  {
+    "archived_at": "2026-06-07T06:37:28.752140+00:00",
+    "base_snapshot_date": "2026-06-06",
+    "base_snapshot_sha256": "78b4e985d70815579587402e2a97a707e8032a805642168cfbf4ced89d09e0b9",
+    "compressed_bytes": 11384256,
+    "date": "2026-06-07",
+    "delta_window_end_utc": "2026-06-07T00:00:00Z",
+    "delta_window_start_utc": "2026-06-06T00:00:00Z",
+    "object_count": 67915,
+    "provenance": "rolling_gp_history_delta",
+    "query_strategy": "prior_snapshot_plus_bounded_gp_history_delta",
+    "sha256": "d35dfd6ba531b98dbf5feb8cb787848b06dcc297ef5a36f88a93107ee97d36e3",
+    "state_as_of_utc": "2026-06-07T00:00:00Z"
   }
 ]
