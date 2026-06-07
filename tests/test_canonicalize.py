@@ -45,6 +45,29 @@ class CanonicalizeTests(unittest.TestCase):
         with self.assertRaisesRegex(snapshot.SnapshotError, "expected string"):
             snapshot.validate_gp_records([record], min_count=0, context="test")
 
+    def test_gp_records_allow_null_optional_values(self):
+        # Space-Track returns JSON null for DECAY_DATE, RCS_SIZE, SITE,
+        # LAUNCH_DATE, and COUNTRY_CODE on many objects; null must be accepted
+        # (it hashes deterministically as `null`).
+        record = {
+            "NORAD_CAT_ID": "4",
+            "CREATION_DATE": "2026-04-18T05:00:00",
+            "EPOCH": "2026-04-18T04:00:00",
+            "MEAN_MOTION": "15.0",
+            "ECCENTRICITY": "0.0001",
+            "INCLINATION": "51.6",
+            "RA_OF_ASC_NODE": "10.0",
+            "ARG_OF_PERICENTER": "20.0",
+            "MEAN_ANOMALY": "30.0",
+            "COUNTRY_CODE": None,
+            "DECAY_DATE": None,
+        }
+
+        # Must not raise.
+        snapshot.validate_gp_records([record], min_count=0, context="test")
+        # null serializes deterministically.
+        self.assertIn(b'"COUNTRY_CODE":null', snapshot.canonicalize([record]))
+
     def test_records_by_cat_id_rejects_duplicate_ids(self):
         left = {
             "NORAD_CAT_ID": "1",

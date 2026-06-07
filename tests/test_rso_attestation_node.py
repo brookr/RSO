@@ -175,16 +175,27 @@ class RsoAttestationNodeTest(unittest.TestCase):
             )
 
             with patch.object(node, "DATA_DIR", data_dir):
+                # auto mode falls back to the plain location, with or without node_id
                 self.assertEqual(node.release_uri("2026-05-28"), "ar://abc123")
+                self.assertEqual(
+                    node.release_uri("2026-05-28", node_id="github:owner/repo"), "ar://abc123"
+                )
+                # an explicitly requested destination mode still requires a fingerprint
                 with self.assertRaisesRegex(ValueError, "bundle fingerprint"):
-                    node.release_uri("2026-05-28", node_id="github:owner/repo")
+                    node.release_uri("2026-05-28", mode="arweave", node_id="github:owner/repo")
 
-    def test_release_uri_rejects_node_attestation_without_publication_location(self):
+    def test_release_uri_hash_only_when_no_publication_location(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.object(node, "DATA_DIR", Path(tmpdir) / "data"):
+                # auto mode degrades to a hash-only attestation (empty uri) rather
+                # than halting the snapshot, with or without node_id set.
                 self.assertEqual(node.release_uri("2026-05-28"), "")
-                with self.assertRaisesRegex(ValueError, "publication location"):
-                    node.release_uri("2026-05-28", node_id="github:owner/repo")
+                self.assertEqual(
+                    node.release_uri("2026-05-28", node_id="github:owner/repo"), ""
+                )
+                # an explicitly requested destination mode still errors.
+                with self.assertRaisesRegex(ValueError, "destination"):
+                    node.release_uri("2026-05-28", mode="github_release", node_id="github:owner/repo")
 
     def test_prepare_sign_records_signed_artifact_and_state_entry(self):
         with tempfile.TemporaryDirectory() as tmpdir:

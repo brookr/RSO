@@ -299,9 +299,15 @@ def validate_gp_record_values(record, *, index, context):
     for field, value in record.items():
         if not isinstance(field, str):
             raise SnapshotError(f"{context} record {cat_id} has a non-string field name")
-        if not isinstance(value, str):
+        # Space-Track returns JSON null for fields like DECAY_DATE, RCS_SIZE,
+        # SITE, LAUNCH_DATE, and COUNTRY_CODE on many objects. null is allowed:
+        # it serializes deterministically as `null` across implementations (and
+        # is already part of committed snapshot hashes). Any other non-string
+        # type (notably float) is rejected to fail closed on the real
+        # cross-language determinism risk.
+        if value is not None and not isinstance(value, str):
             raise SnapshotError(
-                f"{context} record {cat_id} field {field} is {type(value).__name__}, expected string"
+                f"{context} record {cat_id} field {field} is {type(value).__name__}, expected string or null"
             )
 
 

@@ -228,15 +228,20 @@ def release_uri(snapshot_date: str, *, mode: str = "auto", node_id: str = "") ->
                 locations=locations,
                 node_id=node_id,
             )
-        if node_id:
+        # A location without a bundle fingerprint cannot form a sweeper-verifiable
+        # locator. For an explicitly requested destination mode that is a real
+        # error; in auto mode fall back to the plain location URI (the sweeper
+        # will simply defer an unverifiable claim).
+        if mode != "auto" and node_id:
             raise ValueError(
                 f"{snapshot_date}: node attestations require a bundle fingerprint"
             )
         return locations[0]
-    if mode == "auto" and node_id:
-        raise ValueError(
-            f"{snapshot_date}: node attestations require at least one publication location"
-        )
+    # No publication destination. In auto mode this is a valid hash-only
+    # attestation (uri == ""): the snapshot must not halt just because there is
+    # nothing to publish (e.g. STORAGE_BACKEND=none), and the sweeper will not
+    # sponsor an unverifiable claim. Only an explicitly requested destination
+    # mode is an error here.
     if mode == "auto":
         return ""
     raise ValueError(f"{snapshot_date}: no {mode} destination in storage receipt")
