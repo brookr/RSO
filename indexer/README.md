@@ -55,26 +55,59 @@ The vendored decoder accepts both the original `DocAttested` event shape and the
 current shape with signed `onBehalfOf` metadata. Legacy events are indexed with
 `onBehalfOf` set to the zero address.
 
-To include card-specific backing in the generated agreement groups, pass a
-daily operator-backing snapshot:
+To include TDH support in the generated agreement groups, pass the directory of
+daily TDH support snapshots and the public sweeper reports:
 
 ```bash
-python3 indexer/index_rso_attestations.py --backing backing.json
+python3 indexer/index_rso_attestations.py \
+  --tdh-support data/backing \
+  --sweeper-reports reports/sweeper
 ```
 
 Supported shape:
 
 ```json
 {
-  "schema": "rso-operator-backing-snapshot-v1",
+  "schema": "rso-tdh-support-snapshot-v1",
   "date": "2026-06-01",
+  "identities": {
+    "example-6529-identity": {
+      "cardSpecificTdh": 12345,
+      "accounts": ["0x..."]
+    }
+  },
   "operators": {
-    "0xoperatorAttester": { "cardSpecificTdh": 12345, "backerCount": 17, "rank": 1 }
+    "github:owner/repo": {
+      "cardSpecificTdhBacking": 12345,
+      "backerCount": 17,
+      "rank": 1
+    }
   }
 }
 ```
 
-The indexer groups events by daily fingerprint and sums backing across the
-operator attesters in each agreement group. `onBehalfOf` remains visible as
-DocChain metadata, but RSO V1 does not use it for TDH weighting. The indexer
-does not treat raw repository count as consensus.
+The indexer applies each support snapshot only to that snapshot's date. Direct
+witness TDH is assigned when the event attester is an account in a listed 6529
+identity. Node-backing TDH is assigned only when a public sweeper report proves
+that the selected node, artifact declaration, signed publication `nodeId`, and
+signed attester all aligned and every listed bundle location verified.
+
+Publication URLs never establish node identity. This prevents a signer from
+claiming another node's backing by placing a victim-looking GitHub URL in an
+attestation, and it allows Arweave-only nodes to receive backing after the
+sweeper verifies them.
+
+The index reports `directWitnessTdh`, `nodeBackingTdh`, and
+`combinedSupportTdh` separately. It counts each identity and node at most once
+per agreement group. If an identity or node supports conflicting groups for one
+day, that channel is reported as equivocating and counts for neither group.
+Raw attestation count is descriptive only and never breaks a support tie; when
+multiple groups have equal combined support, `leadingAgreementGroup` is `null`.
+`onBehalfOf` remains visible as generic DocChain metadata, but RSO V1 does not
+use it for TDH weighting.
+
+Raw DocChain events are permissionless claims. An event can name any
+`docChainId`, publish any URI string, or point at a repository-like location.
+RSO consumers should treat unverified node claims as claims only. Verified
+sweeper evidence plus the applicable daily TDH support snapshot determines
+weighting, not event volume or repository count.

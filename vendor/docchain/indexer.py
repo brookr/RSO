@@ -35,6 +35,7 @@ RPC_MAX_RETRIES = 6
 RPC_RETRY_BASE_DELAY_SECONDS = 0.75
 RPC_RETRY_MAX_DELAY_SECONDS = 30.0
 GET_LOGS_REQUEST_DELAY_SECONDS = 0.2
+RPC_MAX_RESPONSE_BYTES = 10 * 1024 * 1024
 
 
 class EthereumRpc:
@@ -64,9 +65,9 @@ class EthereumRpc:
             )
             try:
                 with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                    body = json.loads(response.read().decode("utf-8"))
+                    body = json.loads(_read_limited(response, RPC_MAX_RESPONSE_BYTES).decode("utf-8"))
             except urllib.error.HTTPError as exc:
-                detail = exc.read().decode("utf-8", errors="replace")
+                detail = _read_limited(exc, RPC_MAX_RESPONSE_BYTES).decode("utf-8", errors="replace")
                 if exc.code == 429:
                     if attempt < RPC_MAX_RETRIES:
                         _sleep_for_retry(attempt, _retry_after_seconds(exc))
@@ -316,6 +317,22 @@ def _retry_after_seconds(exc: urllib.error.HTTPError) -> float | None:
     if delay < 0:
         return None
     return delay
+
+
+def _read_limited(stream, limit: int) -> bytes:
+    if limit < 1:
+        raise RpcError("JSON-RPC response size limit must be positive")
+    chunks = []
+    total = 0
+    while True:
+        chunk = stream.read(min(1024 * 1024, limit - total + 1))
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > limit:
+            raise RpcError("JSON-RPC response exceeds size limit")
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 def _sleep_for_retry(attempt: int, retry_after: float | None) -> None:

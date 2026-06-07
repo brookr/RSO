@@ -3,7 +3,9 @@
 The daily hash is computed from canonical catalog bytes. Storage locations are
 retrieval hints; they are not part of consensus. When a signed attestation uses
 the RSO publication-locator data URI, it also commits to the exact release
-bundle SHA-256 so each mirror can be checked byte-for-byte.
+bundle SHA-256 so each mirror can be checked byte-for-byte. Locations do not
+identify the node. Normal node attestations explicitly sign a `nodeId`, which a
+sweeper recognizes only after it matches the node artifact and attester.
 
 ## Quick Verify
 

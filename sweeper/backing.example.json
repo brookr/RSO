@@ -1,14 +1,22 @@
 {
-  "schema": "rso-operator-backing-snapshot-v1",
+  "schema": "rso-tdh-support-snapshot-v1",
   "date": "2026-06-01",
   "tdhSnapshot": {
     "source": "6529",
     "completedAt": "2026-06-02T00:15:00Z"
   },
   "cardTokenId": null,
-  "operators": {
-    "0x0000000000000000000000000000000000000000": {
+  "identities": {
+    "example-6529-identity": {
       "cardSpecificTdh": 0,
+      "accounts": [
+        "0x0000000000000000000000000000000000000000"
+      ]
+    }
+  },
+  "operators": {
+    "github:owner/rso": {
+      "cardSpecificTdhBacking": 0,
       "backerCount": 0,
       "rank": 0
     }

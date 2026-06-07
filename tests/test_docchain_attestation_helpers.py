@@ -4,6 +4,8 @@ from unittest.mock import patch
 
 from vendor.docchain.attestation import (
     attest_doc_calldata,
+    cast_wallet_args_from_env,
+    has_cast_wallet_config,
     doc_block_hash_payload,
     doc_block_hash_with_cast,
     prepare_attestation,
@@ -100,10 +102,14 @@ class DocchainAttestationHelpersTest(unittest.TestCase):
             {
                 "DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY": "0xabc",
                 "RSO_SWEEPER_PRIVATE_KEY": "0xdef",
+                "DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD": "secret-pass",
             },
             clear=False,
         ):
-            self.assertEqual(redact_secret_values("x 0xabc y 0xdef"), "x <redacted> y <redacted>")
+            self.assertEqual(
+                redact_secret_values("x 0xabc y 0xdef z secret-pass"),
+                "x <redacted> y <redacted> z <redacted>",
+            )
 
     def test_subprocess_error_detail_redacts(self):
         from vendor.docchain.attestation import subprocess_error_detail
@@ -137,6 +143,53 @@ class DocchainAttestationHelpersTest(unittest.TestCase):
 
         self.assertEqual(calls[0][1:3], ["wallet", "address"])
         self.assertEqual(calls[1][1:3], ["wallet", "sign"])
+
+    def test_sign_prepared_supports_keystore_without_key_on_argv(self):
+        calls = []
+
+        def fake_run(command, check, capture_output, text):
+            calls.append(command)
+            command_text = " ".join(command)
+            self.assertNotIn("keystore-json-secret", command_text)
+            self.assertNotIn("keystore-password-secret", command_text)
+            self.assertIn("--keystore", command)
+            self.assertIn("--password-file", command)
+            if command[1:3] == ["wallet", "address"]:
+                return subprocess.CompletedProcess(command, 0, stdout="0x1111111111111111111111111111111111111111\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout="0x1234\n", stderr="")
+
+        prepared = prepare_attestation(
+            chain_id=1,
+            contract_address="0x" + "aa" * 20,
+            attester="0x" + "11" * 20,
+            doc_chain_id="0x" + "33" * 32,
+            doc_ref=7,
+            parent_hash="0x" + "44" * 32,
+            content_hash="0x" + "55" * 32,
+            deadline=123,
+        )
+
+        with patch.dict(
+            "os.environ",
+            {
+                "PRIVATE_KEY": "",
+                "KEYSTORE_JSON": "keystore-json-secret",
+                "KEYSTORE_PASSWORD": "keystore-password-secret",
+            },
+            clear=False,
+        ):
+            self.assertTrue(has_cast_wallet_config())
+            self.assertEqual(sign_prepared_with_cast(prepared, run=fake_run), "0x1234")
+
+        self.assertEqual(calls[0][1:3], ["wallet", "address"])
+        self.assertEqual(calls[1][1:3], ["wallet", "sign"])
+
+    def test_wallet_config_can_disallow_raw_private_keys(self):
+        with patch.dict("os.environ", {"PRIVATE_KEY": "0xabc"}, clear=True):
+            self.assertFalse(has_cast_wallet_config(allow_raw_private_key=False))
+            with self.assertRaisesRegex(ValueError, "KEYSTORE"):
+                with cast_wallet_args_from_env(allow_raw_private_key=False):
+                    pass
 
     def test_sign_prepared_rejects_private_key_address_mismatch(self):
         def fake_run(command, check, capture_output, text):

@@ -13,8 +13,11 @@ import io
 import gzip
 import hashlib
 import http.cookiejar
+import ipaddress
 import json
 import os
+import re
+import socket
 import sys
 import tarfile
 import time
@@ -50,11 +53,18 @@ RELEASE_OUTPUT_DIR = Path(__file__).parent.parent / ".release"
 STORAGE_BACKENDS = frozenset({"none", "github_release", "arweave", "ipfs_pinata"})
 UPLOAD_POLICIES = frozenset({"never", "if_missing", "always_mirror"})
 ARWEAVE_GATEWAY_DEFAULT = "https://arweave.net"
+MAX_RELEASE_BUNDLE_BYTES = int(os.environ.get("RSO_MAX_RELEASE_BUNDLE_BYTES", str(100 * 1024 * 1024)))
+MAX_CATALOG_BYTES = int(os.environ.get("RSO_MAX_CATALOG_BYTES", str(200 * 1024 * 1024)))
+MAX_JSON_BYTES = int(os.environ.get("RSO_MAX_JSON_BYTES", str(2 * 1024 * 1024)))
 ARWEAVE_MAX_CHUNK_SIZE = 256 * 1024
 ARWEAVE_MIN_CHUNK_SIZE = 32 * 1024
 ARWEAVE_CHUNK_UPLOAD_RETRIES = int(os.environ.get("ARWEAVE_CHUNK_UPLOAD_RETRIES", "5"))
 ARWEAVE_CHUNK_UPLOAD_RETRY_DELAY = float(
     os.environ.get("ARWEAVE_CHUNK_UPLOAD_RETRY_DELAY", "40")
+)
+ARWEAVE_TRANSACTION_RETRIES = int(os.environ.get("ARWEAVE_TRANSACTION_RETRIES", "3"))
+ARWEAVE_TRANSACTION_RETRY_DELAY = float(
+    os.environ.get("ARWEAVE_TRANSACTION_RETRY_DELAY", "20")
 )
 ARWEAVE_TRANSIENT_CHUNK_ERRORS = frozenset(
     {
@@ -64,6 +74,7 @@ ARWEAVE_TRANSIENT_CHUNK_ERRORS = frozenset(
         "timeout",
     }
 )
+ARWEAVE_TRANSIENT_HTTP_STATUSES = frozenset({408, 425, 429, 500, 502, 503, 504})
 RELEASE_ARTIFACT_FILENAMES = (
     "catalog.json.gz",
     "manifest.json",
@@ -256,11 +267,42 @@ def validate_gp_records(records, min_count=MIN_OBJECT_COUNT, context="Space-Trac
     for index, record in enumerate(records):
         if not isinstance(record, dict):
             raise SnapshotError(f"{context} record {index} is not an object")
+        validate_gp_record_values(record, index=index, context=context)
         missing = REQUIRED_OMM_FIELDS.difference(record)
         if missing:
             missing_list = ", ".join(sorted(missing))
             cat_id = record.get("NORAD_CAT_ID", f"index {index}")
             raise SnapshotError(f"{context} record {cat_id} missing fields: {missing_list}")
+
+
+# A NORAD catalog number is a canonical non-negative decimal integer: ASCII
+# digits only with no leading-zero alias ("0" itself is allowed; "05" is not).
+# This keeps the string form a bijection with the int used for sort/dedup, so
+# string-keyed uniqueness and int-keyed ordering can never disagree, and the
+# hashed catalog bytes stay reproducible across language implementations.
+# str.isdigit() is insufficient: it also accepts Unicode digits (Arabic-Indic,
+# fullwidth) and non-decimal digit characters (superscripts) that int() then
+# rejects or aliases. NORAD_CAT_ID is an integer, not a hash or 0x address;
+# identifiers that legitimately carry significant leading zeros are compared as
+# canonical strings elsewhere and are never int()-coerced.
+_CANONICAL_NORAD_CAT_ID = re.compile(r"0|[1-9][0-9]*")
+
+
+def is_canonical_norad_cat_id(value):
+    return isinstance(value, str) and _CANONICAL_NORAD_CAT_ID.fullmatch(value) is not None
+
+
+def validate_gp_record_values(record, *, index, context):
+    cat_id = record.get("NORAD_CAT_ID")
+    if not is_canonical_norad_cat_id(cat_id):
+        raise SnapshotError(f"{context} record {index} has invalid NORAD_CAT_ID")
+    for field, value in record.items():
+        if not isinstance(field, str):
+            raise SnapshotError(f"{context} record {cat_id} has a non-string field name")
+        if not isinstance(value, str):
+            raise SnapshotError(
+                f"{context} record {cat_id} field {field} is {type(value).__name__}, expected string"
+            )
 
 
 def creation_time(record):
@@ -328,6 +370,7 @@ def canonicalize(data):
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=True,
+        allow_nan=False,
     ).encode("utf-8")
 
 
@@ -340,7 +383,15 @@ def record_hash(record):
 
 
 def records_by_cat_id(records):
-    return {record["NORAD_CAT_ID"]: record for record in records}
+    selected = {}
+    for index, record in enumerate(records):
+        cat_id = record.get("NORAD_CAT_ID")
+        if not is_canonical_norad_cat_id(cat_id):
+            raise SnapshotError(f"catalog record {index} has invalid NORAD_CAT_ID")
+        if cat_id in selected:
+            raise SnapshotError(f"duplicate NORAD_CAT_ID value: {cat_id}")
+        selected[cat_id] = record
+    return selected
 
 
 def sorted_records_from_state(state_by_cat_id):
@@ -852,7 +903,7 @@ def build_visibility_audit(
         for cat_id in reappeared_ids
     ]
 
-    current_id_bytes = "\n".join(sorted(current_ids, key=int_string_sort_key)).encode("ascii")
+    current_id_bytes = "\n".join(sorted(current_ids, key=int_string_sort_key)).encode("utf-8")
     audit = {
         "date": snapshot_date,
         "observed_at_utc": observed_at_utc,
@@ -1294,6 +1345,63 @@ def sha256_path(path):
     return digest.hexdigest()
 
 
+def read_limited(stream, limit, *, label="payload"):
+    if limit < 1:
+        raise SnapshotError(f"{label} size limit must be positive")
+    chunks = []
+    total = 0
+    while True:
+        chunk = stream.read(min(1024 * 1024, limit - total + 1))
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > limit:
+            raise SnapshotError(f"{label} exceeds size limit")
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def gzip_decompress_limited(payload, limit, *, label="gzip payload"):
+    with gzip.GzipFile(fileobj=io.BytesIO(payload), mode="rb") as stream:
+        return read_limited(stream, limit, label=label)
+
+
+class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def strip_authorization_headers(headers):
+    return {key: value for key, value in headers.items() if str(key).lower() != "authorization"}
+
+
+def fetch_url_bytes_with_redirects(url, *, timeout, max_bytes, headers, label, validate_url):
+    opener = urllib.request.build_opener(NoRedirectHandler)
+    current = url
+    origin_host = (urllib.parse.urlparse(url).hostname or "").lower()
+    for _redirect in range(4):
+        validate_url(current)
+        current_host = (urllib.parse.urlparse(current).hostname or "").lower()
+        request_headers = dict(headers)
+        if current_host != origin_host:
+            request_headers = strip_authorization_headers(request_headers)
+        request = urllib.request.Request(current, headers=request_headers)
+        try:
+            with opener.open(request, timeout=timeout) as response:
+                return read_limited(response, max_bytes, label=label)
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (301, 302, 303, 307, 308):
+                raise
+            try:
+                location = exc.headers.get("location")
+                if not location:
+                    raise SnapshotError(f"{label} redirect response is missing Location") from exc
+                current = urllib.parse.urljoin(current, location)
+            finally:
+                exc.close()
+    raise SnapshotError(f"{label} redirects too many times")
+
+
 def release_tag(current_date_str):
     parse_date(current_date_str)
     return f"rso-archive-{current_date_str}"
@@ -1391,12 +1499,14 @@ def github_request(
     req = urllib.request.Request(url, data=data, headers=request_headers, method=method)
     try:
         with urllib.request.urlopen(req, timeout=180) as resp:
-            body = resp.read()
+            body = read_limited(resp, MAX_JSON_BYTES, label="GitHub API response")
             content_type = resp.headers.get("Content-Type", "")
     except urllib.error.HTTPError as exc:
         if allow_not_found and exc.code == 404:
             return None
-        detail = exc.read().decode("utf-8", errors="replace")
+        detail = read_limited(exc, MAX_JSON_BYTES, label="GitHub API error response").decode(
+            "utf-8", errors="replace"
+        )
         raise SnapshotError(f"GitHub API {method} {url} failed ({exc.code}): {detail}") from exc
 
     if not body:
@@ -1429,9 +1539,31 @@ def github_download_bytes(url):
     headers = {"User-Agent": f"rso-archive/{PIPELINE_VERSION}"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=180) as resp:
-        return resp.read()
+    return fetch_url_bytes_with_redirects(
+        url,
+        timeout=180,
+        max_bytes=MAX_RELEASE_BUNDLE_BYTES,
+        headers=headers,
+        label="GitHub release asset",
+        validate_url=validate_github_download_url,
+    )
+
+
+def validate_github_download_url(url):
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https":
+        raise SnapshotError("GitHub release asset URL must use HTTPS")
+    host = (parsed.hostname or "").lower()
+    if not github_download_host_allowed(host):
+        raise SnapshotError(f"GitHub release asset host is not allowed: {host}")
+    reject_private_host(host, context="GitHub release asset")
+
+
+def github_download_host_allowed(host):
+    allowed = ("github.com", "api.github.com", "uploads.github.com", "objects.githubusercontent.com")
+    if host in allowed:
+        return True
+    return host.endswith(".githubusercontent.com")
 
 
 def release_bundle_from_github(current_date_str, repo=None):
@@ -1450,7 +1582,7 @@ def catalog_gz_bytes_from_release_bundle(current_date_str, repo=None):
         member = tar.extractfile("catalog.json.gz")
         if member is None:
             raise SnapshotError(f"{release_asset_name(current_date_str)} missing catalog.json.gz")
-        return member.read()
+        return read_limited(member, MAX_CATALOG_BYTES, label="catalog.json.gz")
 
 
 def download_release_bundle_to_file(current_date_str, output_dir=None, repo=None):
@@ -1462,14 +1594,18 @@ def download_release_bundle_to_file(current_date_str, output_dir=None, repo=None
 
 
 def catalog_bytes_from_release_bundle(current_date_str, repo=None):
-    return gzip.decompress(catalog_gz_bytes_from_release_bundle(current_date_str, repo=repo))
+    return gzip_decompress_limited(
+        catalog_gz_bytes_from_release_bundle(current_date_str, repo=repo),
+        MAX_CATALOG_BYTES,
+        label="catalog.json",
+    )
 
 
 def read_catalog_bytes(current_date_str, repo=None):
     gz_path = catalog_gz_path(current_date_str)
     if gz_path.exists():
         with gzip.open(gz_path, "rb") as f:
-            return f.read()
+            return read_limited(f, MAX_CATALOG_BYTES, label=str(gz_path))
     return catalog_bytes_from_release_bundle(current_date_str, repo=repo)
 
 
@@ -1594,13 +1730,23 @@ def release_bundle_from_existing(current_date_str, output_dir=None):
     bundle_path = output_dir / release_asset_name(current_date_str)
     if not bundle_path.exists():
         raise SnapshotError(f"{current_date_str}: missing existing bundle {bundle_path}")
+    if bundle_path.stat().st_size > MAX_RELEASE_BUNDLE_BYTES:
+        raise SnapshotError(f"{current_date_str}: existing bundle exceeds size limit")
 
     manifest = load_manifest(current_date_str)
     with tarfile.open(bundle_path, mode="r:gz") as tar:
         member = tar.extractfile("release-manifest.json")
         if member is None:
             raise SnapshotError(f"{bundle_path}: missing release-manifest.json")
-        bundle_manifest = json.load(member)
+        bundle_manifest = json.loads(
+            read_limited(member, MAX_JSON_BYTES, label="release-manifest.json").decode("utf-8")
+        )
+        if not isinstance(bundle_manifest, dict):
+            raise SnapshotError(f"{bundle_path}: release-manifest.json must be a JSON object")
+        catalog_member = tar.extractfile("catalog.json.gz")
+        if catalog_member is None:
+            raise SnapshotError(f"{bundle_path}: missing catalog.json.gz")
+        catalog_gz = read_limited(catalog_member, MAX_CATALOG_BYTES, label="catalog.json.gz")
 
     if bundle_manifest.get("catalog_sha256") != manifest.get("sha256"):
         raise SnapshotError(
@@ -1609,6 +1755,11 @@ def release_bundle_from_existing(current_date_str, output_dir=None):
     if bundle_manifest.get("object_count") != manifest.get("object_count"):
         raise SnapshotError(
             f"{current_date_str}: existing bundle object count does not match manifest"
+        )
+    catalog_bytes = gzip_decompress_limited(catalog_gz, MAX_CATALOG_BYTES, label="catalog.json")
+    if compute_hash(catalog_bytes) != manifest.get("sha256"):
+        raise SnapshotError(
+            f"{current_date_str}: existing bundle catalog bytes do not match manifest"
         )
 
     return {
@@ -1691,7 +1842,45 @@ def sha384_bytes(data):
 
 
 def arweave_gateway():
-    return os.environ.get("ARWEAVE_GATEWAY", ARWEAVE_GATEWAY_DEFAULT).rstrip("/")
+    gateway = os.environ.get("ARWEAVE_GATEWAY", ARWEAVE_GATEWAY_DEFAULT).rstrip("/")
+    validate_arweave_gateway(gateway)
+    return gateway
+
+
+def validate_arweave_gateway(gateway):
+    parsed = urllib.parse.urlparse(gateway)
+    if parsed.scheme != "https":
+        raise SnapshotError("ARWEAVE_GATEWAY must use HTTPS")
+    host = parsed.hostname
+    if not host:
+        raise SnapshotError("ARWEAVE_GATEWAY is missing a host")
+    host = host.lower()
+    if host != "arweave.net":
+        raise SnapshotError("ARWEAVE_GATEWAY must be https://arweave.net")
+    reject_private_host(host, context="ARWEAVE_GATEWAY")
+
+
+def reject_private_host(host, *, context):
+    try:
+        addresses = [host]
+        ipaddress.ip_address(host)
+    except ValueError:
+        try:
+            addresses = [item[4][0] for item in socket.getaddrinfo(host, None)]
+        except OSError as exc:
+            raise SnapshotError(f"{context} host cannot be resolved: {host}") from exc
+    for address in addresses:
+        ip = ipaddress.ip_address(address)
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+            or not ip.is_global
+        ):
+            raise SnapshotError(f"{context} resolves to a non-public address")
 
 
 def arweave_request(
@@ -1703,6 +1892,7 @@ def arweave_request(
     allow_not_found=False,
 ):
     url = path if path.startswith("http://") or path.startswith("https://") else f"{arweave_gateway()}{path}"
+    validate_arweave_gateway(url)
     request_headers = {
         "Accept": "application/json",
         "User-Agent": f"rso-archive/{PIPELINE_VERSION}",
@@ -1721,13 +1911,15 @@ def arweave_request(
     req = urllib.request.Request(url, data=data, headers=request_headers, method=method)
     try:
         with urllib.request.urlopen(req, timeout=180) as resp:
-            body = resp.read()
+            body = read_limited(resp, MAX_JSON_BYTES, label="Arweave API response")
             content_type = resp.headers.get("Content-Type", "")
             status = resp.status
     except urllib.error.HTTPError as exc:
         if allow_not_found and exc.code == 404:
             return 404, None
-        detail = exc.read().decode("utf-8", errors="replace")
+        detail = read_limited(exc, MAX_JSON_BYTES, label="Arweave API error response").decode(
+            "utf-8", errors="replace"
+        )
         if allow_http_errors:
             try:
                 return exc.code, json.loads(detail)
@@ -2050,9 +2242,67 @@ def arweave_chunk_payload(transaction, chunk_plan, bundle_bytes, chunk_index):
     }
 
 
+def arweave_request_retryable(status, response):
+    if status in ARWEAVE_TRANSIENT_HTTP_STATUSES:
+        return True
+    if isinstance(response, dict):
+        error = str(response.get("error", "")).lower()
+    else:
+        error = str(response).lower()
+    return any(
+        marker in error
+        for marker in (
+            "timeout",
+            "temporarily",
+            "try again",
+            "rate limit",
+            "too many requests",
+            "service unavailable",
+            "gateway",
+        )
+    )
+
+
+def arweave_request_with_retries(
+    method,
+    path,
+    *,
+    payload=None,
+    headers=None,
+    allow_not_found=False,
+    attempts=None,
+    delay=None,
+):
+    max_attempts = ARWEAVE_TRANSACTION_RETRIES + 1 if attempts is None else attempts
+    retry_delay = ARWEAVE_TRANSACTION_RETRY_DELAY if delay is None else delay
+    last_error = None
+    for attempt in range(max_attempts):
+        try:
+            status, response = arweave_request(
+                method,
+                path,
+                payload=payload,
+                headers=headers,
+                allow_http_errors=True,
+                allow_not_found=allow_not_found,
+            )
+        except (TimeoutError, urllib.error.URLError) as exc:
+            last_error = exc
+            if attempt == max_attempts - 1:
+                raise SnapshotError(f"Arweave API {method} {path} did not settle: {exc}") from exc
+        else:
+            if status < 400 or (allow_not_found and status == 404):
+                return status, response
+            if not arweave_request_retryable(status, response) or attempt == max_attempts - 1:
+                return status, response
+            last_error = SnapshotError(f"Arweave API {method} {path} returned {status}: {response}")
+        time.sleep(retry_delay)
+    raise SnapshotError(f"Arweave API {method} {path} did not settle: {last_error}")
+
+
 def arweave_submit_transaction(upload):
     transaction = upload["transaction"]
-    status, response = arweave_request("POST", "/tx", payload=transaction)
+    status, response = arweave_request_with_retries("POST", "/tx", payload=transaction)
     if status not in (200, 208):
         raise SnapshotError(
             f"Arweave transaction submission failed for {transaction['id']}: {response}"
@@ -2161,9 +2411,10 @@ def github_delete_release_asset(asset, repo):
 
 def github_upload_release_asset(release, bundle):
     upload_url = release["upload_url"].split("{", 1)[0]
+    validate_github_download_url(upload_url)
     upload_url = f"{upload_url}?name={urllib.parse.quote(bundle['asset_name'])}"
     with open(bundle["path"], "rb") as f:
-        payload = f.read()
+        payload = read_limited(f, MAX_RELEASE_BUNDLE_BYTES, label=str(bundle["path"]))
     return github_request(
         "POST",
         upload_url,
@@ -2325,7 +2576,7 @@ def publish_arweave_bundle(bundle, upload_policy="if_missing", force=False):
     if not upload["inline_data"]:
         arweave_submit_chunks(upload)
 
-    status_code, tx_status = arweave_request(
+    status_code, tx_status = arweave_request_with_retries(
         "GET",
         f"/tx/{transaction['id']}/status",
         allow_not_found=True,
@@ -2536,7 +2787,7 @@ def process_prune_catalogs(args):
 
 def validate_catalog_payload(current_date_str, catalog_gz_bytes, manifest):
     try:
-        raw_bytes = gzip.decompress(catalog_gz_bytes)
+        raw_bytes = gzip_decompress_limited(catalog_gz_bytes, MAX_CATALOG_BYTES, label="catalog.json")
         records = json.loads(raw_bytes)
     except (json.JSONDecodeError, OSError, gzip.BadGzipFile) as exc:
         raise SnapshotError(f"{current_date_str}: cannot read catalog payload: {exc}") from exc
@@ -2562,6 +2813,7 @@ def validate_catalog_payload(current_date_str, catalog_gz_bytes, manifest):
             f"{current_date_str}: object_count={manifest.get('object_count')} "
             f"actual={len(records)}"
         )
+    validate_gp_records(records, min_count=0, context=f"snapshot {current_date_str}")
     if raw_bytes != canonicalize(records):
         raise SnapshotError(f"{current_date_str}: catalog payload is not canonical JSON")
 
@@ -2688,7 +2940,7 @@ def validate_snapshot_artifacts(
     if gz_path.exists():
         try:
             with gzip.open(gz_path, "rb") as f:
-                raw_bytes = f.read()
+                raw_bytes = read_limited(f, MAX_CATALOG_BYTES, label=str(gz_path))
             records = json.loads(raw_bytes)
         except (json.JSONDecodeError, OSError, gzip.BadGzipFile) as exc:
             return [f"{current_date_str}: cannot read catalog.json.gz: {exc}"], manifest

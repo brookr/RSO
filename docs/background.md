@@ -262,7 +262,7 @@ Hash-only attestations use an empty URI. Hash-plus-location attestations use
 either a direct bundle URI or an RSO publication-locator data URI. The locator
 data URI uses the media type
 `application/vnd.ompub.rso.publication-locator.v1+json` and signs a compact JSON
-payload with `bundleSha256` plus one or more storage locations. The signed
+payload with `nodeId`, `bundleSha256`, and one or more storage locations. The signed
 `contentHash` remains the catalog fingerprint; `bundleSha256` fixes the exact
 release bundle bytes.
 
@@ -286,11 +286,13 @@ DocChain:
    optional `onBehalfOf` identity metadata.
 4. RSO indexers group events by `docChainId`, `docRef`, and `blockHash`,
    then walk `parentHash` links to build branches.
-5. After the daily 6529 TDH calculation, RSO records which card holders backed
-   which operator attesters and how much card-specific TDH each operator has for
-   that day.
-6. The branch with the most eligible historical card-specific TDH is canonical
-   for RSO display.
+5. After the daily 6529 TDH calculation, RSO records direct witness identities,
+   the nodes card holders backed, and the applicable card-specific TDH for that
+   day.
+6. Sweepers publish evidence connecting selected nodes to their signed claims
+   only after every identity and publication check passes.
+7. Indexers report direct witness TDH and node-backing TDH separately, then sum
+   them for display while excluding equivocation.
 
 Historical TDH can come from 6529's published Arweave snapshots or the 6529
 node today. A future composable TDH oracle could replace that lookup without
@@ -441,7 +443,8 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 - [x] Treasury sweeper path for submitting eligible signed attestations
 - [x] Static RSO DocChain indexer with Sepolia seed support and custom deployment config
 - [x] Disposable no-funds EOA signing path for operator nodes
-- [x] Sweeper consumes daily operator-backing snapshots, validates URI bundle
+- [x] Sweeper consumes daily TDH support snapshots, validates signed node
+  identity and URI bundle
   fingerprints and catalog fingerprints, simulates `attestDoc`, and funds
   selected submissions
 

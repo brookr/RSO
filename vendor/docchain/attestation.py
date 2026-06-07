@@ -11,6 +11,7 @@ import os
 import subprocess
 import tempfile
 import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Mapping
@@ -128,45 +129,57 @@ def sign_prepared_with_cast(
     prepared: Mapping[str, object],
     *,
     private_key_env: str = "PRIVATE_KEY",
+    keystore_json_env: str | None = None,
+    keystore_path_env: str | None = None,
+    account_env: str | None = None,
+    password_env: str | None = None,
+    password_file_env: str | None = None,
     cast: str | None = None,
     run=subprocess.run,
 ) -> str:
     """Sign a prepared attestation using Foundry `cast wallet sign`.
 
-    The private key is read from `private_key_env`. Callers should use a
-    disposable signing key and should never fund that key.
+    The signer can be supplied as a temporary keystore, an existing keystore, an
+    account name, or a raw private key. Keystore inputs avoid placing the raw
+    private key on the process command line. Raw private-key mode is retained
+    for simple disposable signer setups and should never be used with funded
+    keys.
     """
     typed_data = prepared["typedData"]
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json", delete=False) as tmp:
         json.dump(typed_data, tmp, separators=(",", ":"), sort_keys=True)
         tmp_path = tmp.name
     try:
-        private_key = os.environ.get(private_key_env)
-        if not private_key:
-            raise ValueError(f"set {private_key_env}")
-        expected_attester = prepared_attester(prepared)
-        if expected_attester is not None:
-            actual_attester = cast_wallet_address(
-                private_key,
-                cast=cast,
-                run=run,
-            )
-            if actual_attester != expected_attester:
-                raise ValueError(
-                    f"configured attester {expected_attester} does not match "
-                    f"{private_key_env} address {actual_attester}"
+        with cast_wallet_args_from_env(
+            private_key_env=private_key_env,
+            keystore_json_env=keystore_json_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_JSON"),
+            keystore_path_env=keystore_path_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE"),
+            account_env=account_env or private_key_env.replace("PRIVATE_KEY", "ACCOUNT"),
+            password_env=password_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_PASSWORD"),
+            password_file_env=password_file_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_PASSWORD_FILE"),
+        ) as wallet_args:
+            expected_attester = prepared_attester(prepared)
+            if expected_attester is not None:
+                actual_attester = cast_wallet_address(
+                    wallet_args=wallet_args,
+                    cast=cast,
+                    run=run,
                 )
-        command = [
-            cast_path(cast),
-            "wallet",
-            "sign",
-            "--data",
-            "--from-file",
-            tmp_path,
-            "--private-key",
-            private_key,
-        ]
-        result = run(command, check=True, capture_output=True, text=True)
+                if actual_attester != expected_attester:
+                    raise ValueError(
+                        f"configured attester {expected_attester} does not match "
+                        f"configured signing wallet address {actual_attester}"
+                    )
+            command = [
+                cast_path(cast),
+                "wallet",
+                "sign",
+                "--data",
+                "--from-file",
+                tmp_path,
+                *wallet_args,
+            ]
+            result = run(command, check=True, capture_output=True, text=True)
         signature = result.stdout.strip().splitlines()[-1].strip()
         return normalize_hex_bytes(signature)
     finally:
@@ -182,15 +195,92 @@ def prepared_attester(prepared: Mapping[str, object]) -> str | None:
 
 
 def cast_wallet_address(
-    private_key: str,
     *,
+    private_key: str | None = None,
+    wallet_args: list[str] | None = None,
     cast: str | None = None,
     run=subprocess.run,
 ) -> str:
-    command = [cast_path(cast), "wallet", "address", "--private-key", private_key]
+    if wallet_args is None:
+        if not private_key:
+            raise ValueError("private_key or wallet_args is required")
+        wallet_args = ["--private-key", private_key]
+    command = [cast_path(cast), "wallet", "address", *wallet_args]
     result = run(command, check=True, capture_output=True, text=True)
     address = result.stdout.strip().splitlines()[-1].strip()
     return normalize_address(address)
+
+
+def has_cast_wallet_config(
+    *,
+    private_key_env: str = "PRIVATE_KEY",
+    keystore_json_env: str | None = None,
+    keystore_path_env: str | None = None,
+    account_env: str | None = None,
+    allow_raw_private_key: bool = True,
+) -> bool:
+    names = [
+        keystore_json_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_JSON"),
+        keystore_path_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE"),
+        account_env or private_key_env.replace("PRIVATE_KEY", "ACCOUNT"),
+    ]
+    if allow_raw_private_key:
+        names.append(private_key_env)
+    return any(os.environ.get(name) for name in names)
+
+
+@contextmanager
+def cast_wallet_args_from_env(
+    *,
+    private_key_env: str = "PRIVATE_KEY",
+    keystore_json_env: str | None = None,
+    keystore_path_env: str | None = None,
+    account_env: str | None = None,
+    password_env: str | None = None,
+    password_file_env: str | None = None,
+    allow_raw_private_key: bool = True,
+):
+    """Yield Foundry wallet arguments from environment-backed signer config."""
+    keystore_json_env = keystore_json_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_JSON")
+    keystore_path_env = keystore_path_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE")
+    account_env = account_env or private_key_env.replace("PRIVATE_KEY", "ACCOUNT")
+    password_env = password_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_PASSWORD")
+    password_file_env = password_file_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_PASSWORD_FILE")
+
+    with tempfile.TemporaryDirectory(prefix="docchain-wallet-") as tmpdir:
+        tmp = Path(tmpdir)
+        args: list[str]
+        keystore_json = os.environ.get(keystore_json_env)
+        keystore_path = os.environ.get(keystore_path_env)
+        account = os.environ.get(account_env)
+        raw_private_key = os.environ.get(private_key_env)
+
+        if keystore_json:
+            key_path = tmp / "keystore.json"
+            key_path.write_text(keystore_json, encoding="utf-8")
+            args = ["--keystore", str(key_path)]
+        elif keystore_path:
+            args = ["--keystore", keystore_path]
+        elif account:
+            args = ["--account", account]
+        elif raw_private_key and allow_raw_private_key:
+            args = ["--private-key", raw_private_key]
+        else:
+            choices = f"{keystore_json_env}, {keystore_path_env}, or {account_env}"
+            if allow_raw_private_key:
+                choices += f", or {private_key_env}"
+            raise ValueError(f"set {choices}")
+
+        password_file = os.environ.get(password_file_env)
+        password = os.environ.get(password_env)
+        if password_file:
+            args.extend(["--password-file", password_file])
+        elif password:
+            password_path = tmp / "password.txt"
+            password_path.write_text(password, encoding="utf-8")
+            args.extend(["--password-file", str(password_path)])
+
+        yield args
 
 
 def attest_doc_calldata(attestation: Mapping[str, object], signature: str) -> str:
@@ -298,6 +388,10 @@ def redact_secret_values(text: str) -> str:
         "PRIVATE_KEY",
         "RSO_SWEEPER_PRIVATE_KEY",
         "SUBMITTER_PRIVATE_KEY",
+        "DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON",
+        "DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD",
+        "RSO_SWEEPER_KEYSTORE_JSON",
+        "RSO_SWEEPER_KEYSTORE_PASSWORD",
     ):
         value = os.environ.get(name)
         if value:

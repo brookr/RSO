@@ -1,8 +1,11 @@
+import gzip
+import io
 import json
 import tarfile
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from pipeline import snapshot
 
@@ -83,6 +86,27 @@ class ReleaseBundleTests(unittest.TestCase):
             "rso-archive-2026-04-18.tar.gz",
         )
 
+    def test_release_bundle_from_existing_rehashes_catalog_member(self):
+        manifest = self.archive_day()
+        output_dir = self.root / "bundle"
+        bundle = snapshot.build_release_bundle("2026-04-18", output_dir=output_dir, min_count=1)
+
+        tampered_catalog = b'[{"NORAD_CAT_ID":"999"}]'
+        release_manifest = {
+            "catalog_sha256": manifest["sha256"],
+            "manifest_sha256": bundle["manifest_sha256"],
+            "object_count": manifest["object_count"],
+            "files": bundle["files"],
+        }
+        with open(bundle["path"], "wb") as raw_file:
+            with gzip.GzipFile(filename="", mode="wb", fileobj=raw_file, mtime=0) as gz_file:
+                with tarfile.open(fileobj=gz_file, mode="w") as tar:
+                    add_tar_bytes(tar, "release-manifest.json", json.dumps(release_manifest).encode("utf-8"))
+                    add_tar_bytes(tar, "catalog.json.gz", gzip.compress(tampered_catalog))
+
+        with self.assertRaisesRegex(snapshot.SnapshotError, "catalog bytes"):
+            snapshot.release_bundle_from_existing("2026-04-18", output_dir=output_dir)
+
     def test_github_release_publish_skips_existing_asset_without_force(self):
         calls = []
         original_release_payload = snapshot.github_release_payload
@@ -133,6 +157,20 @@ class ReleaseBundleTests(unittest.TestCase):
             snapshot.github_release_payload = original_release_payload
             snapshot.resolve_github_repo = original_resolve_repo
             snapshot.github_upload_release_asset = original_upload
+
+    def test_github_download_url_rejects_untrusted_hosts(self):
+        with self.assertRaisesRegex(snapshot.SnapshotError, "not allowed"):
+            snapshot.validate_github_download_url("https://example.com/archive.tar.gz")
+        with self.assertRaisesRegex(snapshot.SnapshotError, "HTTPS"):
+            snapshot.validate_github_download_url("http://github.com/OMPub/RSO/releases/download/a/b")
+
+    def test_arweave_gateway_is_https_arweave_net(self):
+        with patch("pipeline.snapshot.socket.getaddrinfo", return_value=[(None, None, None, None, ("95.216.149.139", 443))]):
+            snapshot.validate_arweave_gateway("https://arweave.net")
+            with self.assertRaisesRegex(snapshot.SnapshotError, "HTTPS"):
+                snapshot.validate_arweave_gateway("http://arweave.net")
+            with self.assertRaisesRegex(snapshot.SnapshotError, "arweave.net"):
+                snapshot.validate_arweave_gateway("https://example.com")
 
     def test_record_storage_destination_merges_destinations(self):
         bundle = {
@@ -564,6 +602,41 @@ class ReleaseBundleTests(unittest.TestCase):
             snapshot.arweave_request = original_request
             snapshot.ARWEAVE_CHUNK_UPLOAD_RETRY_DELAY = original_delay
 
+    def test_arweave_transaction_submit_retries_transient_http_errors(self):
+        calls = []
+        upload = {
+            "transaction": {
+                "id": "tx123",
+                "data_root": "root123",
+                "data_size": "20",
+            },
+        }
+        original_request = snapshot.arweave_request
+        original_delay = snapshot.ARWEAVE_TRANSACTION_RETRY_DELAY
+        try:
+            snapshot.ARWEAVE_TRANSACTION_RETRY_DELAY = 0
+
+            def fake_request(
+                method,
+                path,
+                payload=None,
+                headers=None,
+                allow_http_errors=False,
+                allow_not_found=False,
+            ):
+                calls.append((method, path, allow_http_errors))
+                if len(calls) == 1:
+                    return 503, {"error": "service unavailable"}
+                return 200, {}
+
+            snapshot.arweave_request = fake_request
+            snapshot.arweave_submit_transaction(upload)
+            self.assertEqual(len(calls), 2)
+            self.assertTrue(calls[0][2])
+        finally:
+            snapshot.arweave_request = original_request
+            snapshot.ARWEAVE_TRANSACTION_RETRY_DELAY = original_delay
+
     def test_arweave_nonfatal_failure_records_failed_receipt(self):
         bundle = {
             "date": "2026-04-18",
@@ -590,6 +663,14 @@ class ReleaseBundleTests(unittest.TestCase):
             self.assertIn("0 winston", receipt["destinations"]["arweave"]["error"])
         finally:
             snapshot.publish_arweave_bundle = original_publish
+
+
+def add_tar_bytes(tar, arcname, data):
+    info = tarfile.TarInfo(arcname)
+    info.size = len(data)
+    info.mtime = 0
+    info.mode = 0o644
+    tar.addfile(info, io.BytesIO(data))
 
 
 if __name__ == "__main__":

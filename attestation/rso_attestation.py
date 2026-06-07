@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
 import urllib.parse
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Mapping
 
-from indexer.rso_profile import RSO_DOC_CHAIN_ID, encode_publication_locator_uri
+from indexer.rso_profile import RSO_DOC_CHAIN_ID, encode_publication_locator_uri, normalize_node_id
 from vendor.docchain.attestation import (
     doc_block_hash_with_cast,
     normalize_address,
@@ -58,7 +59,9 @@ def storage_receipt_path(snapshot_date: str) -> Path:
     return snapshot_dir(snapshot_date) / "storage.json"
 
 
-def signed_attestation_path(snapshot_date: str) -> Path:
+def signed_attestation_path(snapshot_date: str, artifact_id: str | None = None) -> Path:
+    if artifact_id:
+        return DATA_DIR / "attestations" / "signed" / snapshot_date / f"{artifact_id}.json"
     return DATA_DIR / "attestations" / "signed" / f"{snapshot_date}.json"
 
 
@@ -141,15 +144,51 @@ def latest_state_attestation(state: Mapping[str, object]) -> dict[str, object] |
     return latest
 
 
-def state_attestation_for_date(
+def latest_state_attestation_for_date(
     state: Mapping[str, object],
     snapshot_date: str,
 ) -> dict[str, object] | None:
     raw = state.get("attestations", [])
     if not isinstance(raw, list):
         raise ValueError("state attestations must be an array")
-    for item in raw:
+    for item in reversed(raw):
         if isinstance(item, dict) and item.get("date") == snapshot_date:
+            return item
+    return None
+
+
+def state_attestation_for_date(
+    state: Mapping[str, object],
+    snapshot_date: str,
+) -> dict[str, object] | None:
+    return latest_state_attestation_for_date(state, snapshot_date)
+
+
+def state_attestation_for_inputs(
+    state: Mapping[str, object],
+    *,
+    snapshot_date: str,
+    attester: str,
+    on_behalf_of: str,
+    parent_hash: str,
+    content_hash: str,
+    uri: str,
+) -> dict[str, object] | None:
+    raw = state.get("attestations", [])
+    if not isinstance(raw, list):
+        raise ValueError("state attestations must be an array")
+    expected = {
+        "date": snapshot_date,
+        "attester": normalize_address(attester),
+        "onBehalfOf": normalize_address(on_behalf_of),
+        "parentHash": normalize_bytes32(parent_hash),
+        "contentHash": normalize_bytes32(content_hash),
+        "uri": uri,
+    }
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        if all(item.get(key) == value for key, value in expected.items()):
             return item
     return None
 
@@ -163,24 +202,19 @@ def parent_hash_for_date(
 ) -> str:
     if snapshot_date == baseline_date:
         return ZERO_BYTES32
-    latest = latest_state_attestation(state)
-    if latest is None:
+    expected_previous = previous_date(snapshot_date)
+    previous = latest_state_attestation_for_date(state, expected_previous)
+    if previous is None:
         if bootstrap_parent_hash:
             return normalize_bytes32(bootstrap_parent_hash)
         raise ValueError(
             f"{snapshot_date}: no prior DocChain blockHash in state. "
             "Set RSO_ATTESTATION_BOOTSTRAP_PARENT_HASH for a deliberate bootstrap."
         )
-    expected_previous = previous_date(snapshot_date)
-    if latest.get("date") != expected_previous:
-        raise ValueError(
-            f"{snapshot_date}: latest attested date is {latest.get('date')}, "
-            f"expected {expected_previous}"
-        )
-    return normalize_bytes32(str(latest["blockHash"]))
+    return normalize_bytes32(str(previous["blockHash"]))
 
 
-def release_uri(snapshot_date: str, *, mode: str = "auto") -> str:
+def release_uri(snapshot_date: str, *, mode: str = "auto", node_id: str = "") -> str:
     """Choose the publication URI to include in a node attestation."""
     if mode == "empty":
         return ""
@@ -192,8 +226,17 @@ def release_uri(snapshot_date: str, *, mode: str = "auto") -> str:
             return encode_publication_locator_uri(
                 bundle_sha256=bundle_sha256,
                 locations=locations,
+                node_id=node_id,
+            )
+        if node_id:
+            raise ValueError(
+                f"{snapshot_date}: node attestations require a bundle fingerprint"
             )
         return locations[0]
+    if mode == "auto" and node_id:
+        raise ValueError(
+            f"{snapshot_date}: node attestations require at least one publication location"
+        )
     if mode == "auto":
         return ""
     raise ValueError(f"{snapshot_date}: no {mode} destination in storage receipt")
@@ -209,7 +252,11 @@ def publication_locations_from_receipt(receipt: Mapping[str, object], *, mode: s
     locations = []
     arweave = destinations.get("arweave")
     github_release = destinations.get("github_release")
-    if mode in ("auto", "arweave") and isinstance(arweave, dict):
+    if (
+        mode in ("auto", "arweave")
+        and isinstance(arweave, dict)
+        and destination_matches_bundle(receipt, arweave, required_statuses={"submitted"})
+    ):
         tx_id = arweave.get("transaction_id")
         if isinstance(tx_id, str) and tx_id:
             locations.append("ar://" + tx_id)
@@ -227,6 +274,24 @@ def publication_locations_from_receipt(receipt: Mapping[str, object], *, mode: s
             if isinstance(release_url, str) and isinstance(asset_name, str):
                 locations.append(github_release_asset_url(release_url, asset_name))
     return locations
+
+
+def destination_matches_bundle(
+    receipt: Mapping[str, object],
+    destination: Mapping[str, object],
+    *,
+    required_statuses: set[str],
+) -> bool:
+    status = destination.get("status")
+    if not isinstance(status, str) or status not in required_statuses:
+        return False
+    receipt_bundle_sha = receipt.get("bundle_sha256")
+    destination_bundle_sha = destination.get("bundle_sha256")
+    if isinstance(receipt_bundle_sha, str) and receipt_bundle_sha:
+        return destination_bundle_sha == receipt_bundle_sha
+    if isinstance(destination_bundle_sha, str) and destination_bundle_sha:
+        return destination_bundle_sha == receipt_bundle_sha
+    return True
 
 
 def github_release_asset_url(release_url: str, asset_name: str) -> str:
@@ -253,7 +318,7 @@ def build_prepared_attestation(
     parent_hash: str,
     uri: str,
     deadline: int | None = None,
-    ttl: int = 86_400,
+    ttl: int = 7 * 24 * 60 * 60,
     network: str = "",
 ) -> dict[str, object]:
     manifest = load_manifest(snapshot_date)
@@ -286,8 +351,16 @@ def state_entry_from_signed_artifact(
     doc_block = attestation["docBlock"]
     if not isinstance(doc_block, Mapping):
         raise ValueError("prepared docBlock is malformed")
+    artifact_id = signed_attestation_artifact_id(
+        attester=str(attestation["attester"]),
+        on_behalf_of=str(attestation.get("onBehalfOf", ZERO_ADDRESS)),
+        parent_hash=str(doc_block["parentHash"]),
+        content_hash=str(doc_block["contentHash"]),
+        uri=str(attestation.get("uri", "")),
+    )
     return {
         "date": snapshot_date,
+        "artifactId": artifact_id,
         "docRef": int(doc_block["docRef"]),
         "attester": normalize_address(str(attestation["attester"])),
         "onBehalfOf": normalize_address(str(attestation.get("onBehalfOf", ZERO_ADDRESS))),
@@ -295,7 +368,8 @@ def state_entry_from_signed_artifact(
         "blockHash": normalize_bytes32(block_hash),
         "contentHash": normalize_bytes32(str(doc_block["contentHash"])),
         "uri": str(attestation.get("uri", "")),
-        "signedPath": display_path(signed_attestation_path(snapshot_date)),
+        "signedPath": display_path(signed_attestation_path(snapshot_date, artifact_id)),
+        "latestSignedPath": display_path(signed_attestation_path(snapshot_date)),
         "signature": str(signed["signature"]),
         "submissionStatus": "signed",
         "updatedAt": datetime.now(timezone.utc)
@@ -305,14 +379,54 @@ def state_entry_from_signed_artifact(
     }
 
 
+def signed_attestation_artifact_id(
+    *,
+    attester: str,
+    on_behalf_of: str,
+    parent_hash: str,
+    content_hash: str,
+    uri: str,
+) -> str:
+    payload = {
+        "attester": normalize_address(attester),
+        "onBehalfOf": normalize_address(on_behalf_of),
+        "parentHash": normalize_bytes32(parent_hash),
+        "contentHash": normalize_bytes32(content_hash),
+        "uri": uri,
+    }
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def state_entry_key(entry: Mapping[str, object]) -> tuple[str, str, str, str, str, str]:
+    return (
+        str(entry.get("date", "")),
+        normalize_address(str(entry.get("attester", ZERO_ADDRESS))),
+        normalize_address(str(entry.get("onBehalfOf", ZERO_ADDRESS))),
+        normalize_bytes32(str(entry.get("parentHash", ZERO_BYTES32))),
+        normalize_bytes32(str(entry.get("contentHash", ZERO_BYTES32))),
+        str(entry.get("uri", "")),
+    )
+
+
 def record_state_entry(path: Path, entry: Mapping[str, object]) -> dict[str, object]:
     state = load_attestation_state(path)
     attestations = state["attestations"]
     assert isinstance(attestations, list)
-    entry_date = str(entry["date"])
-    retained = [item for item in attestations if isinstance(item, dict) and item.get("date") != entry_date]
+    entry_key = state_entry_key(entry)
+    retained = [
+        item
+        for item in attestations
+        if isinstance(item, dict) and state_entry_key(item) != entry_key
+    ]
     retained.append(dict(entry))
-    retained.sort(key=lambda item: str(item["date"]))
+    retained.sort(
+        key=lambda item: (
+            str(item["date"]),
+            str(item.get("updatedAt", "")),
+            str(item.get("artifactId", "")),
+        )
+    )
     state["attestations"] = retained
     state["latest"] = retained[-1] if retained else None
     state["updatedAt"] = entry["updatedAt"]
@@ -326,6 +440,7 @@ def signed_artifact(
     prepared: Mapping[str, object],
     signed: Mapping[str, object],
     block_hash: str,
+    node_id: str = "",
     repository: str = "",
     workflow_run_id: str = "",
 ) -> dict[str, object]:
@@ -342,6 +457,8 @@ def signed_artifact(
         "blockHash": normalize_bytes32(block_hash),
         "signed": dict(signed),
         "node": {
+            "nodeId": normalize_node_id(node_id) if node_id else "",
+            "attester": normalize_address(attestation["attester"]),
             "repository": repository,
             "workflowRunId": workflow_run_id,
         },
@@ -374,18 +491,25 @@ def prepare_sign_one(
     private_key_env: str = "DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY",
     uri_mode: str = "auto",
     bootstrap_parent_hash: str | None = None,
-    ttl: int = 86_400,
+    ttl: int = 7 * 24 * 60 * 60,
     network: str = "",
+    node_id: str = "",
     repository: str = "",
     workflow_run_id: str = "",
     cast: str | None = None,
+    parent_hash: str | None = None,
+    uri: str | None = None,
 ) -> tuple[PreparedRsoAttestation, dict[str, object]]:
-    parent_hash = parent_hash_for_date(
-        snapshot_date,
-        state,
-        bootstrap_parent_hash=bootstrap_parent_hash,
-    )
-    uri = release_uri(snapshot_date, mode=uri_mode)
+    if parent_hash is None:
+        parent_hash = parent_hash_for_date(
+            snapshot_date,
+            state,
+            bootstrap_parent_hash=bootstrap_parent_hash,
+        )
+    else:
+        parent_hash = normalize_bytes32(parent_hash)
+    if uri is None:
+        uri = release_uri(snapshot_date, mode=uri_mode, node_id=node_id)
     prepared = build_prepared_attestation(
         snapshot_date=snapshot_date,
         chain_id=chain_id,
@@ -397,7 +521,7 @@ def prepare_sign_one(
         ttl=ttl,
         network=network,
     )
-    signature = sign_prepared_with_cast(prepared, private_key_env=private_key_env)
+    signature = sign_prepared_with_cast(prepared, private_key_env=private_key_env, cast=cast)
     signed = signed_attestation(prepared, signature)
     attestation = prepared["attestation"]
     assert isinstance(attestation, Mapping)
@@ -409,6 +533,7 @@ def prepare_sign_one(
         prepared=prepared,
         signed=signed,
         block_hash=block_hash,
+        node_id=node_id,
         repository=repository,
         workflow_run_id=workflow_run_id,
     )

@@ -3,6 +3,7 @@
   "chunkSize": 10,
   "confirmations": 12,
   "contractAddress": "0xaCE3a26Fe2F993e351a0eF74fb727Cfe1029884b",
+  "directWitnessAccountCount": 0,
   "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
   "docRefCount": 5,
   "docRefs": {
@@ -10,15 +11,22 @@
       "agreementGroups": [
         {
           "attestationCount": 1,
-          "backingAccounts": [
+          "attesters": [
             "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
           ],
+          "backedNodeIds": [],
           "blockHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-          "cardSpecificTdh": 0,
+          "bundleFingerprints": [],
+          "combinedSupportTdh": 0,
           "contentHash": "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795",
-          "operators": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-          ]
+          "directWitnessIdentities": [],
+          "directWitnessTdh": 0,
+          "equivocatingDirectWitnessIdentities": [],
+          "equivocatingNodes": [],
+          "locations": [
+            "https://om.pub/rso/sepolia/synthetic/20260515000000"
+          ],
+          "nodeBackingTdh": 0
         }
       ],
       "blockFingerprints": [
@@ -38,21 +46,31 @@
       "events": [
         {
           "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "blockHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-          "cardSpecificTdh": 0,
+          "claimFingerprint": "78ccef77065f707f836e2feedfdea08eea54618678c84334ea118c018ee6cb35",
+          "claimedNodeId": "",
+          "combinedSupportTdh": 0,
           "contentHash": "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795",
           "date": "2026-05-15",
+          "directWitnessIdentity": "",
+          "directWitnessTdh": 0,
           "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
           "docRef": 20260515000000,
           "ethereumBlock": 10861422,
           "ethereumBlockHash": "0x32073eaaac559b980d80db87218cbc0b9fd9d928b26e809fb8b47640383552ef",
-          "hasIdentityClaim": false,
-          "identityAddress": "",
           "logIndex": 220,
+          "nodeAuthorizationStatus": "not_claimed",
+          "nodeBackingTdh": 0,
+          "nodeId": "",
           "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "parentHash": "0x66ad3b0c4fcb010431793d8c0dc2599fb3f066803d9f129b9ea587fc17e1179a",
+          "publication": {
+            "bundleSha256": "",
+            "locations": [
+              "https://om.pub/rso/sepolia/synthetic/20260515000000"
+            ],
+            "nodeId": ""
+          },
           "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "transactionHash": "0xe62455cef01cb3eb1b94df85fa9c6553e3fc48d38464897c361034e9eb235edb",
           "uri": "https://om.pub/rso/sepolia/synthetic/20260515000000",
@@ -61,30 +79,44 @@
       ],
       "leadingAgreementGroup": {
         "attestationCount": 1,
-        "backingAccounts": [
+        "attesters": [
           "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
         ],
+        "backedNodeIds": [],
         "blockHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-        "cardSpecificTdh": 0,
+        "bundleFingerprints": [],
+        "combinedSupportTdh": 0,
         "contentHash": "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795",
-        "operators": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-        ]
+        "directWitnessIdentities": [],
+        "directWitnessTdh": 0,
+        "equivocatingDirectWitnessIdentities": [],
+        "equivocatingNodes": [],
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260515000000"
+        ],
+        "nodeBackingTdh": 0
       }
     },
     "20260516000000": {
       "agreementGroups": [
         {
           "attestationCount": 1,
-          "backingAccounts": [
+          "attesters": [
             "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
           ],
+          "backedNodeIds": [],
           "blockHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-          "cardSpecificTdh": 0,
+          "bundleFingerprints": [],
+          "combinedSupportTdh": 0,
           "contentHash": "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb",
-          "operators": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-          ]
+          "directWitnessIdentities": [],
+          "directWitnessTdh": 0,
+          "equivocatingDirectWitnessIdentities": [],
+          "equivocatingNodes": [],
+          "locations": [
+            "https://om.pub/rso/sepolia/synthetic/20260516000000"
+          ],
+          "nodeBackingTdh": 0
         }
       ],
       "blockFingerprints": [
@@ -104,21 +136,31 @@
       "events": [
         {
           "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "blockHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-          "cardSpecificTdh": 0,
+          "claimFingerprint": "55930b022b9494a4cb7e50966b7cc59b8cb90cf246db42dc992049e517b74c14",
+          "claimedNodeId": "",
+          "combinedSupportTdh": 0,
           "contentHash": "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb",
           "date": "2026-05-16",
+          "directWitnessIdentity": "",
+          "directWitnessTdh": 0,
           "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
           "docRef": 20260516000000,
           "ethereumBlock": 10861423,
           "ethereumBlockHash": "0x7173a2756c33bd0b454f318005b1de0c32e7503f252f502995400d0c777a5890",
-          "hasIdentityClaim": false,
-          "identityAddress": "",
           "logIndex": 565,
+          "nodeAuthorizationStatus": "not_claimed",
+          "nodeBackingTdh": 0,
+          "nodeId": "",
           "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "parentHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
+          "publication": {
+            "bundleSha256": "",
+            "locations": [
+              "https://om.pub/rso/sepolia/synthetic/20260516000000"
+            ],
+            "nodeId": ""
+          },
           "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "transactionHash": "0xd0cdd655fa8118115bcce9e786b817607cca1ce507944104fd1a6c13b730ab7b",
           "uri": "https://om.pub/rso/sepolia/synthetic/20260516000000",
@@ -127,30 +169,44 @@
       ],
       "leadingAgreementGroup": {
         "attestationCount": 1,
-        "backingAccounts": [
+        "attesters": [
           "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
         ],
+        "backedNodeIds": [],
         "blockHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-        "cardSpecificTdh": 0,
+        "bundleFingerprints": [],
+        "combinedSupportTdh": 0,
         "contentHash": "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb",
-        "operators": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-        ]
+        "directWitnessIdentities": [],
+        "directWitnessTdh": 0,
+        "equivocatingDirectWitnessIdentities": [],
+        "equivocatingNodes": [],
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260516000000"
+        ],
+        "nodeBackingTdh": 0
       }
     },
     "20260517000000": {
       "agreementGroups": [
         {
           "attestationCount": 1,
-          "backingAccounts": [
+          "attesters": [
             "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
           ],
+          "backedNodeIds": [],
           "blockHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-          "cardSpecificTdh": 0,
+          "bundleFingerprints": [],
+          "combinedSupportTdh": 0,
           "contentHash": "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064",
-          "operators": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-          ]
+          "directWitnessIdentities": [],
+          "directWitnessTdh": 0,
+          "equivocatingDirectWitnessIdentities": [],
+          "equivocatingNodes": [],
+          "locations": [
+            "https://om.pub/rso/sepolia/synthetic/20260517000000"
+          ],
+          "nodeBackingTdh": 0
         }
       ],
       "blockFingerprints": [
@@ -170,21 +226,31 @@
       "events": [
         {
           "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "blockHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-          "cardSpecificTdh": 0,
+          "claimFingerprint": "364eba2b4450940364fad3e3eee37d4342655a7e1949381c0ff46c92d8094923",
+          "claimedNodeId": "",
+          "combinedSupportTdh": 0,
           "contentHash": "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064",
           "date": "2026-05-17",
+          "directWitnessIdentity": "",
+          "directWitnessTdh": 0,
           "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
           "docRef": 20260517000000,
           "ethereumBlock": 10861424,
           "ethereumBlockHash": "0xcf87130aca8dc85eb773021d6584426789a88769ec4d6a371e10837c11fbee2c",
-          "hasIdentityClaim": false,
-          "identityAddress": "",
           "logIndex": 315,
+          "nodeAuthorizationStatus": "not_claimed",
+          "nodeBackingTdh": 0,
+          "nodeId": "",
           "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "parentHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
+          "publication": {
+            "bundleSha256": "",
+            "locations": [
+              "https://om.pub/rso/sepolia/synthetic/20260517000000"
+            ],
+            "nodeId": ""
+          },
           "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "transactionHash": "0x5d6789bd8f16b77a1837d8de1e1cc3c567d87630997a260b85155a83477cc84c",
           "uri": "https://om.pub/rso/sepolia/synthetic/20260517000000",
@@ -193,30 +259,44 @@
       ],
       "leadingAgreementGroup": {
         "attestationCount": 1,
-        "backingAccounts": [
+        "attesters": [
           "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
         ],
+        "backedNodeIds": [],
         "blockHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-        "cardSpecificTdh": 0,
+        "bundleFingerprints": [],
+        "combinedSupportTdh": 0,
         "contentHash": "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064",
-        "operators": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-        ]
+        "directWitnessIdentities": [],
+        "directWitnessTdh": 0,
+        "equivocatingDirectWitnessIdentities": [],
+        "equivocatingNodes": [],
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260517000000"
+        ],
+        "nodeBackingTdh": 0
       }
     },
     "20260518000000": {
       "agreementGroups": [
         {
           "attestationCount": 1,
-          "backingAccounts": [
+          "attesters": [
             "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
           ],
+          "backedNodeIds": [],
           "blockHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-          "cardSpecificTdh": 0,
+          "bundleFingerprints": [],
+          "combinedSupportTdh": 0,
           "contentHash": "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af",
-          "operators": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-          ]
+          "directWitnessIdentities": [],
+          "directWitnessTdh": 0,
+          "equivocatingDirectWitnessIdentities": [],
+          "equivocatingNodes": [],
+          "locations": [
+            "https://om.pub/rso/sepolia/synthetic/20260518000000"
+          ],
+          "nodeBackingTdh": 0
         }
       ],
       "blockFingerprints": [
@@ -236,21 +316,31 @@
       "events": [
         {
           "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "blockHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-          "cardSpecificTdh": 0,
+          "claimFingerprint": "e6a90a22d9c2bfb33ae970c605103d0d847365299dc86f4f1bbdca5dea9a06a2",
+          "claimedNodeId": "",
+          "combinedSupportTdh": 0,
           "contentHash": "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af",
           "date": "2026-05-18",
+          "directWitnessIdentity": "",
+          "directWitnessTdh": 0,
           "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
           "docRef": 20260518000000,
           "ethereumBlock": 10861425,
           "ethereumBlockHash": "0xbf9da8b68548873c81052fc2e6dd99f1d82f224a5187203c4918d2e0ab064d70",
-          "hasIdentityClaim": false,
-          "identityAddress": "",
           "logIndex": 261,
+          "nodeAuthorizationStatus": "not_claimed",
+          "nodeBackingTdh": 0,
+          "nodeId": "",
           "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "parentHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
+          "publication": {
+            "bundleSha256": "",
+            "locations": [
+              "https://om.pub/rso/sepolia/synthetic/20260518000000"
+            ],
+            "nodeId": ""
+          },
           "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "transactionHash": "0xe822538cf673a0cb6f3b7b6e47765fcb9c0e8edd3ea23cd8556b6439a6b0978d",
           "uri": "https://om.pub/rso/sepolia/synthetic/20260518000000",
@@ -259,30 +349,44 @@
       ],
       "leadingAgreementGroup": {
         "attestationCount": 1,
-        "backingAccounts": [
+        "attesters": [
           "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
         ],
+        "backedNodeIds": [],
         "blockHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-        "cardSpecificTdh": 0,
+        "bundleFingerprints": [],
+        "combinedSupportTdh": 0,
         "contentHash": "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af",
-        "operators": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-        ]
+        "directWitnessIdentities": [],
+        "directWitnessTdh": 0,
+        "equivocatingDirectWitnessIdentities": [],
+        "equivocatingNodes": [],
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260518000000"
+        ],
+        "nodeBackingTdh": 0
       }
     },
     "20260519000000": {
       "agreementGroups": [
         {
           "attestationCount": 1,
-          "backingAccounts": [
+          "attesters": [
             "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
           ],
+          "backedNodeIds": [],
           "blockHash": "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa",
-          "cardSpecificTdh": 0,
+          "bundleFingerprints": [],
+          "combinedSupportTdh": 0,
           "contentHash": "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a",
-          "operators": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-          ]
+          "directWitnessIdentities": [],
+          "directWitnessTdh": 0,
+          "equivocatingDirectWitnessIdentities": [],
+          "equivocatingNodes": [],
+          "locations": [
+            "https://om.pub/rso/sepolia/synthetic/20260519000000"
+          ],
+          "nodeBackingTdh": 0
         }
       ],
       "blockFingerprints": [
@@ -302,21 +406,31 @@
       "events": [
         {
           "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "blockHash": "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa",
-          "cardSpecificTdh": 0,
+          "claimFingerprint": "0094d54a5d0694cb4c2f59d809526b9464193c52a4df9212142036b4f1fbbd4c",
+          "claimedNodeId": "",
+          "combinedSupportTdh": 0,
           "contentHash": "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a",
           "date": "2026-05-19",
+          "directWitnessIdentity": "",
+          "directWitnessTdh": 0,
           "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
           "docRef": 20260519000000,
           "ethereumBlock": 10861426,
           "ethereumBlockHash": "0x8db689a405f0009e8b08c4cedf0f88fc08bd86a6f0edec6053e964f6e3fdcf78",
-          "hasIdentityClaim": false,
-          "identityAddress": "",
           "logIndex": 232,
+          "nodeAuthorizationStatus": "not_claimed",
+          "nodeBackingTdh": 0,
+          "nodeId": "",
           "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "parentHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
+          "publication": {
+            "bundleSha256": "",
+            "locations": [
+              "https://om.pub/rso/sepolia/synthetic/20260519000000"
+            ],
+            "nodeId": ""
+          },
           "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
           "transactionHash": "0x76ec4e462af646ef126ed97857c1298b908bdd3f1507d021e244a8a969ae4e57",
           "uri": "https://om.pub/rso/sepolia/synthetic/20260519000000",
@@ -325,15 +439,22 @@
       ],
       "leadingAgreementGroup": {
         "attestationCount": 1,
-        "backingAccounts": [
+        "attesters": [
           "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
         ],
+        "backedNodeIds": [],
         "blockHash": "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa",
-        "cardSpecificTdh": 0,
+        "bundleFingerprints": [],
+        "combinedSupportTdh": 0,
         "contentHash": "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a",
-        "operators": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-        ]
+        "directWitnessIdentities": [],
+        "directWitnessTdh": 0,
+        "equivocatingDirectWitnessIdentities": [],
+        "equivocatingNodes": [],
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260519000000"
+        ],
+        "nodeBackingTdh": 0
       }
     }
   },
@@ -341,21 +462,31 @@
   "events": [
     {
       "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "blockHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-      "cardSpecificTdh": 0,
+      "claimFingerprint": "78ccef77065f707f836e2feedfdea08eea54618678c84334ea118c018ee6cb35",
+      "claimedNodeId": "",
+      "combinedSupportTdh": 0,
       "contentHash": "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795",
       "date": "2026-05-15",
+      "directWitnessIdentity": "",
+      "directWitnessTdh": 0,
       "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
       "docRef": 20260515000000,
       "ethereumBlock": 10861422,
       "ethereumBlockHash": "0x32073eaaac559b980d80db87218cbc0b9fd9d928b26e809fb8b47640383552ef",
-      "hasIdentityClaim": false,
-      "identityAddress": "",
       "logIndex": 220,
+      "nodeAuthorizationStatus": "not_claimed",
+      "nodeBackingTdh": 0,
+      "nodeId": "",
       "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "parentHash": "0x66ad3b0c4fcb010431793d8c0dc2599fb3f066803d9f129b9ea587fc17e1179a",
+      "publication": {
+        "bundleSha256": "",
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260515000000"
+        ],
+        "nodeId": ""
+      },
       "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "transactionHash": "0xe62455cef01cb3eb1b94df85fa9c6553e3fc48d38464897c361034e9eb235edb",
       "uri": "https://om.pub/rso/sepolia/synthetic/20260515000000",
@@ -363,21 +494,31 @@
     },
     {
       "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "blockHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-      "cardSpecificTdh": 0,
+      "claimFingerprint": "55930b022b9494a4cb7e50966b7cc59b8cb90cf246db42dc992049e517b74c14",
+      "claimedNodeId": "",
+      "combinedSupportTdh": 0,
       "contentHash": "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb",
       "date": "2026-05-16",
+      "directWitnessIdentity": "",
+      "directWitnessTdh": 0,
       "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
       "docRef": 20260516000000,
       "ethereumBlock": 10861423,
       "ethereumBlockHash": "0x7173a2756c33bd0b454f318005b1de0c32e7503f252f502995400d0c777a5890",
-      "hasIdentityClaim": false,
-      "identityAddress": "",
       "logIndex": 565,
+      "nodeAuthorizationStatus": "not_claimed",
+      "nodeBackingTdh": 0,
+      "nodeId": "",
       "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "parentHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
+      "publication": {
+        "bundleSha256": "",
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260516000000"
+        ],
+        "nodeId": ""
+      },
       "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "transactionHash": "0xd0cdd655fa8118115bcce9e786b817607cca1ce507944104fd1a6c13b730ab7b",
       "uri": "https://om.pub/rso/sepolia/synthetic/20260516000000",
@@ -385,21 +526,31 @@
     },
     {
       "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "blockHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-      "cardSpecificTdh": 0,
+      "claimFingerprint": "364eba2b4450940364fad3e3eee37d4342655a7e1949381c0ff46c92d8094923",
+      "claimedNodeId": "",
+      "combinedSupportTdh": 0,
       "contentHash": "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064",
       "date": "2026-05-17",
+      "directWitnessIdentity": "",
+      "directWitnessTdh": 0,
       "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
       "docRef": 20260517000000,
       "ethereumBlock": 10861424,
       "ethereumBlockHash": "0xcf87130aca8dc85eb773021d6584426789a88769ec4d6a371e10837c11fbee2c",
-      "hasIdentityClaim": false,
-      "identityAddress": "",
       "logIndex": 315,
+      "nodeAuthorizationStatus": "not_claimed",
+      "nodeBackingTdh": 0,
+      "nodeId": "",
       "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "parentHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
+      "publication": {
+        "bundleSha256": "",
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260517000000"
+        ],
+        "nodeId": ""
+      },
       "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "transactionHash": "0x5d6789bd8f16b77a1837d8de1e1cc3c567d87630997a260b85155a83477cc84c",
       "uri": "https://om.pub/rso/sepolia/synthetic/20260517000000",
@@ -407,21 +558,31 @@
     },
     {
       "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "blockHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-      "cardSpecificTdh": 0,
+      "claimFingerprint": "e6a90a22d9c2bfb33ae970c605103d0d847365299dc86f4f1bbdca5dea9a06a2",
+      "claimedNodeId": "",
+      "combinedSupportTdh": 0,
       "contentHash": "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af",
       "date": "2026-05-18",
+      "directWitnessIdentity": "",
+      "directWitnessTdh": 0,
       "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
       "docRef": 20260518000000,
       "ethereumBlock": 10861425,
       "ethereumBlockHash": "0xbf9da8b68548873c81052fc2e6dd99f1d82f224a5187203c4918d2e0ab064d70",
-      "hasIdentityClaim": false,
-      "identityAddress": "",
       "logIndex": 261,
+      "nodeAuthorizationStatus": "not_claimed",
+      "nodeBackingTdh": 0,
+      "nodeId": "",
       "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "parentHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
+      "publication": {
+        "bundleSha256": "",
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260518000000"
+        ],
+        "nodeId": ""
+      },
       "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "transactionHash": "0xe822538cf673a0cb6f3b7b6e47765fcb9c0e8edd3ea23cd8556b6439a6b0978d",
       "uri": "https://om.pub/rso/sepolia/synthetic/20260518000000",
@@ -429,21 +590,31 @@
     },
     {
       "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "backingAccount": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "blockHash": "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa",
-      "cardSpecificTdh": 0,
+      "claimFingerprint": "0094d54a5d0694cb4c2f59d809526b9464193c52a4df9212142036b4f1fbbd4c",
+      "claimedNodeId": "",
+      "combinedSupportTdh": 0,
       "contentHash": "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a",
       "date": "2026-05-19",
+      "directWitnessIdentity": "",
+      "directWitnessTdh": 0,
       "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
       "docRef": 20260519000000,
       "ethereumBlock": 10861426,
       "ethereumBlockHash": "0x8db689a405f0009e8b08c4cedf0f88fc08bd86a6f0edec6053e964f6e3fdcf78",
-      "hasIdentityClaim": false,
-      "identityAddress": "",
       "logIndex": 232,
+      "nodeAuthorizationStatus": "not_claimed",
+      "nodeBackingTdh": 0,
+      "nodeId": "",
       "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "operatorAttester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "parentHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
+      "publication": {
+        "bundleSha256": "",
+        "locations": [
+          "https://om.pub/rso/sepolia/synthetic/20260519000000"
+        ],
+        "nodeId": ""
+      },
       "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
       "transactionHash": "0x76ec4e462af646ef126ed97857c1298b908bdd3f1507d021e244a8a969ae4e57",
       "uri": "https://om.pub/rso/sepolia/synthetic/20260519000000",
@@ -456,5 +627,6 @@
   "network": "sepolia",
   "profileURI": "https://om.pub/rso/doc-chain/v1",
   "schema": "rso-docchain-index-v1",
+  "sweeperVerifiedClaimCount": 0,
   "toBlock": 10861440
 }

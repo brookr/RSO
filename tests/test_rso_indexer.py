@@ -22,7 +22,10 @@ from indexer.rso_profile import (
     filter_rso_events,
     normalize_address,
     normalize_hex,
+    normalize_node_id,
     normalize_operator_backing,
+    normalize_direct_witnesses,
+    normalize_verified_claims,
 )
 from vendor.docchain.model import DocAttested
 
@@ -84,13 +87,13 @@ class RsoIndexerTest(unittest.TestCase):
         self.assertEqual(doc_ref["candidateCount"], 1)
         self.assertEqual(doc_ref["events"][0]["ethereumBlock"], 10861426)
         self.assertEqual(doc_ref["events"][0]["onBehalfOf"], ZERO_ADDRESS)
-        self.assertFalse(doc_ref["events"][0]["hasIdentityClaim"])
-        self.assertEqual(doc_ref["events"][0]["identityAddress"], "")
+        self.assertEqual(doc_ref["events"][0]["onBehalfOf"], ZERO_ADDRESS)
+        self.assertEqual(doc_ref["events"][0]["nodeAuthorizationStatus"], "not_claimed")
         self.assertEqual(doc_ref["blockFingerprints"], doc_ref["blockHashes"])
         self.assertEqual(doc_ref["contentFingerprints"], doc_ref["contentHashes"])
         self.assertEqual(index["events"][0]["date"], "2026-05-19")
         self.assertEqual(index["events"][0]["onBehalfOf"], ZERO_ADDRESS)
-        self.assertEqual(index["events"][0]["publication"], {"bundleSha256": "", "locations": []})
+        self.assertEqual(index["events"][0]["publication"], {"nodeId": "", "bundleSha256": "", "locations": []})
 
     def test_build_static_index_exposes_identity_claims(self):
         event = make_event(
@@ -114,15 +117,18 @@ class RsoIndexerTest(unittest.TestCase):
 
         indexed_event = index["events"][0]
         self.assertEqual(indexed_event["onBehalfOf"], "0x" + "2" * 40)
-        self.assertTrue(indexed_event["hasIdentityClaim"])
-        self.assertEqual(indexed_event["identityAddress"], "0x" + "2" * 40)
-        self.assertEqual(indexed_event["operatorAttester"], "0x" + "a" * 40)
-        self.assertEqual(indexed_event["backingAccount"], "0x" + "a" * 40)
+        self.assertEqual(indexed_event["onBehalfOf"], "0x" + "2" * 40)
+        self.assertEqual(indexed_event["attester"], "0x" + "a" * 40)
+        self.assertEqual(indexed_event["nodeId"], "")
+        self.assertEqual(indexed_event["directWitnessTdh"], 0)
+        self.assertEqual(indexed_event["nodeBackingTdh"], 0)
+        self.assertEqual(indexed_event["combinedSupportTdh"], 0)
 
     def test_build_static_index_reports_tdh_weighted_agreement_groups(self):
         locator = encode_publication_locator_uri(
             bundle_sha256="11" * 32,
             locations=["ar://abc123", "https://github.com/owner/repo/releases/download/tag/archive.tar.gz"],
+            node_id="github:owner/repo",
         )
         first = make_event(
             doc_ref=20260519000000,
@@ -144,7 +150,7 @@ class RsoIndexerTest(unittest.TestCase):
             content_hash="0x" + "f" * 64,
         )
 
-        index = build_static_index(
+        unverified = build_static_index(
             network="sepolia",
             chain_id=11155111,
             contract_address="0xace3a26fe2f993e351a0ef74fb727cfe1029884b",
@@ -155,16 +161,41 @@ class RsoIndexerTest(unittest.TestCase):
             chunk_size=10,
             events=[first, second],
             operator_backing={
-                "0x" + "a" * 40: 100,
-                "0x" + "b" * 40: 25,
+                "github:owner/repo": 100,
+                "github:other/repo": 25,
+            },
+            indexed_at="2026-05-22T00:00:00Z",
+        )
+        first_claim = unverified["events"][0]["claimFingerprint"]
+        index = build_static_index(
+            network="sepolia",
+            chain_id=11155111,
+            contract_address="0xace3a26fe2f993e351a0ef74fb727cfe1029884b",
+            from_block=1,
+            to_block=2,
+            latest_chain_block=3,
+            confirmations=0,
+            chunk_size=10,
+            events=[first, second],
+            operator_backing={"github:owner/repo": 100},
+            verified_claims={
+                first_claim: {
+                    "authorizationStatus": "verified",
+                    "publicationStatus": "verified",
+                    "nodeId": "github:owner/repo",
+                    "claimedNodeId": "github:owner/repo",
+                    "declaredAttester": "0x" + "a" * 40,
+                    "attestationAttester": "0x" + "a" * 40,
+                }
             },
             indexed_at="2026-05-22T00:00:00Z",
         )
 
         groups = index["docRefs"]["20260519000000"]["agreementGroups"]
         self.assertEqual(len(groups), 2)
-        self.assertEqual(groups[0]["cardSpecificTdh"], 100)
-        self.assertEqual(groups[0]["backingAccounts"], ["0x" + "a" * 40])
+        self.assertEqual(groups[0]["nodeBackingTdh"], 100)
+        self.assertEqual(groups[0]["combinedSupportTdh"], 100)
+        self.assertEqual(groups[0]["backedNodeIds"], ["github:owner/repo"])
         self.assertEqual(groups[0]["bundleFingerprints"], ["11" * 32])
         self.assertEqual(
             groups[0]["locations"],
@@ -176,6 +207,7 @@ class RsoIndexerTest(unittest.TestCase):
         uri = encode_publication_locator_uri(
             bundle_sha256="AA" * 32,
             locations=["ar://abc123"],
+            node_id="github:owner/repo",
         )
         header, encoded = uri.split(",", 1)
         decoded_payload = json.loads(base64.b64decode(encoded).decode("utf-8"))
@@ -187,24 +219,100 @@ class RsoIndexerTest(unittest.TestCase):
             "data:application/vnd.ompub.rso.publication-locator.v1+json;base64",
         )
         self.assertNotIn("schema", decoded_payload)
+        self.assertEqual(publication["nodeId"], "github:owner/repo")
         self.assertEqual(publication["bundleSha256"], "aa" * 32)
         self.assertEqual(publication["locations"], ["ar://abc123"])
 
     def test_publication_uri_accepts_direct_and_empty_forms(self):
         self.assertEqual(
             describe_publication_uri("ar://abc123"),
-            {"bundleSha256": "", "locations": ["ar://abc123"]},
+            {"nodeId": "", "bundleSha256": "", "locations": ["ar://abc123"]},
         )
         self.assertEqual(
             describe_publication_uri(""),
-            {"bundleSha256": "", "locations": []},
+            {"nodeId": "", "bundleSha256": "", "locations": []},
         )
+
+    def test_publication_locator_rejects_duplicate_locations(self):
+        with self.assertRaisesRegex(ValueError, "unique"):
+            encode_publication_locator_uri(
+                bundle_sha256="aa" * 32,
+                locations=["ar://same", "ar://same"],
+                node_id="github:owner/repo",
+            )
 
     def test_normalize_operator_backing_accepts_schema_records(self):
         self.assertEqual(
-            normalize_operator_backing({"0X" + "AB" * 20: {"cardSpecificTdh": "42"}}),
-            {"0x" + "ab" * 20: 42},
+            normalize_operator_backing({"GitHub:Owner/Repo": {"cardSpecificTdh": "42"}}),
+            {"github:owner/repo": 42},
         )
+        self.assertEqual(
+            normalize_operator_backing({"GitHub:Owner/Repo": {"cardSpecificTdhBacking": "43"}}),
+            {"github:owner/repo": 43},
+        )
+
+    def test_normalize_node_id_accepts_github_short_form(self):
+        self.assertEqual(normalize_node_id("Owner/Repo"), "github:owner/repo")
+
+    def test_normalize_node_id_accepts_valid_domains_and_rejects_malformed_hosts(self):
+        self.assertEqual(normalize_node_id("domain:Node.Example.com"), "domain:node.example.com")
+        for node_id in (
+            "domain:localhost",
+            "domain:-node.example.com",
+            "domain:node..example.com",
+            "domain:node_example.com",
+        ):
+            with self.subTest(node_id=node_id):
+                with self.assertRaisesRegex(ValueError, "domain:hostname"):
+                    normalize_node_id(node_id)
+        with self.assertRaisesRegex(ValueError, "GitHub node id"):
+            normalize_node_id("github:../repo")
+
+    def test_normalized_support_and_evidence_duplicates_fail_closed(self):
+        with self.assertRaisesRegex(ValueError, "duplicate normalized node"):
+            normalize_operator_backing(
+                {
+                    "github:owner/repo": 100,
+                    "GitHub:Owner/Repo": 200,
+                }
+            )
+        with self.assertRaisesRegex(ValueError, "duplicate normalized fingerprints"):
+            normalize_verified_claims(
+                {
+                    "aa" * 32: {"nodeId": "github:owner/repo"},
+                    "AA" * 32: {"nodeId": "github:other/repo"},
+                }
+            )
+
+    def test_direct_witness_normalization_rejects_conflicting_identity_data(self):
+        with self.assertRaisesRegex(ValueError, "conflicting TDH"):
+            normalize_direct_witnesses(
+                {
+                    "first": {
+                        "identity": "alice",
+                        "cardSpecificTdh": 100,
+                        "accounts": ["0x" + "aa" * 20],
+                    },
+                    "second": {
+                        "identity": "alice",
+                        "cardSpecificTdh": 200,
+                        "accounts": ["0x" + "bb" * 20],
+                    },
+                }
+            )
+        with self.assertRaisesRegex(ValueError, "conflicting direct witness"):
+            normalize_direct_witnesses(
+                {
+                    "alice": {
+                        "cardSpecificTdh": 100,
+                        "accounts": ["0x" + "aa" * 20],
+                    },
+                    "bob": {
+                        "cardSpecificTdh": 100,
+                        "accounts": ["0x" + "aa" * 20],
+                    },
+                }
+            )
 
     def test_cli_load_operator_backing_accepts_snapshot_schema(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -215,8 +323,8 @@ class RsoIndexerTest(unittest.TestCase):
                         "schema": "rso-operator-backing-snapshot-v1",
                         "date": "2026-06-01",
                         "operators": {
-                            "0x" + "ab" * 20: {
-                                "cardSpecificTdh": 99,
+                            "github:owner/repo": {
+                                "cardSpecificTdhBacking": 99,
                                 "backerCount": 3,
                             }
                         },
@@ -225,7 +333,311 @@ class RsoIndexerTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            self.assertEqual(cli.load_operator_backing(str(path)), {"0x" + "ab" * 20: 99})
+            self.assertEqual(cli.load_operator_backing(str(path)), {"github:owner/repo": 99})
+
+    def test_github_looking_location_never_establishes_node_identity(self):
+        locator = encode_publication_locator_uri(
+            bundle_sha256="11" * 32,
+            locations=["https://github.com/victim/repo/releases/download/tag/archive.tar.gz"],
+        )
+        index = build_test_index(
+            [make_event(uri=locator)],
+            operator_backing={"github:victim/repo": 999},
+        )
+
+        event = index["events"][0]
+        self.assertEqual(event["claimedNodeId"], "")
+        self.assertEqual(event["nodeId"], "")
+        self.assertEqual(event["nodeBackingTdh"], 0)
+
+    def test_verified_arweave_only_node_claim_receives_backing(self):
+        locator = encode_publication_locator_uri(
+            bundle_sha256="11" * 32,
+            locations=["ar://abc123"],
+            node_id="github:owner/repo",
+        )
+        event = make_event(uri=locator)
+        unverified = build_test_index([event])
+        fingerprint = unverified["events"][0]["claimFingerprint"]
+        index = build_test_index(
+            [event],
+            operator_backing={"github:owner/repo": 250},
+            verified_claims={
+                fingerprint: verified_claim(
+                    node_id="github:owner/repo",
+                    attester=event.attester,
+                )
+            },
+        )
+
+        indexed = index["events"][0]
+        self.assertEqual(indexed["nodeId"], "github:owner/repo")
+        self.assertEqual(indexed["nodeBackingTdh"], 250)
+
+    def test_unverified_signed_node_claim_receives_no_backing(self):
+        event = make_event(
+            uri=encode_publication_locator_uri(
+                bundle_sha256="11" * 32,
+                locations=["ar://abc123"],
+                node_id="github:owner/repo",
+            )
+        )
+        index = build_test_index(
+            [event],
+            operator_backing={"github:owner/repo": 250},
+        )
+
+        self.assertEqual(index["events"][0]["claimedNodeId"], "github:owner/repo")
+        self.assertEqual(index["events"][0]["nodeAuthorizationStatus"], "unverified")
+        self.assertEqual(index["events"][0]["nodeBackingTdh"], 0)
+
+    def test_direct_witness_and_node_backing_are_separate_and_additive(self):
+        locator = encode_publication_locator_uri(
+            bundle_sha256="11" * 32,
+            locations=["ar://abc123"],
+            node_id="github:owner/repo",
+        )
+        event = make_event(uri=locator, attester="0x" + "a" * 40)
+        fingerprint = build_test_index([event])["events"][0]["claimFingerprint"]
+        index = build_test_index(
+            [event],
+            operator_backing={"github:owner/repo": 200},
+            verified_claims={
+                fingerprint: verified_claim(
+                    node_id="github:owner/repo",
+                    attester=event.attester,
+                )
+            },
+            direct_witnesses={
+                "alice": {
+                    "cardSpecificTdh": 100,
+                    "accounts": [event.attester, "0x" + "b" * 40],
+                }
+            },
+        )
+
+        indexed = index["events"][0]
+        group = index["docRefs"]["20260519000000"]["agreementGroups"][0]
+        self.assertEqual(indexed["directWitnessIdentity"], "alice")
+        self.assertEqual(indexed["directWitnessTdh"], 100)
+        self.assertEqual(indexed["nodeBackingTdh"], 200)
+        self.assertEqual(group["combinedSupportTdh"], 300)
+
+    def test_raw_attestation_count_cannot_break_a_support_tie(self):
+        first = make_event(
+            attester="0x" + "a" * 40,
+            transaction_hash="0x" + "1" * 64,
+        )
+        second = make_event(
+            attester="0x" + "b" * 40,
+            transaction_hash="0x" + "2" * 64,
+        )
+        conflicting = make_event(
+            attester="0x" + "c" * 40,
+            transaction_hash="0x" + "3" * 64,
+            block_hash="0x" + "e" * 64,
+            content_hash="0x" + "f" * 64,
+        )
+        index = build_test_index([first, second, conflicting])
+
+        groups = index["docRefs"]["20260519000000"]["agreementGroups"]
+        self.assertEqual(sorted(group["attestationCount"] for group in groups), [1, 2])
+        self.assertTrue(all(group["combinedSupportTdh"] == 0 for group in groups))
+        self.assertIsNone(index["docRefs"]["20260519000000"]["leadingAgreementGroup"])
+
+    def test_multiple_identity_accounts_and_node_keys_count_each_channel_once(self):
+        locator = encode_publication_locator_uri(
+            bundle_sha256="11" * 32,
+            locations=["ar://abc123"],
+            node_id="github:owner/repo",
+        )
+        first = make_event(
+            uri=locator,
+            attester="0x" + "a" * 40,
+            transaction_hash="0x" + "1" * 64,
+        )
+        second = make_event(
+            uri=locator,
+            attester="0x" + "b" * 40,
+            transaction_hash="0x" + "2" * 64,
+        )
+        initial = build_test_index([first, second])
+        verified = {
+            event["claimFingerprint"]: verified_claim(
+                node_id="github:owner/repo",
+                attester=event["attester"],
+            )
+            for event in initial["events"]
+        }
+        index = build_test_index(
+            [first, second],
+            operator_backing={"github:owner/repo": 200},
+            verified_claims=verified,
+            direct_witnesses={
+                "alice": {
+                    "cardSpecificTdh": 100,
+                    "accounts": [first.attester, second.attester],
+                }
+            },
+        )
+
+        group = index["docRefs"]["20260519000000"]["agreementGroups"][0]
+        self.assertEqual(group["attestationCount"], 2)
+        self.assertEqual(group["directWitnessIdentities"], ["alice"])
+        self.assertEqual(group["backedNodeIds"], ["github:owner/repo"])
+        self.assertEqual(group["directWitnessTdh"], 100)
+        self.assertEqual(group["nodeBackingTdh"], 200)
+        self.assertEqual(group["combinedSupportTdh"], 300)
+
+    def test_equivocating_identity_and_node_do_not_multiply_or_count(self):
+        locator = encode_publication_locator_uri(
+            bundle_sha256="11" * 32,
+            locations=["ar://abc123"],
+            node_id="github:owner/repo",
+        )
+        first = make_event(uri=locator, transaction_hash="0x" + "1" * 64)
+        second = make_event(
+            uri=locator,
+            transaction_hash="0x" + "2" * 64,
+            block_hash="0x" + "e" * 64,
+            content_hash="0x" + "f" * 64,
+        )
+        initial = build_test_index([first, second])
+        verified = {
+            event["claimFingerprint"]: verified_claim(
+                node_id="github:owner/repo",
+                attester=event["attester"],
+            )
+            for event in initial["events"]
+        }
+        index = build_test_index(
+            [first, second],
+            operator_backing={"github:owner/repo": 200},
+            verified_claims=verified,
+            direct_witnesses={
+                "alice": {
+                    "cardSpecificTdh": 100,
+                    "accounts": [first.attester],
+                }
+            },
+        )
+
+        for group in index["docRefs"]["20260519000000"]["agreementGroups"]:
+            self.assertEqual(group["directWitnessTdh"], 0)
+            self.assertEqual(group["nodeBackingTdh"], 0)
+            self.assertEqual(group["equivocatingDirectWitnessIdentities"], ["alice"])
+            self.assertEqual(group["equivocatingNodes"], ["github:owner/repo"])
+
+    def test_cli_loads_tdh_support_and_only_verified_sweeper_records(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            support_path = Path(tmpdir) / "support.json"
+            report_path = Path(tmpdir) / "report.json"
+            support_path.write_text(
+                json.dumps(
+                    {
+                        "schema": "rso-tdh-support-snapshot-v1",
+                        "identities": {
+                            "alice": {
+                                "cardSpecificTdh": 100,
+                                "accounts": ["0x" + "aa" * 20],
+                            }
+                        },
+                        "operators": {
+                            "github:owner/repo": {"cardSpecificTdhBacking": 200}
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            report_path.write_text(
+                json.dumps(
+                    {
+                        "schema": "rso-sweeper-date-report-v1",
+                        "operators": [
+                            {
+                                "status": "submitted",
+                                "authorizationStatus": "verified",
+                                "publicationStatus": "verified",
+                                "claimFingerprint": "11" * 32,
+                                "nodeId": "github:owner/repo",
+                                "claimedNodeId": "github:owner/repo",
+                                "declaredAttester": "0x" + "aa" * 20,
+                                "attestationAttester": "0x" + "aa" * 20,
+                            },
+                            {
+                                "status": "candidate",
+                                "authorizationStatus": "verified",
+                                "publicationStatus": "pending",
+                                "claimFingerprint": "22" * 32,
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            self.assertEqual(cli.load_operator_backing(str(support_path)), {"github:owner/repo": 200})
+            self.assertIn("alice", cli.load_direct_witnesses(str(support_path)))
+            self.assertEqual(list(cli.load_verified_claims(str(report_path))), ["11" * 32])
+
+    def test_tdh_support_is_applied_only_to_matching_archive_date(self):
+        first = make_event(
+            doc_ref=20260519000000,
+            transaction_hash="0x" + "1" * 64,
+        )
+        second = make_event(
+            doc_ref=20260520000000,
+            transaction_hash="0x" + "2" * 64,
+        )
+        index = build_test_index(
+            [first, second],
+            direct_witnesses_by_date={
+                "2026-05-19": {
+                    "alice": {
+                        "cardSpecificTdh": 100,
+                        "accounts": [first.attester],
+                    }
+                },
+                "2026-05-20": {
+                    "alice": {
+                        "cardSpecificTdh": 250,
+                        "accounts": [second.attester],
+                    }
+                },
+            },
+        )
+
+        by_date = {event["date"]: event for event in index["events"]}
+        self.assertEqual(by_date["2026-05-19"]["directWitnessTdh"], 100)
+        self.assertEqual(by_date["2026-05-20"]["directWitnessTdh"], 250)
+        self.assertEqual(index["tdhSupportDates"], ["2026-05-19", "2026-05-20"])
+        self.assertEqual(index["directWitnessAccountCount"], 1)
+
+    def test_cli_allows_repeated_equivalent_sweeper_evidence(self):
+        record = {
+            "status": "submitted",
+            "authorizationStatus": "verified",
+            "publicationStatus": "verified",
+            "claimFingerprint": "11" * 32,
+            "nodeId": "github:owner/repo",
+            "claimedNodeId": "github:owner/repo",
+            "declaredAttester": "0x" + "aa" * 20,
+            "attestationAttester": "0x" + "aa" * 20,
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for name, observed_at in (
+                ("one.json", "2026-06-01T01:00:00Z"),
+                ("two.json", "2026-06-01T02:00:00Z"),
+            ):
+                payload = {
+                    "schema": "rso-sweeper-date-report-v1",
+                    "operators": [{**record, "observedAt": observed_at}],
+                }
+                (Path(tmpdir) / name).write_text(json.dumps(payload), encoding="utf-8")
+
+            claims = cli.load_verified_claims(tmpdir)
+
+        self.assertEqual(list(claims), ["11" * 32])
 
     def test_build_static_index_dedupes_duplicate_events(self):
         event = make_event(doc_ref=20260519000000, transaction_hash="0x" + "1" * 64)
@@ -416,8 +828,18 @@ class RsoIndexerTest(unittest.TestCase):
         self.assertEqual(index["docRefCount"], 5)
         self.assertEqual(len(cache_lines), 5)
         self.assertEqual(index["events"][0]["onBehalfOf"], ZERO_ADDRESS)
-        self.assertFalse(index["events"][0]["hasIdentityClaim"])
-        self.assertEqual(index["events"][0]["identityAddress"], "")
+        self.assertEqual(index["events"][0]["onBehalfOf"], ZERO_ADDRESS)
+        self.assertNotIn("hasIdentityClaim", index["events"][0])
+        self.assertNotIn("identityAddress", index["events"][0])
+        self.assertEqual(index["events"][0]["nodeId"], "")
+        self.assertEqual(index["events"][0]["nodeBackingTdh"], 0)
+        self.assertEqual(index["events"][0]["directWitnessTdh"], 0)
+        self.assertEqual(index["sweeperVerifiedClaimCount"], 0)
+        self.assertEqual(index["directWitnessAccountCount"], 0)
+        self.assertIn("attesters", index["docRefs"]["20260515000000"]["agreementGroups"][0])
+        self.assertNotIn("operators", index["docRefs"]["20260515000000"]["agreementGroups"][0])
+        self.assertNotIn("operatorAttester", index["events"][0])
+        self.assertNotIn("cardSpecificTdh", index["events"][0])
         self.assertIn('"on_behalf_of":"0x0000000000000000000000000000000000000000"', cache_lines[0])
         self.assertEqual(checkpoint["last_block"], index["toBlock"])
         self.assertEqual(index["chunkSize"], 10)
@@ -461,6 +883,33 @@ def make_event(
         log_index=3,
         ethereum_block_hash="0x" + "9" * 64,
     )
+
+
+def build_test_index(events, **support):
+    return build_static_index(
+        network="sepolia",
+        chain_id=11155111,
+        contract_address="0xace3a26fe2f993e351a0ef74fb727cfe1029884b",
+        from_block=1,
+        to_block=2,
+        latest_chain_block=3,
+        confirmations=0,
+        chunk_size=10,
+        events=events,
+        indexed_at="2026-05-22T00:00:00Z",
+        **support,
+    )
+
+
+def verified_claim(*, node_id, attester):
+    return {
+        "authorizationStatus": "verified",
+        "publicationStatus": "verified",
+        "nodeId": node_id,
+        "claimedNodeId": node_id,
+        "declaredAttester": attester,
+        "attestationAttester": attester,
+    }
 
 
 if __name__ == "__main__":

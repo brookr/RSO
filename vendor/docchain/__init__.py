@@ -2,8 +2,10 @@
 
 from .attestation import (
     attest_doc_calldata,
+    cast_wallet_args_from_env,
     doc_block_hash_payload,
     doc_block_hash_with_cast,
+    has_cast_wallet_config,
     prepare_attestation,
     signed_attestation,
     sign_prepared_with_cast,
@@ -36,10 +38,12 @@ __all__ = [
     "append_event_cache",
     "attest_doc_calldata",
     "build_docchain_index",
+    "cast_wallet_args_from_env",
     "checkpoint_from_block",
     "decode_doc_attested_log",
     "doc_block_hash_payload",
     "doc_block_hash_with_cast",
+    "has_cast_wallet_config",
     "load_event_cache",
     "normalize_doc_attested",
     "prepare_attestation",
