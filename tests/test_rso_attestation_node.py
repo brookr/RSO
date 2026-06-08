@@ -21,6 +21,14 @@ class RsoAttestationNodeTest(unittest.TestCase):
             args = node_cli.parse_args()
         self.assertEqual(args.ttl, node_cli.MAX_ATTESTATION_TTL)
 
+    def test_node_cli_treats_empty_on_behalf_of_environment_as_zero_address(self):
+        with patch.dict("os.environ", {"RSO_ON_BEHALF_OF_ADDRESS": ""}, clear=True), patch(
+            "sys.argv",
+            ["node_attest.py", "--start", "2026-05-28", "--end", "2026-05-28"],
+        ):
+            args = node_cli.parse_args()
+        self.assertEqual(args.on_behalf_of, node.ZERO_ADDRESS)
+
     def test_parent_hash_for_baseline_is_zero(self):
         self.assertEqual(
             node.parent_hash_for_date("2026-04-20", {"attestations": []}),
@@ -263,6 +271,8 @@ class RsoAttestationNodeTest(unittest.TestCase):
                 block_hash=prepared.block_hash,
             )
             self.assertEqual(entry["blockHash"], "0x" + "22" * 32)
+            self.assertEqual(entry["chainId"], 1)
+            self.assertEqual(entry["contractAddress"], "0x" + "aa" * 20)
             self.assertTrue(entry["signedPath"].startswith("data/attestations/signed/2026-04-20/"))
             self.assertEqual(entry["latestSignedPath"], "data/attestations/signed/2026-04-20.json")
             self.assertEqual(entry["submissionStatus"], "signed")
@@ -277,6 +287,8 @@ class RsoAttestationNodeTest(unittest.TestCase):
             base_entry = {
                 "date": "2026-04-20",
                 "artifactId": "one",
+                "chainId": 1,
+                "contractAddress": "0x" + "aa" * 20,
                 "docRef": 20260420000000,
                 "attester": "0x" + "bb" * 20,
                 "onBehalfOf": node.ZERO_ADDRESS,
@@ -303,6 +315,51 @@ class RsoAttestationNodeTest(unittest.TestCase):
                 node.state_attestation_for_inputs(
                     state,
                     snapshot_date="2026-04-20",
+                    chain_id=1,
+                    contract_address="0x" + "aa" * 20,
+                    attester="0x" + "bb" * 20,
+                    on_behalf_of=node.ZERO_ADDRESS,
+                    parent_hash=node.ZERO_BYTES32,
+                    content_hash="0x" + "22" * 32,
+                    uri="ar://one",
+                )
+            )
+
+    def test_state_keeps_attestations_for_different_contract_domains(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state_path = Path(tmpdir) / "state.json"
+            base_entry = {
+                "date": "2026-04-20",
+                "artifactId": "one",
+                "chainId": 11155111,
+                "contractAddress": "0x" + "aa" * 20,
+                "docRef": 20260420000000,
+                "attester": "0x" + "bb" * 20,
+                "onBehalfOf": node.ZERO_ADDRESS,
+                "parentHash": node.ZERO_BYTES32,
+                "blockHash": "0x" + "11" * 32,
+                "contentHash": "0x" + "22" * 32,
+                "uri": "ar://one",
+                "signedPath": "one.json",
+                "signature": "0x1234",
+                "submissionStatus": "signed",
+                "updatedAt": "2026-06-01T00:00:00Z",
+            }
+            replacement = dict(base_entry)
+            replacement["artifactId"] = "two"
+            replacement["contractAddress"] = "0x" + "cc" * 20
+            replacement["updatedAt"] = "2026-06-01T00:01:00Z"
+
+            state = node.record_state_entry(state_path, base_entry)
+            state = node.record_state_entry(state_path, replacement)
+
+            self.assertEqual(len(state["attestations"]), 2)
+            self.assertIsNone(
+                node.state_attestation_for_inputs(
+                    state,
+                    snapshot_date="2026-04-20",
+                    chain_id=11155111,
+                    contract_address="0x" + "dd" * 20,
                     attester="0x" + "bb" * 20,
                     on_behalf_of=node.ZERO_ADDRESS,
                     parent_hash=node.ZERO_BYTES32,

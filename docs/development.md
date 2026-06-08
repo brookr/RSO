@@ -55,10 +55,12 @@ python3 pipeline/snapshot.py prune-catalogs --all --keep-latest 2 --require-bund
 python3 pipeline/snapshot.py hydrate-catalogs --latest 2 --repo OMPub/RSO
 ```
 
-For long replay or roll-forward runs, increase the request delay:
+Long replay or roll-forward runs need no manual throttling: the Space-Track client
+paces itself under the published limits (fewer than 30 requests/minute and 300/hour)
+and backs off/retries the HTTP 500 rate-limit response automatically.
 
 ```bash
-RSO_REQUEST_DELAY=12.5 python3 pipeline/snapshot.py replay --start 2026-01-01
+python3 pipeline/snapshot.py replay --start 2026-01-01
 ```
 
 ## Related Docs

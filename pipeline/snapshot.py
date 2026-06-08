@@ -9,6 +9,7 @@ the closed UTC window before the snapshot cutoff.
 
 import argparse
 import base64
+import collections
 import io
 import gzip
 import hashlib
@@ -16,6 +17,7 @@ import http.cookiejar
 import ipaddress
 import json
 import os
+import random
 import re
 import socket
 import sys
@@ -36,10 +38,17 @@ SPACETRACK_BASE = "https://www.space-track.org"
 SPACETRACK_LOGIN = f"{SPACETRACK_BASE}/ajaxauth/login"
 SPACETRACK_QUERY = f"{SPACETRACK_BASE}/basicspacedata/query"
 
-# Space-Track guideline: max 30 req/min and 300 req/hr. The default leaves
-# plenty of margin for daily runs. For months of replay/roll-forward, set
-# RSO_REQUEST_DELAY=12.5 to stay below the hourly limit.
+# Space-Track guideline: fewer than 30 req/min and 300 req/hr; exceeding either
+# can suspend the account. Space-Track does NOT return HTTP 429 / Retry-After --
+# a violation comes back as HTTP 500 with "violated your query rate limit" in the
+# body -- so the client paces PROACTIVELY to the windows below (never tripping the
+# limit) and treats that 500 as a retryable backstop. The per-minute/per-hour
+# pacing keeps every operator fork compliant during long roll-forward/replay runs
+# with no per-fork tuning. RSO_REQUEST_DELAY is now just an optional minimum gap.
 REQUEST_DELAY = float(os.environ.get("RSO_REQUEST_DELAY", "2.5"))
+MAX_REQUESTS_PER_MINUTE = int(os.environ.get("RSO_MAX_REQUESTS_PER_MINUTE", "25"))
+MAX_REQUESTS_PER_HOUR = int(os.environ.get("RSO_MAX_REQUESTS_PER_HOUR", "275"))
+MAX_REQUEST_RETRIES = int(os.environ.get("RSO_MAX_REQUEST_RETRIES", "5"))
 CATALOG_RANGE_SIZE = int(os.environ.get("RSO_CATALOG_RANGE_SIZE", "10000"))
 MAX_NORAD_CAT_ID = int(os.environ.get("RSO_MAX_NORAD_CAT_ID", "339999"))
 MIN_OBJECT_COUNT = int(os.environ.get("RSO_MIN_OBJECT_COUNT", "40000"))
@@ -102,23 +111,122 @@ class SnapshotError(RuntimeError):
     """Raised when a snapshot would be incomplete or invalid."""
 
 
+class SpaceTrackRateLimiter:
+    """Proactively keep Space-Track requests under the published limits.
+
+    Space-Track allows fewer than 30 requests/minute and 300 requests/hour and
+    may suspend accounts that exceed either. It does NOT emit HTTP 429 or a
+    Retry-After header, so reactive backoff alone cannot keep a long run
+    compliant -- the only safe control is to pace before each request and never
+    trip the limit. acquire() sleeps until issuing a request now would breach
+    neither the rolling per-minute window, the rolling per-hour window, nor an
+    optional minimum spacing. This keeps every operator fork well behaved during
+    multi-day roll-forward/replay without per-fork tuning.
+    """
+
+    def __init__(
+        self,
+        *,
+        per_minute=MAX_REQUESTS_PER_MINUTE,
+        per_hour=MAX_REQUESTS_PER_HOUR,
+        min_spacing=0.0,
+        sleep=time.sleep,
+        clock=time.monotonic,
+    ):
+        if per_minute < 1 or per_hour < 1:
+            raise SnapshotError("Space-Track rate limits must be positive")
+        self.per_minute = per_minute
+        self.per_hour = per_hour
+        self.min_spacing = max(0.0, min_spacing)
+        self._sleep = sleep
+        self._clock = clock
+        self._calls = collections.deque()
+        self._last = None
+
+    def acquire(self):
+        for _ in range(10000):  # bounded; resolves in 1-2 iterations in practice
+            now = self._clock()
+            while self._calls and now - self._calls[0] >= 3600:
+                self._calls.popleft()
+            wait = 0.0
+            if self.min_spacing and self._last is not None:
+                wait = max(wait, self.min_spacing - (now - self._last))
+            minute = [t for t in self._calls if now - t < 60]
+            if len(minute) >= self.per_minute:
+                wait = max(wait, 60 - (now - minute[0]))
+            if len(self._calls) >= self.per_hour:
+                wait = max(wait, 3600 - (now - self._calls[0]))
+            if wait <= 0:
+                break
+            self._sleep(wait)
+        now = self._clock()
+        self._calls.append(now)
+        self._last = now
+
+
+def request_backoff_seconds(attempt, *, rate_limited, jitter=random.uniform):
+    """Exponential backoff for transient Space-Track errors / rate-limit 500s."""
+    base = min(2.0 * (2 ** attempt), 30.0)
+    if rate_limited:
+        # A rate-limit 500 means the minute window is full; wait it out.
+        base = max(60.0, base)
+    return base + jitter(0.0, base * 0.25)
+
+
+def is_rate_limit_response(detail):
+    return "violated your query rate limit" in detail.lower()
+
+
 class SpaceTrackClient:
-    def __init__(self):
+    def __init__(self, *, rate_limiter=None, sleep=time.sleep, jitter=None):
         cookie_jar = http.cookiejar.CookieJar()
         self.opener = urllib.request.build_opener(
             urllib.request.HTTPCookieProcessor(cookie_jar)
         )
         self.authenticated = False
+        self.rate_limiter = rate_limiter or SpaceTrackRateLimiter(min_spacing=REQUEST_DELAY)
+        self._sleep = sleep
+        self._jitter = jitter if jitter is not None else random.uniform
 
     def _request(self, url, data=None):
         headers = {"User-Agent": f"rso-archive/{PIPELINE_VERSION}"}
-        if data is not None:
-            body = urllib.parse.urlencode(data).encode("utf-8")
+        body = urllib.parse.urlencode(data).encode("utf-8") if data is not None else None
+        last_error = None
+        for attempt in range(MAX_REQUEST_RETRIES + 1):
+            # Pace proactively before every attempt so we stay under the limits
+            # rather than relying on tripping them.
+            self.rate_limiter.acquire()
             req = urllib.request.Request(url, data=body, headers=headers)
-        else:
-            req = urllib.request.Request(url, headers=headers)
-        resp = self.opener.open(req, timeout=180)
-        return resp.read()
+            try:
+                resp = self.opener.open(req, timeout=180)
+                return resp.read()
+            except urllib.error.HTTPError as exc:
+                detail = ""
+                try:
+                    detail = exc.read().decode("utf-8", errors="replace")
+                except Exception:
+                    detail = ""
+                # Space-Track signals a rate-limit violation as HTTP 500 with a
+                # marker in the body (not 429/Retry-After). 5xx gateway errors
+                # are transient. Anything else (e.g. a bad query) is not retried.
+                rate_limited = exc.code == 500 and is_rate_limit_response(detail)
+                transient = exc.code in (502, 503, 504)
+                last_error = SnapshotError(
+                    f"Space-Track request failed (HTTP {exc.code}): {detail[:200].strip()}"
+                )
+                if not (rate_limited or transient) or attempt >= MAX_REQUEST_RETRIES:
+                    raise last_error from exc
+                self._sleep(
+                    request_backoff_seconds(attempt, rate_limited=rate_limited, jitter=self._jitter)
+                )
+            except (TimeoutError, urllib.error.URLError) as exc:
+                last_error = SnapshotError(f"Space-Track request did not settle: {exc}")
+                if attempt >= MAX_REQUEST_RETRIES:
+                    raise last_error from exc
+                self._sleep(
+                    request_backoff_seconds(attempt, rate_limited=False, jitter=self._jitter)
+                )
+        raise last_error or SnapshotError("Space-Track request failed")
 
     def login(self):
         user = os.environ.get("SPACETRACK_USER")
@@ -463,9 +571,8 @@ def query_gp_history_ranges(
         validate_gp_records(batch, min_count=0, context=f"gp_history {start}--{end}")
         records.extend(batch)
         query_paths.append(path)
-
-        if REQUEST_DELAY > 0:
-            time.sleep(REQUEST_DELAY)
+        # Pacing (per-minute, per-hour, and the optional RSO_REQUEST_DELAY minimum
+        # gap) is enforced centrally by the client rate limiter before each request.
 
     return records, query_paths
 

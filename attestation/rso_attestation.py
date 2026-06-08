@@ -168,6 +168,8 @@ def state_attestation_for_inputs(
     state: Mapping[str, object],
     *,
     snapshot_date: str,
+    chain_id: int,
+    contract_address: str,
     attester: str,
     on_behalf_of: str,
     parent_hash: str,
@@ -179,6 +181,8 @@ def state_attestation_for_inputs(
         raise ValueError("state attestations must be an array")
     expected = {
         "date": snapshot_date,
+        "chainId": int(chain_id),
+        "contractAddress": normalize_address(contract_address),
         "attester": normalize_address(attester),
         "onBehalfOf": normalize_address(on_behalf_of),
         "parentHash": normalize_bytes32(parent_hash),
@@ -357,6 +361,8 @@ def state_entry_from_signed_artifact(
     if not isinstance(doc_block, Mapping):
         raise ValueError("prepared docBlock is malformed")
     artifact_id = signed_attestation_artifact_id(
+        chain_id=int(prepared["chainId"]),
+        contract_address=str(prepared["contractAddress"]),
         attester=str(attestation["attester"]),
         on_behalf_of=str(attestation.get("onBehalfOf", ZERO_ADDRESS)),
         parent_hash=str(doc_block["parentHash"]),
@@ -366,6 +372,8 @@ def state_entry_from_signed_artifact(
     return {
         "date": snapshot_date,
         "artifactId": artifact_id,
+        "chainId": int(prepared["chainId"]),
+        "contractAddress": normalize_address(str(prepared["contractAddress"])),
         "docRef": int(doc_block["docRef"]),
         "attester": normalize_address(str(attestation["attester"])),
         "onBehalfOf": normalize_address(str(attestation.get("onBehalfOf", ZERO_ADDRESS))),
@@ -386,6 +394,8 @@ def state_entry_from_signed_artifact(
 
 def signed_attestation_artifact_id(
     *,
+    chain_id: int,
+    contract_address: str,
     attester: str,
     on_behalf_of: str,
     parent_hash: str,
@@ -393,6 +403,8 @@ def signed_attestation_artifact_id(
     uri: str,
 ) -> str:
     payload = {
+        "chainId": int(chain_id),
+        "contractAddress": normalize_address(contract_address),
         "attester": normalize_address(attester),
         "onBehalfOf": normalize_address(on_behalf_of),
         "parentHash": normalize_bytes32(parent_hash),
@@ -403,9 +415,13 @@ def signed_attestation_artifact_id(
     return hashlib.sha256(raw).hexdigest()
 
 
-def state_entry_key(entry: Mapping[str, object]) -> tuple[str, str, str, str, str, str]:
+def state_entry_key(
+    entry: Mapping[str, object],
+) -> tuple[str, int, str, str, str, str, str, str]:
     return (
         str(entry.get("date", "")),
+        int(entry.get("chainId", 0)),
+        normalize_address(str(entry.get("contractAddress", ZERO_ADDRESS))),
         normalize_address(str(entry.get("attester", ZERO_ADDRESS))),
         normalize_address(str(entry.get("onBehalfOf", ZERO_ADDRESS))),
         normalize_bytes32(str(entry.get("parentHash", ZERO_BYTES32))),

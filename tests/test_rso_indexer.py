@@ -808,51 +808,46 @@ class RsoIndexerTest(unittest.TestCase):
         self.assertEqual(captured_index["payload"]["chunkSize"], 10)
 
     def test_committed_sepolia_seed_artifacts_are_consistent(self):
-        index = json.loads(
-            (ROOT / "indexer/generated/sepolia/rso-docchain-index.json").read_text(
-                encoding="utf-8"
-            )
-        )
-        checkpoint = json.loads(
-            (ROOT / "indexer/cache/sepolia/checkpoint.json").read_text(encoding="utf-8")
-        )
+        index_path = ROOT / "indexer/generated/sepolia/rso-docchain-index.json"
+        checkpoint_path = ROOT / "indexer/cache/sepolia/checkpoint.json"
+        cache_path = ROOT / "indexer/cache/sepolia/doc-attested.jsonl"
+        existing_paths = [
+            path for path in (index_path, checkpoint_path, cache_path) if path.exists()
+        ]
+        if not existing_paths:
+            self.skipTest("Sepolia index has not been generated on this node yet")
+        self.assertEqual(len(existing_paths), 3)
+
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+        checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
         cache_lines = [
             line
-            for line in (ROOT / "indexer/cache/sepolia/doc-attested.jsonl")
-            .read_text(encoding="utf-8")
-            .splitlines()
+            for line in cache_path.read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
+        cached_events = [json.loads(line) for line in cache_lines]
+        indexed_events = index["events"]
+        doc_refs = sorted({str(event["docRef"]) for event in indexed_events})
 
-        self.assertEqual(index["eventCount"], 5)
-        self.assertEqual(index["docRefCount"], 5)
-        self.assertEqual(len(cache_lines), 5)
-        self.assertEqual(index["events"][0]["onBehalfOf"], ZERO_ADDRESS)
-        self.assertEqual(index["events"][0]["onBehalfOf"], ZERO_ADDRESS)
-        self.assertNotIn("hasIdentityClaim", index["events"][0])
-        self.assertNotIn("identityAddress", index["events"][0])
-        self.assertEqual(index["events"][0]["nodeId"], "")
-        self.assertEqual(index["events"][0]["nodeBackingTdh"], 0)
-        self.assertEqual(index["events"][0]["directWitnessTdh"], 0)
-        self.assertEqual(index["sweeperVerifiedClaimCount"], 0)
-        self.assertEqual(index["directWitnessAccountCount"], 0)
-        self.assertIn("attesters", index["docRefs"]["20260515000000"]["agreementGroups"][0])
-        self.assertNotIn("operators", index["docRefs"]["20260515000000"]["agreementGroups"][0])
-        self.assertNotIn("operatorAttester", index["events"][0])
-        self.assertNotIn("cardSpecificTdh", index["events"][0])
-        self.assertIn('"on_behalf_of":"0x0000000000000000000000000000000000000000"', cache_lines[0])
+        self.assertGreater(index["eventCount"], 0)
+        self.assertEqual(index["eventCount"], len(indexed_events))
+        self.assertEqual(index["eventCount"], len(cached_events))
+        self.assertEqual(index["docRefCount"], len(index["docRefs"]))
+        self.assertEqual(list(index["docRefs"]), doc_refs)
+        self.assertTrue(all("on_behalf_of" in event for event in cached_events))
+        for event in indexed_events:
+            self.assertNotIn("hasIdentityClaim", event)
+            self.assertNotIn("identityAddress", event)
+            self.assertNotIn("operatorAttester", event)
+            self.assertNotIn("cardSpecificTdh", event)
+        for doc_ref in index["docRefs"].values():
+            for group in doc_ref["agreementGroups"]:
+                self.assertIn("attesters", group)
+                self.assertNotIn("operators", group)
         self.assertEqual(checkpoint["last_block"], index["toBlock"])
+        self.assertEqual(checkpoint["address"], index["contractAddress"].lower())
+        self.assertEqual(checkpoint["chain_id"], index["chainId"])
         self.assertEqual(index["chunkSize"], 10)
-        self.assertEqual(
-            list(index["docRefs"].keys()),
-            [
-                "20260515000000",
-                "20260516000000",
-                "20260517000000",
-                "20260518000000",
-                "20260519000000",
-            ],
-        )
 
 
 def make_event(

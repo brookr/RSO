@@ -84,11 +84,17 @@ Rebuild an existing range deliberately:
 python pipeline/snapshot.py roll-forward --start 2026-04-27 --end 2026-04-29 --force
 ```
 
-Use a slower Space-Track request delay for long ranges:
+Long ranges need no special pacing: the client self-throttles under Space-Track's
+limits (fewer than 30 requests/minute and 300/hour) and retries the HTTP 500
+rate-limit response automatically, so a multi-day roll-forward stays compliant on
+its own.
 
 ```bash
-RSO_REQUEST_DELAY=12.5 python pipeline/snapshot.py roll-forward --start 2026-04-21 --end 2026-04-29
+python pipeline/snapshot.py roll-forward --start 2026-04-21 --end 2026-04-29
 ```
+
+`RSO_REQUEST_DELAY` still works as an optional minimum gap between requests if you
+want to spread load further.
 
 After rolling forward, validate:
 

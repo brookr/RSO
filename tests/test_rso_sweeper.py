@@ -21,6 +21,7 @@ from sweeper.rso_sweeper import (
     github_fork_operator_registry,
     handle_signed_attestation,
     host_allowed,
+    is_duplicate_error,
     merge_date_report,
     normalize_backing_snapshot,
     parse_attest_doc_return,
@@ -36,6 +37,7 @@ from sweeper.rso_sweeper import (
 )
 from indexer.rso_profile import encode_publication_locator_uri
 from vendor.docchain.attestation import prepare_attestation, signed_attestation
+from vendor.docchain.indexer import RpcError
 
 
 class RsoSweeperTest(unittest.TestCase):
@@ -45,6 +47,16 @@ class RsoSweeperTest(unittest.TestCase):
         self.assertEqual(parsed["blockHash"], "0x" + "11" * 32)
         self.assertEqual(parsed["uriHash"], "0x" + "22" * 32)
         self.assertEqual(parsed["attestationKey"], "0x" + "33" * 32)
+
+    def test_duplicate_error_recognizes_text_and_custom_error_selector(self):
+        self.assertTrue(is_duplicate_error("execution reverted: DuplicateAttestation"))
+        self.assertTrue(
+            is_duplicate_error(
+                "eth_call returned error: {'data': "
+                "'0xdd65d744372d0e8c6cbfdd3949b08650c67c1dce34a1b43a'}"
+            )
+        )
+        self.assertFalse(is_duplicate_error("execution reverted: expired"))
 
     def test_operator_url_defaults_to_raw_github_signed_artifact(self):
         self.assertEqual(
@@ -757,10 +769,29 @@ class RsoSweeperTest(unittest.TestCase):
         self.assertEqual(transaction_hash_from_cast_output(f"transactionHash {tx}\n"), tx)
         self.assertEqual(transaction_hash_from_cast_output(f"sent {tx}\n"), tx)
 
+    def test_handle_signed_attestation_reports_contract_duplicate(self):
+        rpc = FakeRpc(error=RpcError("execution reverted: 0xdd65d744" + "33" * 32))
+        with patch("sweeper.rso_sweeper.validate_uri", return_value=verified_publication()):
+            response = handle_signed_attestation(
+                make_artifact(),
+                operator={
+                    "repository": "owner/repo",
+                    "attester": "0x" + "bb" * 20,
+                    "_backing": backed_operator(),
+                },
+                config=config_for_test(),
+                rpc=rpc,
+            )
+
+        self.assertEqual(response["status"], "duplicate")
+        self.assertEqual(response["authorizationStatus"], "verified")
+        self.assertEqual(response["publicationStatus"], "verified")
+
 
 class FakeRpc:
-    def __init__(self, *, simulation=None):
+    def __init__(self, *, simulation=None, error=None):
         self.simulation = simulation or "0x" + "11" * 32 + "22" * 32 + "33" * 32
+        self.error = error
         self.calls = []
 
     def call(self, method, params):
@@ -769,6 +800,8 @@ class FakeRpc:
         data = params[0]["data"]
         self.calls.append(data)
         if data.startswith("0xd2b85e96"):
+            if self.error is not None:
+                raise self.error
             return self.simulation
         raise AssertionError(f"unexpected calldata {data}")
 

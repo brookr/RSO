@@ -58,6 +58,8 @@ def main() -> int:
             existing = state_attestation_for_inputs(
                 state,
                 snapshot_date=snapshot_date,
+                chain_id=args.chain_id,
+                contract_address=args.contract_address,
                 attester=args.attester,
                 on_behalf_of=args.on_behalf_of,
                 parent_hash=parent_hash,
@@ -141,7 +143,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--on-behalf-of",
-        default=os.environ.get("RSO_ON_BEHALF_OF_ADDRESS", ZERO_ADDRESS),
+        default=os.environ.get("RSO_ON_BEHALF_OF_ADDRESS") or ZERO_ADDRESS,
         help="6529 identity/card-holding address represented by the disposable EOA.",
     )
     parser.add_argument(

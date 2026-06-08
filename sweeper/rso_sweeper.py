@@ -51,6 +51,7 @@ DEFAULT_SPONSORSHIP_LIMIT = 5
 DEFAULT_MAX_BACKED_NODE_DISCOVERY = 100
 DEFAULT_MAX_REPORT_RECORDS_PER_DATE = 1000
 MAX_ATTESTATION_URI_BYTES = 8192
+DUPLICATE_ATTESTATION_SELECTOR = "0xdd65d744"
 
 
 class SweeperError(ValueError):
@@ -1031,7 +1032,11 @@ def validate_expected_date(
 
 def is_duplicate_error(message: str) -> bool:
     normalized = message.lower()
-    return "duplicateattestation" in normalized or "duplicate attestation" in normalized
+    return (
+        "duplicateattestation" in normalized
+        or "duplicate attestation" in normalized
+        or DUPLICATE_ATTESTATION_SELECTOR in normalized
+    )
 
 
 def simulate_attest_doc(rpc: EthereumRpc, contract_address: str, calldata: str) -> dict[str, str]:

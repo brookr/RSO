@@ -7,10 +7,10 @@ The first profile is Sepolia:
 
 ```text
 network: sepolia
-contract: 0xaCE3a26Fe2F993e351a0eF74fb727Cfe1029884b
+contract: 0x1133895b7b8C4A0A8aae0b5d40B96C652192F5DA
 profileURI: https://om.pub/rso/doc-chain/v1
 docChainId: 0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d
-fromBlock: 10849363
+fromBlock: 11007365
 ```
 
 Run it with any Sepolia JSON-RPC endpoint:

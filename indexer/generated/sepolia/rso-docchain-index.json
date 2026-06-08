@@ -2,631 +2,158 @@
   "chainId": 11155111,
   "chunkSize": 10,
   "confirmations": 12,
-  "contractAddress": "0xaCE3a26Fe2F993e351a0eF74fb727Cfe1029884b",
+  "contractAddress": "0x1133895b7b8C4A0A8aae0b5d40B96C652192F5DA",
   "directWitnessAccountCount": 0,
   "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-  "docRefCount": 5,
+  "docRefCount": 1,
   "docRefs": {
-    "20260515000000": {
+    "20260607000000": {
       "agreementGroups": [
         {
           "attestationCount": 1,
           "attesters": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
+            "0x226db9fe9ed3eb91baeccb081f4505a799e4e376"
           ],
-          "backedNodeIds": [],
-          "blockHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-          "bundleFingerprints": [],
-          "combinedSupportTdh": 0,
-          "contentHash": "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795",
+          "backedNodeIds": [
+            "github:ompub/rso"
+          ],
+          "blockHash": "0xf6b2b68ed73a5327c1d5d0725edef9dc3d1a875aee29d0fc75579f49abd92ca4",
+          "bundleFingerprints": [
+            "f2f0b9fde608a3596a0b165cea95a740eef045aa7a71cb3aa82d9e7ce66acbbe"
+          ],
+          "combinedSupportTdh": 1,
+          "contentHash": "0xd35dfd6ba531b98dbf5feb8cb787848b06dcc297ef5a36f88a93107ee97d36e3",
           "directWitnessIdentities": [],
           "directWitnessTdh": 0,
           "equivocatingDirectWitnessIdentities": [],
           "equivocatingNodes": [],
           "locations": [
-            "https://om.pub/rso/sepolia/synthetic/20260515000000"
+            "ar://0HpbzX1GC01TG1Wro6_w6op5AONAeimruDBo20YFtg4",
+            "https://github.com/OMPub/RSO/releases/download/rso-archive-2026-06-07/rso-archive-2026-06-07.tar.gz"
           ],
-          "nodeBackingTdh": 0
+          "nodeBackingTdh": 1
         }
       ],
       "blockFingerprints": [
-        "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272"
+        "0xf6b2b68ed73a5327c1d5d0725edef9dc3d1a875aee29d0fc75579f49abd92ca4"
       ],
       "blockHashes": [
-        "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272"
+        "0xf6b2b68ed73a5327c1d5d0725edef9dc3d1a875aee29d0fc75579f49abd92ca4"
       ],
       "candidateCount": 1,
       "contentFingerprints": [
-        "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795"
+        "0xd35dfd6ba531b98dbf5feb8cb787848b06dcc297ef5a36f88a93107ee97d36e3"
       ],
       "contentHashes": [
-        "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795"
+        "0xd35dfd6ba531b98dbf5feb8cb787848b06dcc297ef5a36f88a93107ee97d36e3"
       ],
-      "date": "2026-05-15",
+      "date": "2026-06-07",
       "events": [
         {
-          "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "blockHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-          "claimFingerprint": "78ccef77065f707f836e2feedfdea08eea54618678c84334ea118c018ee6cb35",
-          "claimedNodeId": "",
-          "combinedSupportTdh": 0,
-          "contentHash": "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795",
-          "date": "2026-05-15",
+          "attester": "0x226db9fe9ed3eb91baeccb081f4505a799e4e376",
+          "blockHash": "0xf6b2b68ed73a5327c1d5d0725edef9dc3d1a875aee29d0fc75579f49abd92ca4",
+          "claimFingerprint": "907ec10ad1dde445c74a68e2fc373d6f7726d51b5524ba8eaa53616a320e03fa",
+          "claimedNodeId": "github:ompub/rso",
+          "combinedSupportTdh": 1,
+          "contentHash": "0xd35dfd6ba531b98dbf5feb8cb787848b06dcc297ef5a36f88a93107ee97d36e3",
+          "date": "2026-06-07",
           "directWitnessIdentity": "",
           "directWitnessTdh": 0,
           "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-          "docRef": 20260515000000,
-          "ethereumBlock": 10861422,
-          "ethereumBlockHash": "0x32073eaaac559b980d80db87218cbc0b9fd9d928b26e809fb8b47640383552ef",
-          "logIndex": 220,
-          "nodeAuthorizationStatus": "not_claimed",
-          "nodeBackingTdh": 0,
-          "nodeId": "",
+          "docRef": 20260607000000,
+          "ethereumBlock": 11007392,
+          "ethereumBlockHash": "0x41430f6c538b0a81ff6b445ad960d1378e670a24e1259c4001843bf358c52b8f",
+          "logIndex": 736,
+          "nodeAuthorizationStatus": "verified",
+          "nodeBackingTdh": 1,
+          "nodeId": "github:ompub/rso",
           "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "parentHash": "0x66ad3b0c4fcb010431793d8c0dc2599fb3f066803d9f129b9ea587fc17e1179a",
+          "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
           "publication": {
-            "bundleSha256": "",
+            "bundleSha256": "f2f0b9fde608a3596a0b165cea95a740eef045aa7a71cb3aa82d9e7ce66acbbe",
             "locations": [
-              "https://om.pub/rso/sepolia/synthetic/20260515000000"
+              "ar://0HpbzX1GC01TG1Wro6_w6op5AONAeimruDBo20YFtg4",
+              "https://github.com/OMPub/RSO/releases/download/rso-archive-2026-06-07/rso-archive-2026-06-07.tar.gz"
             ],
-            "nodeId": ""
+            "nodeId": "github:ompub/rso"
           },
-          "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "transactionHash": "0xe62455cef01cb3eb1b94df85fa9c6553e3fc48d38464897c361034e9eb235edb",
-          "uri": "https://om.pub/rso/sepolia/synthetic/20260515000000",
-          "uriHash": "0x22cafcbeba6d083d9ba0d66e3d22fffca639aafb4aea82a17d2b4fa815b62dfd"
+          "submitter": "0xaf6b7ccc64820f0f88d7388e7104c6e4c2ae6d4d",
+          "transactionHash": "0x253a8a4e283315dacc3bbb77600b13deedadfb1b4106ef946296347c4f881291",
+          "uri": "data:application/vnd.ompub.rso.publication-locator.v1+json;base64,eyJidW5kbGVTaGEyNTYiOiJmMmYwYjlmZGU2MDhhMzU5NmEwYjE2NWNlYTk1YTc0MGVlZjA0NWFhN2E3MWNiM2FhODJkOWU3Y2U2NmFjYmJlIiwibG9jYXRpb25zIjpbImFyOi8vMEhwYnpYMUdDMDFURzFXcm82X3c2b3A1QU9OQWVpbXJ1REJvMjBZRnRnNCIsImh0dHBzOi8vZ2l0aHViLmNvbS9PTVB1Yi9SU08vcmVsZWFzZXMvZG93bmxvYWQvcnNvLWFyY2hpdmUtMjAyNi0wNi0wNy9yc28tYXJjaGl2ZS0yMDI2LTA2LTA3LnRhci5neiJdLCJub2RlSWQiOiJnaXRodWI6b21wdWIvcnNvIn0=",
+          "uriHash": "0x97b512cfa4ca99e5223c460f349f071769bc33ce9835d7b25b370f074ba9e72a"
         }
       ],
       "leadingAgreementGroup": {
         "attestationCount": 1,
         "attesters": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
+          "0x226db9fe9ed3eb91baeccb081f4505a799e4e376"
         ],
-        "backedNodeIds": [],
-        "blockHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-        "bundleFingerprints": [],
-        "combinedSupportTdh": 0,
-        "contentHash": "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795",
+        "backedNodeIds": [
+          "github:ompub/rso"
+        ],
+        "blockHash": "0xf6b2b68ed73a5327c1d5d0725edef9dc3d1a875aee29d0fc75579f49abd92ca4",
+        "bundleFingerprints": [
+          "f2f0b9fde608a3596a0b165cea95a740eef045aa7a71cb3aa82d9e7ce66acbbe"
+        ],
+        "combinedSupportTdh": 1,
+        "contentHash": "0xd35dfd6ba531b98dbf5feb8cb787848b06dcc297ef5a36f88a93107ee97d36e3",
         "directWitnessIdentities": [],
         "directWitnessTdh": 0,
         "equivocatingDirectWitnessIdentities": [],
         "equivocatingNodes": [],
         "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260515000000"
+          "ar://0HpbzX1GC01TG1Wro6_w6op5AONAeimruDBo20YFtg4",
+          "https://github.com/OMPub/RSO/releases/download/rso-archive-2026-06-07/rso-archive-2026-06-07.tar.gz"
         ],
-        "nodeBackingTdh": 0
-      }
-    },
-    "20260516000000": {
-      "agreementGroups": [
-        {
-          "attestationCount": 1,
-          "attesters": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-          ],
-          "backedNodeIds": [],
-          "blockHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-          "bundleFingerprints": [],
-          "combinedSupportTdh": 0,
-          "contentHash": "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb",
-          "directWitnessIdentities": [],
-          "directWitnessTdh": 0,
-          "equivocatingDirectWitnessIdentities": [],
-          "equivocatingNodes": [],
-          "locations": [
-            "https://om.pub/rso/sepolia/synthetic/20260516000000"
-          ],
-          "nodeBackingTdh": 0
-        }
-      ],
-      "blockFingerprints": [
-        "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c"
-      ],
-      "blockHashes": [
-        "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c"
-      ],
-      "candidateCount": 1,
-      "contentFingerprints": [
-        "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb"
-      ],
-      "contentHashes": [
-        "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb"
-      ],
-      "date": "2026-05-16",
-      "events": [
-        {
-          "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "blockHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-          "claimFingerprint": "55930b022b9494a4cb7e50966b7cc59b8cb90cf246db42dc992049e517b74c14",
-          "claimedNodeId": "",
-          "combinedSupportTdh": 0,
-          "contentHash": "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb",
-          "date": "2026-05-16",
-          "directWitnessIdentity": "",
-          "directWitnessTdh": 0,
-          "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-          "docRef": 20260516000000,
-          "ethereumBlock": 10861423,
-          "ethereumBlockHash": "0x7173a2756c33bd0b454f318005b1de0c32e7503f252f502995400d0c777a5890",
-          "logIndex": 565,
-          "nodeAuthorizationStatus": "not_claimed",
-          "nodeBackingTdh": 0,
-          "nodeId": "",
-          "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "parentHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-          "publication": {
-            "bundleSha256": "",
-            "locations": [
-              "https://om.pub/rso/sepolia/synthetic/20260516000000"
-            ],
-            "nodeId": ""
-          },
-          "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "transactionHash": "0xd0cdd655fa8118115bcce9e786b817607cca1ce507944104fd1a6c13b730ab7b",
-          "uri": "https://om.pub/rso/sepolia/synthetic/20260516000000",
-          "uriHash": "0xee8244f9a8768fa6dc038548a33d4d5fc2b57217d73bd5ceac11b36854e0fd82"
-        }
-      ],
-      "leadingAgreementGroup": {
-        "attestationCount": 1,
-        "attesters": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-        ],
-        "backedNodeIds": [],
-        "blockHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-        "bundleFingerprints": [],
-        "combinedSupportTdh": 0,
-        "contentHash": "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb",
-        "directWitnessIdentities": [],
-        "directWitnessTdh": 0,
-        "equivocatingDirectWitnessIdentities": [],
-        "equivocatingNodes": [],
-        "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260516000000"
-        ],
-        "nodeBackingTdh": 0
-      }
-    },
-    "20260517000000": {
-      "agreementGroups": [
-        {
-          "attestationCount": 1,
-          "attesters": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-          ],
-          "backedNodeIds": [],
-          "blockHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-          "bundleFingerprints": [],
-          "combinedSupportTdh": 0,
-          "contentHash": "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064",
-          "directWitnessIdentities": [],
-          "directWitnessTdh": 0,
-          "equivocatingDirectWitnessIdentities": [],
-          "equivocatingNodes": [],
-          "locations": [
-            "https://om.pub/rso/sepolia/synthetic/20260517000000"
-          ],
-          "nodeBackingTdh": 0
-        }
-      ],
-      "blockFingerprints": [
-        "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1"
-      ],
-      "blockHashes": [
-        "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1"
-      ],
-      "candidateCount": 1,
-      "contentFingerprints": [
-        "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064"
-      ],
-      "contentHashes": [
-        "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064"
-      ],
-      "date": "2026-05-17",
-      "events": [
-        {
-          "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "blockHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-          "claimFingerprint": "364eba2b4450940364fad3e3eee37d4342655a7e1949381c0ff46c92d8094923",
-          "claimedNodeId": "",
-          "combinedSupportTdh": 0,
-          "contentHash": "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064",
-          "date": "2026-05-17",
-          "directWitnessIdentity": "",
-          "directWitnessTdh": 0,
-          "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-          "docRef": 20260517000000,
-          "ethereumBlock": 10861424,
-          "ethereumBlockHash": "0xcf87130aca8dc85eb773021d6584426789a88769ec4d6a371e10837c11fbee2c",
-          "logIndex": 315,
-          "nodeAuthorizationStatus": "not_claimed",
-          "nodeBackingTdh": 0,
-          "nodeId": "",
-          "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "parentHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-          "publication": {
-            "bundleSha256": "",
-            "locations": [
-              "https://om.pub/rso/sepolia/synthetic/20260517000000"
-            ],
-            "nodeId": ""
-          },
-          "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "transactionHash": "0x5d6789bd8f16b77a1837d8de1e1cc3c567d87630997a260b85155a83477cc84c",
-          "uri": "https://om.pub/rso/sepolia/synthetic/20260517000000",
-          "uriHash": "0x1e24d7fbe01781b80cbbc805d5312dfee9e139b172734f38d7fbd0146edc7f1c"
-        }
-      ],
-      "leadingAgreementGroup": {
-        "attestationCount": 1,
-        "attesters": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-        ],
-        "backedNodeIds": [],
-        "blockHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-        "bundleFingerprints": [],
-        "combinedSupportTdh": 0,
-        "contentHash": "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064",
-        "directWitnessIdentities": [],
-        "directWitnessTdh": 0,
-        "equivocatingDirectWitnessIdentities": [],
-        "equivocatingNodes": [],
-        "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260517000000"
-        ],
-        "nodeBackingTdh": 0
-      }
-    },
-    "20260518000000": {
-      "agreementGroups": [
-        {
-          "attestationCount": 1,
-          "attesters": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-          ],
-          "backedNodeIds": [],
-          "blockHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-          "bundleFingerprints": [],
-          "combinedSupportTdh": 0,
-          "contentHash": "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af",
-          "directWitnessIdentities": [],
-          "directWitnessTdh": 0,
-          "equivocatingDirectWitnessIdentities": [],
-          "equivocatingNodes": [],
-          "locations": [
-            "https://om.pub/rso/sepolia/synthetic/20260518000000"
-          ],
-          "nodeBackingTdh": 0
-        }
-      ],
-      "blockFingerprints": [
-        "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00"
-      ],
-      "blockHashes": [
-        "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00"
-      ],
-      "candidateCount": 1,
-      "contentFingerprints": [
-        "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af"
-      ],
-      "contentHashes": [
-        "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af"
-      ],
-      "date": "2026-05-18",
-      "events": [
-        {
-          "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "blockHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-          "claimFingerprint": "e6a90a22d9c2bfb33ae970c605103d0d847365299dc86f4f1bbdca5dea9a06a2",
-          "claimedNodeId": "",
-          "combinedSupportTdh": 0,
-          "contentHash": "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af",
-          "date": "2026-05-18",
-          "directWitnessIdentity": "",
-          "directWitnessTdh": 0,
-          "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-          "docRef": 20260518000000,
-          "ethereumBlock": 10861425,
-          "ethereumBlockHash": "0xbf9da8b68548873c81052fc2e6dd99f1d82f224a5187203c4918d2e0ab064d70",
-          "logIndex": 261,
-          "nodeAuthorizationStatus": "not_claimed",
-          "nodeBackingTdh": 0,
-          "nodeId": "",
-          "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "parentHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-          "publication": {
-            "bundleSha256": "",
-            "locations": [
-              "https://om.pub/rso/sepolia/synthetic/20260518000000"
-            ],
-            "nodeId": ""
-          },
-          "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "transactionHash": "0xe822538cf673a0cb6f3b7b6e47765fcb9c0e8edd3ea23cd8556b6439a6b0978d",
-          "uri": "https://om.pub/rso/sepolia/synthetic/20260518000000",
-          "uriHash": "0x21ec0d4ec52a486a89ae7b721b513f9b0e9e2a63c7d65a5db04362d48bfa9cbc"
-        }
-      ],
-      "leadingAgreementGroup": {
-        "attestationCount": 1,
-        "attesters": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-        ],
-        "backedNodeIds": [],
-        "blockHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-        "bundleFingerprints": [],
-        "combinedSupportTdh": 0,
-        "contentHash": "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af",
-        "directWitnessIdentities": [],
-        "directWitnessTdh": 0,
-        "equivocatingDirectWitnessIdentities": [],
-        "equivocatingNodes": [],
-        "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260518000000"
-        ],
-        "nodeBackingTdh": 0
-      }
-    },
-    "20260519000000": {
-      "agreementGroups": [
-        {
-          "attestationCount": 1,
-          "attesters": [
-            "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-          ],
-          "backedNodeIds": [],
-          "blockHash": "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa",
-          "bundleFingerprints": [],
-          "combinedSupportTdh": 0,
-          "contentHash": "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a",
-          "directWitnessIdentities": [],
-          "directWitnessTdh": 0,
-          "equivocatingDirectWitnessIdentities": [],
-          "equivocatingNodes": [],
-          "locations": [
-            "https://om.pub/rso/sepolia/synthetic/20260519000000"
-          ],
-          "nodeBackingTdh": 0
-        }
-      ],
-      "blockFingerprints": [
-        "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa"
-      ],
-      "blockHashes": [
-        "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa"
-      ],
-      "candidateCount": 1,
-      "contentFingerprints": [
-        "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a"
-      ],
-      "contentHashes": [
-        "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a"
-      ],
-      "date": "2026-05-19",
-      "events": [
-        {
-          "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "blockHash": "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa",
-          "claimFingerprint": "0094d54a5d0694cb4c2f59d809526b9464193c52a4df9212142036b4f1fbbd4c",
-          "claimedNodeId": "",
-          "combinedSupportTdh": 0,
-          "contentHash": "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a",
-          "date": "2026-05-19",
-          "directWitnessIdentity": "",
-          "directWitnessTdh": 0,
-          "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-          "docRef": 20260519000000,
-          "ethereumBlock": 10861426,
-          "ethereumBlockHash": "0x8db689a405f0009e8b08c4cedf0f88fc08bd86a6f0edec6053e964f6e3fdcf78",
-          "logIndex": 232,
-          "nodeAuthorizationStatus": "not_claimed",
-          "nodeBackingTdh": 0,
-          "nodeId": "",
-          "onBehalfOf": "0x0000000000000000000000000000000000000000",
-          "parentHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-          "publication": {
-            "bundleSha256": "",
-            "locations": [
-              "https://om.pub/rso/sepolia/synthetic/20260519000000"
-            ],
-            "nodeId": ""
-          },
-          "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-          "transactionHash": "0x76ec4e462af646ef126ed97857c1298b908bdd3f1507d021e244a8a969ae4e57",
-          "uri": "https://om.pub/rso/sepolia/synthetic/20260519000000",
-          "uriHash": "0xa58ee4b33eebfcf3163b88f876207bce2567ec56255fa08aca338583c8a59625"
-        }
-      ],
-      "leadingAgreementGroup": {
-        "attestationCount": 1,
-        "attesters": [
-          "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e"
-        ],
-        "backedNodeIds": [],
-        "blockHash": "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa",
-        "bundleFingerprints": [],
-        "combinedSupportTdh": 0,
-        "contentHash": "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a",
-        "directWitnessIdentities": [],
-        "directWitnessTdh": 0,
-        "equivocatingDirectWitnessIdentities": [],
-        "equivocatingNodes": [],
-        "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260519000000"
-        ],
-        "nodeBackingTdh": 0
+        "nodeBackingTdh": 1
       }
     }
   },
-  "eventCount": 5,
+  "eventCount": 1,
   "events": [
     {
-      "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "blockHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-      "claimFingerprint": "78ccef77065f707f836e2feedfdea08eea54618678c84334ea118c018ee6cb35",
-      "claimedNodeId": "",
-      "combinedSupportTdh": 0,
-      "contentHash": "0x007f685af3b7849e809144d96a8c6656420aa144d4e2c01ab27cbed74f1cd795",
-      "date": "2026-05-15",
+      "attester": "0x226db9fe9ed3eb91baeccb081f4505a799e4e376",
+      "blockHash": "0xf6b2b68ed73a5327c1d5d0725edef9dc3d1a875aee29d0fc75579f49abd92ca4",
+      "claimFingerprint": "907ec10ad1dde445c74a68e2fc373d6f7726d51b5524ba8eaa53616a320e03fa",
+      "claimedNodeId": "github:ompub/rso",
+      "combinedSupportTdh": 1,
+      "contentHash": "0xd35dfd6ba531b98dbf5feb8cb787848b06dcc297ef5a36f88a93107ee97d36e3",
+      "date": "2026-06-07",
       "directWitnessIdentity": "",
       "directWitnessTdh": 0,
       "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-      "docRef": 20260515000000,
-      "ethereumBlock": 10861422,
-      "ethereumBlockHash": "0x32073eaaac559b980d80db87218cbc0b9fd9d928b26e809fb8b47640383552ef",
-      "logIndex": 220,
-      "nodeAuthorizationStatus": "not_claimed",
-      "nodeBackingTdh": 0,
-      "nodeId": "",
+      "docRef": 20260607000000,
+      "ethereumBlock": 11007392,
+      "ethereumBlockHash": "0x41430f6c538b0a81ff6b445ad960d1378e670a24e1259c4001843bf358c52b8f",
+      "logIndex": 736,
+      "nodeAuthorizationStatus": "verified",
+      "nodeBackingTdh": 1,
+      "nodeId": "github:ompub/rso",
       "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "parentHash": "0x66ad3b0c4fcb010431793d8c0dc2599fb3f066803d9f129b9ea587fc17e1179a",
+      "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "publication": {
-        "bundleSha256": "",
+        "bundleSha256": "f2f0b9fde608a3596a0b165cea95a740eef045aa7a71cb3aa82d9e7ce66acbbe",
         "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260515000000"
+          "ar://0HpbzX1GC01TG1Wro6_w6op5AONAeimruDBo20YFtg4",
+          "https://github.com/OMPub/RSO/releases/download/rso-archive-2026-06-07/rso-archive-2026-06-07.tar.gz"
         ],
-        "nodeId": ""
+        "nodeId": "github:ompub/rso"
       },
-      "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "transactionHash": "0xe62455cef01cb3eb1b94df85fa9c6553e3fc48d38464897c361034e9eb235edb",
-      "uri": "https://om.pub/rso/sepolia/synthetic/20260515000000",
-      "uriHash": "0x22cafcbeba6d083d9ba0d66e3d22fffca639aafb4aea82a17d2b4fa815b62dfd"
-    },
-    {
-      "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "blockHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-      "claimFingerprint": "55930b022b9494a4cb7e50966b7cc59b8cb90cf246db42dc992049e517b74c14",
-      "claimedNodeId": "",
-      "combinedSupportTdh": 0,
-      "contentHash": "0xfad56e39e4a2fa17e17bbee751a55de706470b2b75a8b519b2e16fd8054648bb",
-      "date": "2026-05-16",
-      "directWitnessIdentity": "",
-      "directWitnessTdh": 0,
-      "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-      "docRef": 20260516000000,
-      "ethereumBlock": 10861423,
-      "ethereumBlockHash": "0x7173a2756c33bd0b454f318005b1de0c32e7503f252f502995400d0c777a5890",
-      "logIndex": 565,
-      "nodeAuthorizationStatus": "not_claimed",
-      "nodeBackingTdh": 0,
-      "nodeId": "",
-      "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "parentHash": "0xa0b26375f1010460e149d8f5a71c90c84ae61ae8385882ac315d30e5020f7272",
-      "publication": {
-        "bundleSha256": "",
-        "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260516000000"
-        ],
-        "nodeId": ""
-      },
-      "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "transactionHash": "0xd0cdd655fa8118115bcce9e786b817607cca1ce507944104fd1a6c13b730ab7b",
-      "uri": "https://om.pub/rso/sepolia/synthetic/20260516000000",
-      "uriHash": "0xee8244f9a8768fa6dc038548a33d4d5fc2b57217d73bd5ceac11b36854e0fd82"
-    },
-    {
-      "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "blockHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-      "claimFingerprint": "364eba2b4450940364fad3e3eee37d4342655a7e1949381c0ff46c92d8094923",
-      "claimedNodeId": "",
-      "combinedSupportTdh": 0,
-      "contentHash": "0xa34536245c0b749dd46b023b92b8cbb6868756c491fd49e060f7a912ca9cd064",
-      "date": "2026-05-17",
-      "directWitnessIdentity": "",
-      "directWitnessTdh": 0,
-      "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-      "docRef": 20260517000000,
-      "ethereumBlock": 10861424,
-      "ethereumBlockHash": "0xcf87130aca8dc85eb773021d6584426789a88769ec4d6a371e10837c11fbee2c",
-      "logIndex": 315,
-      "nodeAuthorizationStatus": "not_claimed",
-      "nodeBackingTdh": 0,
-      "nodeId": "",
-      "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "parentHash": "0x41b0afafdcf7550d771f462443e46abe9cf513e7112d7f2fc2756b69bea7085c",
-      "publication": {
-        "bundleSha256": "",
-        "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260517000000"
-        ],
-        "nodeId": ""
-      },
-      "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "transactionHash": "0x5d6789bd8f16b77a1837d8de1e1cc3c567d87630997a260b85155a83477cc84c",
-      "uri": "https://om.pub/rso/sepolia/synthetic/20260517000000",
-      "uriHash": "0x1e24d7fbe01781b80cbbc805d5312dfee9e139b172734f38d7fbd0146edc7f1c"
-    },
-    {
-      "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "blockHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-      "claimFingerprint": "e6a90a22d9c2bfb33ae970c605103d0d847365299dc86f4f1bbdca5dea9a06a2",
-      "claimedNodeId": "",
-      "combinedSupportTdh": 0,
-      "contentHash": "0x7be1984fe58f4ecc829f2662f59fc17b4b606f5a4fe2e3d1e8b1cbbc0975c2af",
-      "date": "2026-05-18",
-      "directWitnessIdentity": "",
-      "directWitnessTdh": 0,
-      "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-      "docRef": 20260518000000,
-      "ethereumBlock": 10861425,
-      "ethereumBlockHash": "0xbf9da8b68548873c81052fc2e6dd99f1d82f224a5187203c4918d2e0ab064d70",
-      "logIndex": 261,
-      "nodeAuthorizationStatus": "not_claimed",
-      "nodeBackingTdh": 0,
-      "nodeId": "",
-      "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "parentHash": "0xa2f80608d2fcfe56e8254cee0a8fae6a5cfcf0495e57b6b129ffaec725fbcda1",
-      "publication": {
-        "bundleSha256": "",
-        "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260518000000"
-        ],
-        "nodeId": ""
-      },
-      "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "transactionHash": "0xe822538cf673a0cb6f3b7b6e47765fcb9c0e8edd3ea23cd8556b6439a6b0978d",
-      "uri": "https://om.pub/rso/sepolia/synthetic/20260518000000",
-      "uriHash": "0x21ec0d4ec52a486a89ae7b721b513f9b0e9e2a63c7d65a5db04362d48bfa9cbc"
-    },
-    {
-      "attester": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "blockHash": "0xedc1153d8441450d1b40491a559f6ca6bf973baf034e59d7d45b7fd2e583dcaa",
-      "claimFingerprint": "0094d54a5d0694cb4c2f59d809526b9464193c52a4df9212142036b4f1fbbd4c",
-      "claimedNodeId": "",
-      "combinedSupportTdh": 0,
-      "contentHash": "0xd724600fbcd368e9750bca8c1c6e785c1333fd8143da534c0c3482f9900efd3a",
-      "date": "2026-05-19",
-      "directWitnessIdentity": "",
-      "directWitnessTdh": 0,
-      "docChainId": "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
-      "docRef": 20260519000000,
-      "ethereumBlock": 10861426,
-      "ethereumBlockHash": "0x8db689a405f0009e8b08c4cedf0f88fc08bd86a6f0edec6053e964f6e3fdcf78",
-      "logIndex": 232,
-      "nodeAuthorizationStatus": "not_claimed",
-      "nodeBackingTdh": 0,
-      "nodeId": "",
-      "onBehalfOf": "0x0000000000000000000000000000000000000000",
-      "parentHash": "0xca76f6cc53f82ed8121853d28bc1c21abf2d0d8d1aa33ee3020e7d133fc1fc00",
-      "publication": {
-        "bundleSha256": "",
-        "locations": [
-          "https://om.pub/rso/sepolia/synthetic/20260519000000"
-        ],
-        "nodeId": ""
-      },
-      "submitter": "0x21e753651c9e3655e5deeddabbdd4a99629a2f6e",
-      "transactionHash": "0x76ec4e462af646ef126ed97857c1298b908bdd3f1507d021e244a8a969ae4e57",
-      "uri": "https://om.pub/rso/sepolia/synthetic/20260519000000",
-      "uriHash": "0xa58ee4b33eebfcf3163b88f876207bce2567ec56255fa08aca338583c8a59625"
+      "submitter": "0xaf6b7ccc64820f0f88d7388e7104c6e4c2ae6d4d",
+      "transactionHash": "0x253a8a4e283315dacc3bbb77600b13deedadfb1b4106ef946296347c4f881291",
+      "uri": "data:application/vnd.ompub.rso.publication-locator.v1+json;base64,eyJidW5kbGVTaGEyNTYiOiJmMmYwYjlmZGU2MDhhMzU5NmEwYjE2NWNlYTk1YTc0MGVlZjA0NWFhN2E3MWNiM2FhODJkOWU3Y2U2NmFjYmJlIiwibG9jYXRpb25zIjpbImFyOi8vMEhwYnpYMUdDMDFURzFXcm82X3c2b3A1QU9OQWVpbXJ1REJvMjBZRnRnNCIsImh0dHBzOi8vZ2l0aHViLmNvbS9PTVB1Yi9SU08vcmVsZWFzZXMvZG93bmxvYWQvcnNvLWFyY2hpdmUtMjAyNi0wNi0wNy9yc28tYXJjaGl2ZS0yMDI2LTA2LTA3LnRhci5neiJdLCJub2RlSWQiOiJnaXRodWI6b21wdWIvcnNvIn0=",
+      "uriHash": "0x97b512cfa4ca99e5223c460f349f071769bc33ce9835d7b25b370f074ba9e72a"
     }
   ],
-  "fromBlock": 10849363,
-  "indexedAt": "2026-05-22T00:00:00Z",
-  "latestChainBlock": 10861440,
+  "fromBlock": 11007365,
+  "indexedAt": "2026-06-07T08:15:19Z",
+  "latestChainBlock": 11007425,
   "network": "sepolia",
   "profileURI": "https://om.pub/rso/doc-chain/v1",
   "schema": "rso-docchain-index-v1",
-  "sweeperVerifiedClaimCount": 0,
-  "toBlock": 10861440
+  "sweeperVerifiedClaimCount": 1,
+  "tdhSupportDates": [
+    "2026-06-07"
+  ],
+  "toBlock": 11007413
 }
