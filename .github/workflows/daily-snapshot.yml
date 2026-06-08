@@ -346,6 +346,11 @@ jobs:
       - name: Set up Foundry for attestation signing
         if: env.RSO_ATTESTATION_ENABLED == 'true'
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          # Pin a known-good release. Fetching "latest" downloads + attestation-
+          # verifies the newest tag, which has flaked (504 / corrupt tarball) and
+          # would break the signing step on any operator fork.
+          version: v1.7.0
 
       - name: Sign DocChain attestations for sweepers
         if: env.RSO_ATTESTATION_ENABLED == 'true'
