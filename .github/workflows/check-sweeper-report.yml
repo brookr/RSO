@@ -1,0 +1,50 @@
+name: Check RSO Sweeper Report
+
+on:
+  schedule:
+    # Runs after the treasury sweeper has had time to publish the public report.
+    - cron: "45 2 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Archive date to check, YYYY-MM-DD. Defaults to yesterday UTC."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: rso-sweeper-report-check-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RSO_NODE_ID: ${{ vars.RSO_NODE_ID || format('github:{0}', github.repository) }}
+      RSO_SWEEPER_REPORT_REPO: ${{ vars.RSO_SWEEPER_REPORT_REPO || vars.RSO_UPSTREAM_REPO || 'OMPub/RSO' }}
+      RSO_SWEEPER_REPORT_BRANCH: ${{ vars.RSO_SWEEPER_REPORT_BRANCH || 'main' }}
+      RSO_SWEEPER_REPORT_INPUT_DATE: ${{ inputs.date || '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13.3"
+
+      - name: Check public sweeper report
+        run: |
+          set -euo pipefail
+          args=()
+          DATE="$RSO_SWEEPER_REPORT_INPUT_DATE"
+          if [ -n "$DATE" ]; then
+            args+=(--date "$DATE")
+          fi
+          python3 sweeper/check_sweeper_report.py "${args[@]}"
