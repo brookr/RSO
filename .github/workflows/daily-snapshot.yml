@@ -25,9 +25,18 @@ on:
         required: false
         default: false
         type: boolean
+      auto_update_code:
+        description: "Update main from upstream and merge code into the node branch before running."
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
+
+concurrency:
+  group: rso-node-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
   snapshot:
@@ -39,15 +48,144 @@ jobs:
       STORAGE_BACKEND: ${{ vars.STORAGE_BACKEND || 'github_release' }}
       UPLOAD_POLICY: ${{ vars.UPLOAD_POLICY || 'if_missing' }}
       RSO_RETAINED_CATALOG_COUNT: "2"
+      RSO_NODE_BRANCH: ${{ vars.RSO_NODE_BRANCH || 'node' }}
+      RSO_UPSTREAM_REPO: ${{ vars.RSO_UPSTREAM_REPO || 'OMPub/RSO' }}
+      RSO_AUTO_UPDATE_CODE: ${{ vars.RSO_AUTO_UPDATE_CODE || 'true' }}
+      RSO_DOCCHAIN_NETWORK: ${{ vars.RSO_DOCCHAIN_NETWORK || 'custom' }}
+      RSO_DOCCHAIN_CHAIN_ID: ${{ vars.RSO_DOCCHAIN_CHAIN_ID || '1' }}
+      RSO_DOCCHAIN_ADDRESS: ${{ vars.RSO_DOCCHAIN_ADDRESS }}
+      RSO_DOCCHAIN_DEPLOYMENT_BLOCK: ${{ vars.RSO_DOCCHAIN_DEPLOYMENT_BLOCK }}
+      RSO_ATTESTER_ADDRESS: ${{ vars.RSO_ATTESTER_ADDRESS }}
+      RSO_NODE_ID: ${{ vars.RSO_NODE_ID || format('github:{0}', github.repository) }}
+      RSO_ON_BEHALF_OF_ADDRESS: ${{ vars.RSO_ON_BEHALF_OF_ADDRESS }}
+      RSO_ATTESTATION_URI_MODE: ${{ vars.RSO_ATTESTATION_URI_MODE || 'auto' }}
+      RSO_ATTESTATION_BOOTSTRAP_PARENT_HASH: ${{ vars.RSO_ATTESTATION_BOOTSTRAP_PARENT_HASH }}
+      RSO_TDH_SUPPORT_SNAPSHOT: ${{ vars.RSO_TDH_SUPPORT_SNAPSHOT }}
+      RSO_INPUT_DATE: ${{ inputs.date || '' }}
+      RSO_INPUT_MODE: ${{ inputs.mode || 'auto' }}
+      RSO_INPUT_OVERWRITE: ${{ inputs.overwrite || false }}
+      RSO_INPUT_AUTO_UPDATE_CODE: ${{ inputs.auto_update_code || '' }}
 
     steps:
-      - name: Checkout
+      - name: Checkout controller branch
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          token: ${{ secrets.RSO_WORKFLOW_UPDATE_TOKEN || github.token }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.13.3"
+
+      - name: Sync main from upstream
+        run: |
+          set -euo pipefail
+          AUTO_UPDATE="$RSO_INPUT_AUTO_UPDATE_CODE"
+          if [ -z "$AUTO_UPDATE" ]; then
+            AUTO_UPDATE="$RSO_AUTO_UPDATE_CODE"
+          fi
+          if [ "$AUTO_UPDATE" != "true" ]; then
+            echo "Automatic code update disabled."
+            exit 0
+          fi
+
+          DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote remove upstream 2>/dev/null || true
+          git remote add upstream "https://github.com/$RSO_UPSTREAM_REPO.git"
+          git fetch --prune upstream main
+          git checkout "$DEFAULT_BRANCH"
+
+          BEFORE="$(git rev-parse HEAD)"
+          git merge --ff-only upstream/main
+          AFTER="$(git rev-parse HEAD)"
+
+          if [ "$BEFORE" = "$AFTER" ]; then
+            echo "$DEFAULT_BRANCH already matches upstream/main."
+            exit 0
+          fi
+
+          if ! git push origin "HEAD:$DEFAULT_BRANCH"; then
+            echo "::warning::Could not push updated $DEFAULT_BRANCH. If upstream changed .github/workflows, add a fine-grained RSO_WORKFLOW_UPDATE_TOKEN with Contents write and Workflows write, or sync the fork manually. Continuing with the locally fetched code for this run."
+          fi
+
+      - name: Prepare node branch
+        run: |
+          set -euo pipefail
+          DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+          NODE_BRANCH="$RSO_NODE_BRANCH"
+
+          if ! git remote get-url upstream >/dev/null 2>&1; then
+            git remote add upstream "https://github.com/$RSO_UPSTREAM_REPO.git"
+          fi
+          git fetch --prune origin "+refs/heads/$NODE_BRANCH:refs/remotes/origin/$NODE_BRANCH" || true
+          git fetch --prune upstream "+refs/heads/$NODE_BRANCH:refs/remotes/upstream/$NODE_BRANCH" || true
+
+          if git show-ref --verify --quiet "refs/remotes/origin/$NODE_BRANCH"; then
+            git checkout -B "$NODE_BRANCH" "origin/$NODE_BRANCH"
+          elif git show-ref --verify --quiet "refs/remotes/upstream/$NODE_BRANCH"; then
+            git checkout -B "$NODE_BRANCH" "$DEFAULT_BRANCH"
+            for path in data ledger.json reports; do
+              if git cat-file -e "upstream/$NODE_BRANCH:$path" 2>/dev/null; then
+                git checkout "upstream/$NODE_BRANCH" -- "$path"
+              fi
+            done
+            git add data ledger.json reports
+            git commit -m "Initialize node archive state from upstream"
+            git push -u origin "$NODE_BRANCH"
+          else
+            git checkout -B "$NODE_BRANCH" "$DEFAULT_BRANCH"
+            git push -u origin "$NODE_BRANCH"
+          fi
+
+          MERGE_STATUS=0
+          git merge --no-ff --no-commit "$DEFAULT_BRANCH" || MERGE_STATUS=$?
+
+          # Keep this node's own generated state. Force each pinned path back to
+          # exactly the node (HEAD) version, resolving any merge conflict on it to
+          # the node side. `git restore`/`git checkout` abort on an unmerged
+          # modify/delete path, so clear the index entry first, then restore from HEAD.
+          for path in data ledger.json reports indexer/cache indexer/generated; do
+            git rm -r --cached --quiet --ignore-unmatch -- "$path" || true
+            if git cat-file -e "HEAD:$path" 2>/dev/null; then
+              git checkout HEAD -- "$path"
+            fi
+          done
+
+          # A node consumes the public sweeper report but must not run the treasury
+          # sweeper itself. Preserve that one intentional workflow deletion while
+          # allowing node-side workflows such as the report checker to follow main.
+          path=".github/workflows/sweep-attestations.yml"
+          git rm --cached --quiet --ignore-unmatch -- "$path" || true
+          if git cat-file -e "HEAD:$path" 2>/dev/null; then
+            git checkout HEAD -- "$path"
+          else
+            rm -f -- "$path"
+          fi
+
+          # Every node runs the public report checker. Resolve a historical
+          # deletion or modify/delete conflict by taking the current main copy.
+          path=".github/workflows/check-sweeper-report.yml"
+          git rm --cached --quiet --ignore-unmatch -- "$path" || true
+          if git cat-file -e "$DEFAULT_BRANCH:$path" 2>/dev/null; then
+            git checkout "$DEFAULT_BRANCH" -- "$path"
+          fi
+
+          if git diff --name-only --diff-filter=U | grep .; then
+            echo "::error::Code merge into $NODE_BRANCH has unresolved conflicts outside generated node state."
+            exit "$MERGE_STATUS"
+          fi
+
+          if git diff --cached --quiet; then
+            git merge --abort 2>/dev/null || true
+            echo "$NODE_BRANCH already has current code."
+          else
+            git commit -m "Update node code from main"
+            git push origin "HEAD:$NODE_BRANCH"
+          fi
 
       - name: Run tests
         run: python -m unittest discover -s tests
@@ -58,12 +196,24 @@ jobs:
           SPACETRACK_PASS: ${{ secrets.SPACETRACK_PASS }}
         run: |
           set -euo pipefail
-          MODE="${{ github.event.inputs.mode }}"
+          MODE="$RSO_INPUT_MODE"
           if [ -z "$MODE" ]; then
             MODE="auto"
           fi
+          case "$MODE" in
+            auto|daily|genesis) ;;
+            *) echo "::error::Invalid snapshot mode input"; exit 1 ;;
+          esac
 
-          INPUT_DATE="${{ github.event.inputs.date }}"
+          INPUT_DATE="$RSO_INPUT_DATE"
+          # Reject anything that is not exactly YYYY-MM-DD before it reaches
+          # $GITHUB_ENV or a file path. re.fullmatch (not grep, which matches
+          # per-line) rejects embedded newlines, closing the $GITHUB_ENV
+          # env-injection vector from the workflow_dispatch REST API, where a
+          # string input carries no pattern filter.
+          if [ -n "$INPUT_DATE" ] && ! python3 -c "import re,sys; sys.exit(0 if re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', sys.argv[1]) else 1)" "$INPUT_DATE"; then
+            echo "::error::Invalid snapshot date input (expected YYYY-MM-DD)"; exit 1
+          fi
           END_DATE="$(date -u +%F)"
           if [ -n "$INPUT_DATE" ]; then
             START_DATE="$INPUT_DATE"
@@ -92,7 +242,7 @@ jobs:
             fi
 
             args=(pipeline/snapshot.py "$command" --date "$snapshot_date")
-            if [ "${{ github.event.inputs.overwrite }}" = "true" ]; then
+            if [ "$RSO_INPUT_OVERWRITE" = "true" ]; then
               args+=(--force)
             fi
             python "${args[@]}"
@@ -111,17 +261,23 @@ jobs:
           fi
 
       - name: Validate captured archive
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           python pipeline/snapshot.py verify --date "$RSO_SNAPSHOT_DATE"
           python pipeline/snapshot.py validate
 
       - name: Build release bundles
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           python pipeline/snapshot.py publish --start "$RSO_SNAPSHOT_START_DATE" --end "$RSO_SNAPSHOT_END_DATE" --storage-backend none
 
       - name: Prune old catalogs from git archive
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           python pipeline/snapshot.py prune-catalogs --all --keep-latest "$RSO_RETAINED_CATALOG_COUNT" --require-bundle
@@ -138,15 +294,123 @@ jobs:
             exit 0
           fi
           git commit -m "Archive RSO snapshot"
-          git push
+          git push origin "HEAD:$RSO_NODE_BRANCH"
 
       - name: Publish release archives
         env:
+          ARWEAVE_JWK: ${{ secrets.ARWEAVE_JWK }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          args=(pipeline/snapshot.py publish --start "$RSO_SNAPSHOT_START_DATE" --end "$RSO_SNAPSHOT_END_DATE" --use-existing-bundle)
-          if [ "${{ github.event.inputs.overwrite }}" = "true" ]; then
+          TARGET_COMMIT="$(git rev-parse HEAD)"
+          args=(pipeline/snapshot.py publish --start "$RSO_SNAPSHOT_START_DATE" --end "$RSO_SNAPSHOT_END_DATE" --use-existing-bundle --target-commitish "$TARGET_COMMIT")
+          if [ "$RSO_INPUT_OVERWRITE" = "true" ]; then
             args+=(--force)
           fi
           python "${args[@]}"
+
+      - name: Commit publish receipts
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "No publish receipt changes to commit."
+            exit 0
+          fi
+          git commit -m "Record archive publish destinations"
+          git push origin "HEAD:$RSO_NODE_BRANCH"
+
+      - name: Check attestation configuration
+        env:
+          DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY }}
+          DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON }}
+          DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD }}
+          DISPOSABLE_NO_FUNDS_ETH_KEYSTORE: ${{ vars.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE }}
+          DISPOSABLE_NO_FUNDS_ETH_ACCOUNT: ${{ vars.DISPOSABLE_NO_FUNDS_ETH_ACCOUNT }}
+          RSO_ATTESTER_ADDRESS: ${{ secrets.RSO_ATTESTER_ADDRESS || vars.RSO_ATTESTER_ADDRESS }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY:-}" ] || [ -n "${DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON:-}" ] || [ -n "${DISPOSABLE_NO_FUNDS_ETH_KEYSTORE:-}" ] || [ -n "${DISPOSABLE_NO_FUNDS_ETH_ACCOUNT:-}" ]; then
+            RSO_ATTESTER_HAS_WALLET=true
+          else
+            RSO_ATTESTER_HAS_WALLET=false
+          fi
+          if [ "$RSO_ATTESTER_HAS_WALLET" = "true" ] && [ -n "${RSO_ATTESTER_ADDRESS:-}" ] && [ -n "${RSO_DOCCHAIN_ADDRESS:-}" ]; then
+            echo "RSO_ATTESTATION_ENABLED=true" >> "$GITHUB_ENV"
+          else
+            echo "RSO_ATTESTATION_ENABLED=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Set up Foundry for attestation signing
+        if: env.RSO_ATTESTATION_ENABLED == 'true'
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Sign DocChain attestations for sweepers
+        if: env.RSO_ATTESTATION_ENABLED == 'true'
+        env:
+          DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY }}
+          DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON }}
+          DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD }}
+          DISPOSABLE_NO_FUNDS_ETH_KEYSTORE: ${{ vars.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE }}
+          DISPOSABLE_NO_FUNDS_ETH_ACCOUNT: ${{ vars.DISPOSABLE_NO_FUNDS_ETH_ACCOUNT }}
+          RSO_ATTESTER_ADDRESS: ${{ secrets.RSO_ATTESTER_ADDRESS || vars.RSO_ATTESTER_ADDRESS }}
+          RSO_ON_BEHALF_OF_ADDRESS: ${{ secrets.RSO_ON_BEHALF_OF_ADDRESS || vars.RSO_ON_BEHALF_OF_ADDRESS }}
+        run: |
+          set -euo pipefail
+          python attestation/node_attest.py \
+            --start "$RSO_SNAPSHOT_START_DATE" \
+            --end "$RSO_SNAPSHOT_END_DATE"
+
+      - name: Commit attestation state
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ ! -d data/attestations ]; then
+            echo "No attestation state directory."
+            exit 0
+          fi
+          git add data/attestations
+          if git diff --cached --quiet; then
+            echo "No attestation state changes to commit."
+            exit 0
+          fi
+          git commit -m "Record signed DocChain attestations"
+          git push origin "HEAD:$RSO_NODE_BRANCH"
+
+      - name: Refresh DocChain attestation index
+        env:
+          DOCCHAIN_RPC_URL: ${{ secrets.DOCCHAIN_RPC_URL || secrets.RSO_DOCCHAIN_RPC_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DOCCHAIN_RPC_URL:-}" ] || [ -z "${RSO_DOCCHAIN_ADDRESS:-}" ] || [ -z "${RSO_DOCCHAIN_DEPLOYMENT_BLOCK:-}" ]; then
+            echo "Attestation index skipped: RPC URL, DocChain address, or deployment block is not configured."
+            exit 0
+          fi
+          args=(
+            indexer/index_rso_attestations.py
+            --network "$RSO_DOCCHAIN_NETWORK"
+            --chunk-size 10
+          )
+          if [ -d reports/sweeper ]; then
+            args+=(--sweeper-reports reports/sweeper)
+          fi
+          if [ -n "${RSO_TDH_SUPPORT_SNAPSHOT:-}" ] && [ -e "$RSO_TDH_SUPPORT_SNAPSHOT" ]; then
+            args+=(--tdh-support "$RSO_TDH_SUPPORT_SNAPSHOT")
+          fi
+          python "${args[@]}"
+
+      - name: Commit attestation index
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add indexer/cache indexer/generated
+          if git diff --cached --quiet; then
+            echo "No attestation index changes to commit."
+            exit 0
+          fi
+          git commit -m "Update DocChain attestation index"
+          git push origin "HEAD:$RSO_NODE_BRANCH"
