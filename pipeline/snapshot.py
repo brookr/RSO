@@ -2263,12 +2263,39 @@ def build_v2_backfill_bundle(current_date_str, output_dir=None, min_count=MIN_OB
             v1_receipt_path.write_bytes(receipt_path.read_bytes())
             print(f"  Preserved v1 storage receipt as {v1_receipt_path.name}")
 
+    ensure_local_catalog(current_date_str, manifest)
+
     return build_release_bundle(
         current_date_str,
         output_dir=output_dir,
         min_count=min_count,
         asset_name=release_asset_name_v2(current_date_str),
     )
+
+
+def ensure_local_catalog(current_date_str, manifest):
+    """Materialize a pruned day's catalog.json.gz from its published bundle.
+
+    Bundle building needs the catalog on disk; retention pruning removes old
+    copies. The re-fetched bytes are verified against the committed manifest
+    before being written back.
+    """
+    gz_path = catalog_gz_path(current_date_str)
+    if gz_path.exists():
+        return
+    raw = read_catalog_bytes(current_date_str)
+    computed = compute_hash(raw)
+    if computed != manifest["sha256"]:
+        raise SnapshotError(
+            f"{current_date_str}: refetched catalog hash {computed} does not match "
+            f"manifest sha256 {manifest['sha256']}"
+        )
+    with open(gz_path, "wb") as raw_file:
+        with gzip.GzipFile(
+            filename="", mode="wb", fileobj=raw_file, compresslevel=9, mtime=0
+        ) as gz_file:
+            gz_file.write(raw)
+    print(f"  Rematerialized {gz_path.name} from the published bundle")
 
 
 def build_or_fetch_release_bundle(current_date_str, output_dir=None, min_count=MIN_OBJECT_COUNT, repo=None):
