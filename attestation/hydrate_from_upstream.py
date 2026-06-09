@@ -63,11 +63,11 @@ def main() -> int:
         hydrated = 0
         kept = 0
         for snapshot_date in date_range(args.start, args.end):
-            manifest_file = snapshot_dir(snapshot_date) / "manifest.json"
-            if manifest_file.exists() and not args.overwrite:
-                # A node's own capture is its observation record; hydration
-                # fills gaps, it never replaces local archive days.
-                print(f"  {snapshot_date}: local archive day exists; keeping own capture")
+            if keep_local_day(args, snapshot_date):
+                # A node's own captures are its observation record; hydration
+                # fills gaps and replaces stale inherited copies, it never
+                # touches days the node captured or published itself.
+                print(f"  {snapshot_date}: keeping own archive day")
                 kept += 1
                 continue
             hydrate_day(args, snapshot_date)
@@ -80,6 +80,30 @@ def main() -> int:
     except (OSError, KeyError, ValueError) as exc:
         print(f"hydrate_from_upstream.py: {exc}", file=sys.stderr)
         return 2
+
+
+def keep_local_day(args: argparse.Namespace, snapshot_date: str) -> bool:
+    """Decide whether a local archive day is the node's own.
+
+    With --keep-from, the boundary is explicit: days on or after it are the
+    node's own captures, everything earlier is adopted from upstream (forked
+    nodes inherit upstream's old day directories, which are not their own
+    observations). Without it, a day is kept only when it already carries v2
+    content fields -- a true cold-start node has no days at all, and a node
+    that has been running v2 dailies owns everything it produced.
+    """
+    if args.overwrite:
+        return False
+    if args.keep_from:
+        return snapshot_date >= args.keep_from
+    manifest_file = snapshot_dir(snapshot_date) / "manifest.json"
+    if not manifest_file.exists():
+        return False
+    try:
+        manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+    except ValueError:
+        return False
+    return manifest.get("content_schema") == CONTENT_SCHEMA_V2
 
 
 def hydrate_day(args: argparse.Namespace, snapshot_date: str) -> None:
@@ -253,6 +277,15 @@ def parse_args() -> argparse.Namespace:
         "--overwrite",
         action="store_true",
         help="Replace local archive days with the verified upstream copies.",
+    )
+    parser.add_argument(
+        "--keep-from",
+        default=os.environ.get("RSO_HYDRATE_KEEP_FROM", ""),
+        help=(
+            "Explicit ownership boundary, YYYY-MM-DD: days on or after this date "
+            "are the node's own captures and are never hydrated; earlier days are "
+            "adopted from upstream even if inherited copies exist."
+        ),
     )
     return parser.parse_args()
 

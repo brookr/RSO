@@ -1,0 +1,138 @@
+name: Weekly Drift Audit
+
+# Re-queries a sliding sample of archived gp_history windows and diffs every
+# field against what the archive recorded. Observation-plane drift (the
+# excluded fields) is expected and logged; any non-excluded-field mutation or
+# selection drift is a consensus risk -- the canary that the v2 field
+# partition needs widening -- and opens an issue.
+
+on:
+  schedule:
+    - cron: "45 2 * * 1"
+  workflow_dispatch:
+    inputs:
+      recent:
+        description: "Most recent windows to check."
+        required: false
+        default: "7"
+        type: string
+      older:
+        description: "Random older windows to check."
+        required: false
+        default: "5"
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: rso-drift-audit-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      RSO_NODE_BRANCH: ${{ vars.RSO_NODE_BRANCH || 'node' }}
+    steps:
+      - name: Validate inputs
+        env:
+          INPUT_RECENT: ${{ inputs.recent || '7' }}
+          INPUT_OLDER: ${{ inputs.older || '5' }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, re, sys
+          for name in ("INPUT_RECENT", "INPUT_OLDER"):
+              value = os.environ.get(name, "")
+              if re.fullmatch(r"[0-9]{1,3}", value) is None:
+                  print(f"Invalid {name}: {value!r}")
+                  sys.exit(1)
+          PY
+          {
+            echo "RSO_AUDIT_RECENT=${INPUT_RECENT}"
+            echo "RSO_AUDIT_OLDER=${INPUT_OLDER}"
+          } >> "$GITHUB_ENV"
+
+      - name: Check out node branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RSO_NODE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Run drift audit
+        id: audit
+        env:
+          SPACETRACK_USER: ${{ secrets.SPACETRACK_USER }}
+          SPACETRACK_PASS: ${{ secrets.SPACETRACK_PASS }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          status=0
+          python3 pipeline/drift_audit.py \
+            --recent "$RSO_AUDIT_RECENT" --older "$RSO_AUDIT_OLDER" \
+            --report build/drift/report.json || status=$?
+          echo "audit_status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" -gt 1 ]; then
+            exit "$status"
+          fi
+
+      - name: Commit drift report
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p reports/drift
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          cp build/drift/report.json "reports/drift/drift-$stamp.json"
+          git add reports/drift
+          if git diff --cached --quiet; then
+            echo "No drift report changes to commit."
+          else
+            git commit -m "Record weekly drift audit report"
+            git push origin "HEAD:$RSO_NODE_BRANCH"
+          fi
+
+      - name: Open consensus-drift issue
+        if: steps.audit.outputs.audit_status == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          title="Drift audit: consensus-affecting drift detected"
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' || true)"
+          body_file=build/drift/issue.md
+          {
+            echo "The weekly drift audit found core-field mutations or selection drift."
+            echo
+            echo "This is the canary for the v2 consensus field partition: investigate"
+            echo "whether Space-Track began mutating a field outside the excluded set,"
+            echo "or whether window selection changed. Report:"
+            echo
+            echo '```json'
+            python3 -c "
+          import json
+          report = json.load(open('build/drift/report.json'))
+          slim = {k: report[k] for k in ('generated_at_utc', 'windows_checked', 'alert_window_count')}
+          slim['alerts'] = [
+              {k: r[k] for k in ('date', 'core_field_mutations', 'selection_drift')}
+              for r in report['results']
+              if r['core_field_mutations'] or r['selection_drift']
+          ]
+          print(json.dumps(slim, indent=1))
+          "
+            echo '```'
+          } > "$body_file"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file "$body_file"
+          else
+            gh issue create --title "$title" --body-file "$body_file"
+          fi
+
+      - name: Fail on consensus drift
+        if: steps.audit.outputs.audit_status == '1'
+        run: |
+          echo "Consensus-affecting drift detected; see the opened issue."
+          exit 1
