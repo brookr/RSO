@@ -1,0 +1,27 @@
+{
+  "asset_name": "rso-archive-2026-04-23-v2.tar.gz",
+  "bundle_bytes": 11167233,
+  "bundle_sha256": "8c0dbb309d26e8f76db4187345c231a7b9ce950ecf4cb4c03bd7c607950fc483",
+  "catalog_sha256": "aca918b0d803343624625d52f906f16250c7c53f32755141f5296374f7028827",
+  "date": "2026-04-23",
+  "destinations": {
+    "arweave": {
+      "bundle_sha256": "8c0dbb309d26e8f76db4187345c231a7b9ce950ecf4cb4c03bd7c607950fc483",
+      "error": "Arweave chunk upload did not settle for d_0JmufIdvymyBe908hqW3EK9n7AU0rO8EgleWyPZDM chunk 1/43: {'error': 'data_root_not_found'}",
+      "failed_at": "2026-06-09T22:49:50Z",
+      "status": "failed"
+    },
+    "github_release": {
+      "asset_name": "rso-archive-2026-04-23-v2.tar.gz",
+      "asset_url": "https://github.com/OMPub/RSO/releases/download/rso-archive-2026-04-23/rso-archive-2026-04-23-v2.tar.gz",
+      "release_url": "https://github.com/OMPub/RSO/releases/tag/rso-archive-2026-04-23",
+      "repo": "OMPub/RSO",
+      "status": "uploaded",
+      "tag": "rso-archive-2026-04-23"
+    }
+  },
+  "manifest_sha256": "e5b13a5c7c3f8a3f1e2fa4197619d44d0789a9e239db30f169eddd3616ff81b2",
+  "updated_at": "2026-06-09T23:10:04Z",
+  "verified_at": "2026-06-09T23:10:04Z",
+  "verified_from_upstream": "OMPub/RSO"
+}

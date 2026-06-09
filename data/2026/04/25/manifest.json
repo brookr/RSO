@@ -1,4 +1,5 @@
 {
+  "annotations_sha256": "aaa67640dbe1e0fe53fabf1e66b2e0135aca4b6e66173f1e6abf4d44ae82fab8",
   "api_query_base": "https://www.space-track.org/basicspacedata/query",
   "api_query_paths": [
     "/class/gp_history/NORAD_CAT_ID/0--9999/CREATION_DATE/2026-04-24T00:00:00--2026-04-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
@@ -40,6 +41,19 @@
   "base_snapshot_date": "2026-04-24",
   "base_snapshot_sha256": "0875b754cf11e1bd0f3bcb85abf466c63959bfe7eda02fd47ea64ae1c716bf4e",
   "compressed_bytes": 11210162,
+  "content_excluded_fields": [
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0"
+  ],
+  "content_schema": "rso-core-v2",
+  "content_sha256": "1bbe5e9f6dc9bea6aad6112bcb91fdf83645043b372dcf571c7cba81b5c53bbd",
   "cutoff_utc": "2026-04-25T00:00:00Z",
   "date": "2026-04-25",
   "delta_window_end_utc": "2026-04-25T00:00:00Z",

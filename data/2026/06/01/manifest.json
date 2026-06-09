@@ -1,4 +1,5 @@
 {
+  "annotations_sha256": "8383c4912da5d9c69baf570df5f1279d53dc3eebab085f590b4c82e89c9678b3",
   "api_query_base": "https://www.space-track.org/basicspacedata/query",
   "api_query_paths": [
     "/class/gp_history/NORAD_CAT_ID/0--9999/CREATION_DATE/2026-05-31T00:00:00--2026-06-01T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
@@ -36,17 +37,30 @@
     "/class/gp_history/NORAD_CAT_ID/320000--329999/CREATION_DATE/2026-05-31T00:00:00--2026-06-01T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
     "/class/gp_history/NORAD_CAT_ID/330000--339999/CREATION_DATE/2026-05-31T00:00:00--2026-06-01T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
   ],
-  "archived_at": "2026-06-01T01:30:25.987660+00:00",
+  "archived_at": "2026-06-01T05:19:06.974088+00:00",
   "base_snapshot_date": "2026-05-31",
   "base_snapshot_sha256": "714ba3b4e83245876fc647f9ecf70bb6d5d95f2388db02fe305479c3c7d905ab",
   "compressed_bytes": 11301034,
+  "content_excluded_fields": [
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0"
+  ],
+  "content_schema": "rso-core-v2",
+  "content_sha256": "8846cb904c9431f293a8c307f1b0cd665ef49e954d53979476124e6946e30ad4",
   "cutoff_utc": "2026-06-01T00:00:00Z",
   "date": "2026-06-01",
   "delta_window_end_utc": "2026-06-01T00:00:00Z",
   "delta_window_start_utc": "2026-05-31T00:00:00Z",
   "format": "OMM/JSON",
   "object_count": 67771,
-  "observed_at_utc": "2026-06-01T01:30:14Z",
+  "observed_at_utc": "2026-06-01T05:18:56Z",
   "pipeline_version": "0.3.0",
   "provenance": "rolling_gp_history_delta",
   "query_strategy": "prior_snapshot_plus_bounded_gp_history_delta",

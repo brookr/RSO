@@ -1,10 +1,24 @@
 {
+  "annotations_sha256": "1bbdb0bf3979476bf13f1d4a6620dc7199b717855728f2dc87652f8321c11ced",
   "api_query_base": "https://www.space-track.org/basicspacedata/query",
   "api_query_paths": [
     "/class/gp/orderby/NORAD_CAT_ID%20asc/format/json"
   ],
   "archived_at": "2026-04-20T00:01:01.390416+00:00",
   "compressed_bytes": 11301379,
+  "content_excluded_fields": [
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0"
+  ],
+  "content_schema": "rso-core-v2",
+  "content_sha256": "1838a06696902f7397d78d906c4bd9f5e9d9e372725ccbf4629bbd377231a740",
   "cutoff_utc": "2026-04-20T00:00:00Z",
   "date": "2026-04-20",
   "format": "OMM/JSON",
