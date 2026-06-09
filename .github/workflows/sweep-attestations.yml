@@ -1,0 +1,165 @@
+name: Sweep RSO Attestations
+
+on:
+  schedule:
+    # Run daily after the TDH/backing snapshot boundary. Adjust this cron if
+    # the production 6529 TDH calculation settles at a different UTC time.
+    - cron: "15 1 * * *"
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "First archive date, YYYY-MM-DD. Defaults to yesterday UTC."
+        required: false
+        type: string
+      end:
+        description: "Last archive date, YYYY-MM-DD. Defaults to yesterday UTC."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rso-sweeper-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      RSO_DOCCHAIN_ADDRESS: ${{ vars.RSO_DOCCHAIN_ADDRESS }}
+      RSO_DOCCHAIN_NETWORK: ${{ vars.RSO_DOCCHAIN_NETWORK || 'custom' }}
+      RSO_DOCCHAIN_CHAIN_ID: ${{ vars.RSO_DOCCHAIN_CHAIN_ID || '1' }}
+      RSO_DOCCHAIN_DEPLOYMENT_BLOCK: ${{ vars.RSO_DOCCHAIN_DEPLOYMENT_BLOCK }}
+      RSO_SWEEPER_RPC_URL: ${{ secrets.RSO_SWEEPER_RPC_URL || secrets.DOCCHAIN_RPC_URL }}
+      RSO_SWEEPER_OPERATORS: ${{ vars.RSO_SWEEPER_OPERATORS || format('github-forks:{0}', vars.RSO_SWEEPER_OPERATOR_DISCOVERY_REPO || github.repository) }}
+      RSO_OPERATOR_BACKING_SNAPSHOT: ${{ vars.RSO_OPERATOR_BACKING_SNAPSHOT || 'data/backing/{date}.json' }}
+      RSO_TDH_SUPPORT_SNAPSHOT: ${{ vars.RSO_TDH_SUPPORT_SNAPSHOT || 'data/backing' }}
+      RSO_SWEEPER_DRY_RUN: ${{ vars.RSO_SWEEPER_DRY_RUN || 'false' }}
+      RSO_SWEEPER_MAX_FORKS: ${{ vars.RSO_SWEEPER_MAX_FORKS || '100' }}
+      RSO_SWEEPER_MAX_BACKED_NODE_DISCOVERY: ${{ vars.RSO_SWEEPER_MAX_BACKED_NODE_DISCOVERY || '100' }}
+      RSO_SWEEPER_TOP_OPERATORS: ${{ vars.RSO_SWEEPER_TOP_OPERATORS || '5' }}
+      RSO_SWEEPER_MIN_CARD_SPECIFIC_TDH: ${{ vars.RSO_SWEEPER_MIN_CARD_SPECIFIC_TDH || '1' }}
+      RSO_SWEEPER_MAX_PUBLICATION_LOCATIONS: ${{ vars.RSO_SWEEPER_MAX_PUBLICATION_LOCATIONS || '4' }}
+      RSO_SWEEPER_FETCH_RETRIES: ${{ vars.RSO_SWEEPER_FETCH_RETRIES || '2' }}
+      RSO_SWEEPER_KEYSTORE_JSON: ${{ secrets.RSO_SWEEPER_KEYSTORE_JSON }}
+      RSO_SWEEPER_KEYSTORE_PASSWORD: ${{ secrets.RSO_SWEEPER_KEYSTORE_PASSWORD }}
+      RSO_SWEEPER_KEYSTORE: ${{ vars.RSO_SWEEPER_KEYSTORE }}
+      RSO_SWEEPER_ACCOUNT: ${{ vars.RSO_SWEEPER_ACCOUNT }}
+      RSO_SWEEP_INPUT_START: ${{ inputs.start || '' }}
+      RSO_SWEEP_INPUT_END: ${{ inputs.end || '' }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13.3"
+
+      - name: Set up Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          # Pin a known-good release; fetching "latest" has flaked on download.
+          version: v1.7.0
+
+      - name: Check sweeper configuration
+        run: |
+          set -euo pipefail
+          if [[ "$RSO_SWEEPER_OPERATORS" != github-forks:* && ! -f "$RSO_SWEEPER_OPERATORS" ]]; then
+            echo "Sweeper skipped: $RSO_SWEEPER_OPERATORS does not exist."
+            exit 0
+          fi
+          if [ -n "${RSO_SWEEPER_KEYSTORE_JSON:-}" ] || [ -n "${RSO_SWEEPER_KEYSTORE:-}" ] || [ -n "${RSO_SWEEPER_ACCOUNT:-}" ]; then
+            RSO_SWEEPER_HAS_WALLET=true
+          elif [ "${RSO_SWEEPER_DRY_RUN,,}" = "true" ]; then
+            RSO_SWEEPER_HAS_WALLET=true
+          else
+            RSO_SWEEPER_HAS_WALLET=false
+          fi
+          if [ -z "${RSO_SWEEPER_RPC_URL:-}" ] || [ "$RSO_SWEEPER_HAS_WALLET" != "true" ] || [ -z "${RSO_DOCCHAIN_ADDRESS:-}" ] || [ -z "${RSO_OPERATOR_BACKING_SNAPSHOT:-}" ]; then
+            echo "Sweeper skipped: RPC URL, wallet, DocChain address, or backing snapshot is not configured."
+            exit 0
+          fi
+          echo "RSO_SWEEPER_ENABLED=true" >> "$GITHUB_ENV"
+
+      - name: Sweep signed attestations
+        if: env.RSO_SWEEPER_ENABLED == 'true'
+        run: |
+          set -euo pipefail
+          START="$RSO_SWEEP_INPUT_START"
+          END="$RSO_SWEEP_INPUT_END"
+          # Reject non-YYYY-MM-DD inputs before they reach the report file path
+          # or the sweeper CLI. re.fullmatch rejects embedded newlines / path
+          # separators that a workflow_dispatch REST input could carry.
+          for value in "$START" "$END"; do
+            if [ -n "$value" ] && ! python3 -c "import re,sys; sys.exit(0 if re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', sys.argv[1]) else 1)" "$value"; then
+              echo "::error::Invalid sweep date input (expected YYYY-MM-DD)"; exit 1
+            fi
+          done
+          if [ -z "$END" ]; then
+            END="$(date -u -d 'yesterday' +%F)"
+          fi
+          if [ -z "$START" ]; then
+            # Recheck the prior date once. Signed claims remain valid for seven
+            # days, but a bounded two-day window keeps routine resource use low.
+            START="$(date -u -d "$END - 1 day" +%F)"
+          fi
+          python3 sweeper/rso_sweeper.py \
+            --start "$START" \
+            --end "$END" \
+            --operators "$RSO_SWEEPER_OPERATORS" \
+            --backing "$RSO_OPERATOR_BACKING_SNAPSHOT" \
+            --limit "$RSO_SWEEPER_TOP_OPERATORS" \
+            --report "build/sweeper/sweep-$START-$END.json" \
+            --report-dir "reports/sweeper"
+
+      - name: Refresh verified DocChain index
+        if: env.RSO_SWEEPER_ENABLED == 'true'
+        env:
+          DOCCHAIN_RPC_URL: ${{ secrets.RSO_SWEEPER_RPC_URL || secrets.DOCCHAIN_RPC_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RSO_DOCCHAIN_DEPLOYMENT_BLOCK:-}" ]; then
+            echo "Index refresh skipped: DocChain deployment block is not configured."
+            exit 0
+          fi
+          args=(
+            indexer/index_rso_attestations.py
+            --network "$RSO_DOCCHAIN_NETWORK"
+            --chunk-size 10
+            --sweeper-reports reports/sweeper
+          )
+          if [ -e "$RSO_TDH_SUPPORT_SNAPSHOT" ]; then
+            args+=(--tdh-support "$RSO_TDH_SUPPORT_SNAPSHOT")
+          fi
+          # Active v2 chain (core-projection contentHash, contract release 2).
+          python3 "${args[@]}" --profile v2
+          # Frozen v1 chain: no new attestations are expected, but keep its
+          # index (and the supersession metadata) refreshed alongside v2.
+          python3 "${args[@]}" --profile v1
+
+      - name: Publish public sweeper report
+        if: env.RSO_SWEEPER_ENABLED == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/sweeper indexer/cache indexer/generated
+          if git diff --cached --quiet; then
+            echo "No sweeper report changes to commit."
+            exit 0
+          fi
+          git commit -m "Publish RSO sweeper report and verified index"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Upload sweeper report
+        if: env.RSO_SWEEPER_ENABLED == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rso-sweeper-report
+          path: build/sweeper/*.json
+          if-no-files-found: ignore

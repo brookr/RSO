@@ -1,0 +1,198 @@
+name: Attest Archive Range (v2)
+
+# Sign v2 DocChain attestations for a range of archived days with the node's
+# repo-secret signer. Used for the v2 re-genesis (every day since genesis) and
+# by late-joining nodes, which can hydrate verified upstream bundles first.
+# Signing only -- submission happens through attestation/submit_batch.py with
+# a funded courier key, landing the whole range in one attestBatch transaction.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "First archive date, YYYY-MM-DD."
+        required: true
+        type: string
+      end:
+        description: "Last archive date, YYYY-MM-DD."
+        required: true
+        type: string
+      hydrate_upstream:
+        description: "Hydrate days from the upstream node's verified v2 bundles first (late join)."
+        required: false
+        default: false
+        type: boolean
+      contract_address:
+        description: "DocChain release 2 contract address."
+        required: false
+        default: "0x2c66585E7b60A20563a3fd2B7a4D75Ae5baa5437"
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rso-node-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      RSO_NODE_BRANCH: ${{ vars.RSO_NODE_BRANCH || 'node' }}
+      RSO_UPSTREAM_REPO: ${{ vars.RSO_UPSTREAM_REPO || 'OMPub/RSO' }}
+      RSO_DOCCHAIN_NETWORK: ${{ vars.RSO_DOCCHAIN_NETWORK || 'sepolia' }}
+      RSO_DOCCHAIN_CHAIN_ID: ${{ vars.RSO_DOCCHAIN_CHAIN_ID || '11155111' }}
+      RSO_NODE_ID: ${{ vars.RSO_NODE_ID || format('github:{0}', github.repository) }}
+    steps:
+      - name: Validate inputs
+        env:
+          INPUT_START: ${{ inputs.start }}
+          INPUT_END: ${{ inputs.end }}
+          INPUT_CONTRACT: ${{ inputs.contract_address }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, re, sys
+          for name, pattern in (
+              ("INPUT_START", r"[0-9]{4}-[0-9]{2}-[0-9]{2}"),
+              ("INPUT_END", r"[0-9]{4}-[0-9]{2}-[0-9]{2}"),
+              ("INPUT_CONTRACT", r"0x[0-9a-fA-F]{40}"),
+          ):
+              value = os.environ.get(name, "")
+              if re.fullmatch(pattern, value) is None:
+                  print(f"Invalid {name}: {value!r}")
+                  sys.exit(1)
+          PY
+          {
+            echo "RSO_RANGE_START=${INPUT_START}"
+            echo "RSO_RANGE_END=${INPUT_END}"
+            echo "RSO_DOCCHAIN_ADDRESS=${INPUT_CONTRACT}"
+          } >> "$GITHUB_ENV"
+
+      - name: Check out node branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RSO_NODE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Run tests
+        run: python -m unittest discover -s tests
+
+      - name: Hydrate verified upstream bundles
+        if: inputs.hydrate_upstream
+        run: |
+          set -euo pipefail
+          python3 attestation/hydrate_from_upstream.py \
+            --start "$RSO_RANGE_START" --end "$RSO_RANGE_END" \
+            --upstream "$RSO_UPSTREAM_REPO"
+
+      - name: Commit hydrated archive days
+        if: inputs.hydrate_upstream
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data ledger.json
+          if git diff --cached --quiet; then
+            echo "No hydrated archive changes to commit."
+          else
+            git commit -m "Adopt verified upstream v2 archive days"
+            git push origin "HEAD:$RSO_NODE_BRANCH"
+          fi
+
+      - name: Rebuild v2 fields for own archive days
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 pipeline/snapshot.py rebuild-v2 \
+            --start "$RSO_RANGE_START" --end "$RSO_RANGE_END"
+
+      - name: Publish own v2 bundles for non-adopted days
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARWEAVE_JWK: ${{ secrets.ARWEAVE_JWK }}
+        run: |
+          set -euo pipefail
+          python3 - <<'DATES'
+          # publish --v2-backfill day-by-day, skipping adopted days (the
+          # publish guard raises for them) and days already carrying a v2
+          # receipt; failures on individual days stop the run loudly.
+          import json, subprocess, sys
+          from datetime import datetime, timedelta
+          import os
+          start = datetime.strptime(os.environ["RSO_RANGE_START"], "%Y-%m-%d")
+          end = datetime.strptime(os.environ["RSO_RANGE_END"], "%Y-%m-%d")
+          day = start
+          while day <= end:
+              date = day.strftime("%Y-%m-%d")
+              day += timedelta(days=1)
+              receipt_path = f"data/{date[:4]}/{date[5:7]}/{date[8:10]}/storage.json"
+              try:
+                  receipt = json.load(open(receipt_path))
+              except FileNotFoundError:
+                  receipt = {}
+              if receipt.get("verified_from_upstream"):
+                  print(f"  {date}: adopted from upstream; shared locations stand")
+                  continue
+              if str(receipt.get("asset_name", "")).endswith("-v2.tar.gz"):
+                  print(f"  {date}: v2 receipt already recorded")
+                  continue
+              subprocess.run(
+                  [sys.executable, "pipeline/snapshot.py", "publish",
+                   "--date", date, "--v2-backfill"],
+                  check=True,
+              )
+          DATES
+
+      - name: Commit rebuilt archive metadata
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data ledger.json
+          if git diff --cached --quiet; then
+            echo "No rebuilt metadata to commit."
+          else
+            git commit -m "Record v2 content fields and publish destinations"
+            git push origin "HEAD:$RSO_NODE_BRANCH"
+          fi
+
+      - name: Set up Foundry for attestation signing
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.0
+
+      - name: Sign v2 attestations for the range
+        env:
+          DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY }}
+          DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON }}
+          DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD }}
+          DISPOSABLE_NO_FUNDS_ETH_KEYSTORE: ${{ vars.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE }}
+          DISPOSABLE_NO_FUNDS_ETH_ACCOUNT: ${{ vars.DISPOSABLE_NO_FUNDS_ETH_ACCOUNT }}
+          RSO_ATTESTER_ADDRESS: ${{ secrets.RSO_ATTESTER_ADDRESS || vars.RSO_ATTESTER_ADDRESS }}
+          RSO_ON_BEHALF_OF_ADDRESS: ${{ secrets.RSO_ON_BEHALF_OF_ADDRESS || vars.RSO_ON_BEHALF_OF_ADDRESS }}
+        run: |
+          set -euo pipefail
+          python attestation/node_attest.py \
+            --start "$RSO_RANGE_START" \
+            --end "$RSO_RANGE_END"
+
+      - name: Commit attestation state
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ ! -d data/attestations ]; then
+            echo "No attestation state directory."
+            exit 0
+          fi
+          git add data/attestations
+          if git diff --cached --quiet; then
+            echo "No attestation state changes to commit."
+            exit 0
+          fi
+          git commit -m "Record signed v2 DocChain attestations"
+          git push origin "HEAD:$RSO_NODE_BRANCH"

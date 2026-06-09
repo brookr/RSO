@@ -11,7 +11,13 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Mapping
 
-from indexer.rso_profile import RSO_DOC_CHAIN_ID, encode_publication_locator_uri, normalize_node_id
+from indexer.rso_profile import (
+    RSO_DOC_CHAIN_ID,
+    RSO_DOC_CHAIN_ID_V2,
+    RSO_V1_HEAD_BLOCK_HASH,
+    encode_publication_locator_uri,
+    normalize_node_id,
+)
 from vendor.docchain.attestation import (
     doc_block_hash_with_cast,
     normalize_address,
@@ -27,6 +33,12 @@ from vendor.docchain.model import ZERO_ADDRESS
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 DEFAULT_STATE_PATH = DATA_DIR / "attestations" / "rso-docchain-state.json"
+# v2 chain attestations track their own state: parentHash continuity is
+# per-chain, and mixing v1/v2 entries for the same dates would corrupt lookups.
+DEFAULT_STATE_PATH_V2 = DATA_DIR / "attestations" / "rso-docchain-state-v2.json"
+STATE_SCHEMA_V1 = "rso-docchain-node-state-v1"
+STATE_SCHEMA_V2 = "rso-docchain-node-state-v2"
+ACCEPTED_STATE_SCHEMAS = frozenset({STATE_SCHEMA_V1, STATE_SCHEMA_V2})
 DEFAULT_BUILD_DIR = ROOT / "build" / "attestations"
 OFFICIAL_BASELINE_DATE = os.environ.get("OFFICIAL_BASELINE_DATE", "2026-04-20")
 ZERO_BYTES32 = "0x" + "00" * 32
@@ -117,16 +129,40 @@ def date_range(start: str, end: str) -> list[str]:
 
 
 def content_hash_from_manifest(manifest: Mapping[str, object]) -> str:
+    """Return the attested contentHash for a day manifest.
+
+    v2 manifests carry content_sha256 (the deterministic core projection) next
+    to the raw-catalog sha256; the consensus chain attests the core hash. The
+    raw hash remains in the manifest for artifact integrity.
+    """
+    if "content_sha256" in manifest:
+        return normalize_bytes32("0x" + str(manifest["content_sha256"]))
     return normalize_bytes32("0x" + str(manifest["sha256"]))
 
 
-def load_attestation_state(path: Path = DEFAULT_STATE_PATH) -> dict[str, object]:
+def load_attestation_state(
+    path: Path = DEFAULT_STATE_PATH,
+    *,
+    schema: str | None = STATE_SCHEMA_V1,
+) -> dict[str, object]:
+    """Load a node attestation state file.
+
+    `schema` pins the expected schema; pass None to accept any known schema
+    (used by helpers that must follow whatever chain the file belongs to).
+    A missing file yields a fresh state carrying the requested schema.
+    """
+    if schema is not None and schema not in ACCEPTED_STATE_SCHEMAS:
+        raise ValueError(f"unsupported attestation state schema {schema!r}")
     if not path.exists():
-        return {"schema": "rso-docchain-node-state-v1", "attestations": []}
+        return {"schema": schema or STATE_SCHEMA_V1, "attestations": []}
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError(f"{path} must contain a JSON object")
-    if raw.get("schema") != "rso-docchain-node-state-v1":
+    found = raw.get("schema")
+    if schema is None:
+        if found not in ACCEPTED_STATE_SCHEMAS:
+            raise ValueError(f"{path} has unsupported schema")
+    elif found != schema:
         raise ValueError(f"{path} has unsupported schema")
     attestations = raw.get("attestations")
     if not isinstance(attestations, list):
@@ -203,8 +239,17 @@ def parent_hash_for_date(
     *,
     bootstrap_parent_hash: str | None = None,
     baseline_date: str = OFFICIAL_BASELINE_DATE,
+    baseline_parent_hash: str | None = None,
 ) -> str:
+    """Derive the parentHash for a day from the node's attestation state.
+
+    The baseline (genesis) day takes `baseline_parent_hash` when given -- the
+    v2 chain sets it to the agreed v1 head block, recording supersession on
+    chain -- and the zero hash otherwise (a fresh chain).
+    """
     if snapshot_date == baseline_date:
+        if baseline_parent_hash:
+            return normalize_bytes32(baseline_parent_hash)
         return ZERO_BYTES32
     expected_previous = previous_date(snapshot_date)
     previous = latest_state_attestation_for_date(state, expected_previous)
@@ -329,6 +374,7 @@ def build_prepared_attestation(
     deadline: int | None = None,
     ttl: int = 7 * 24 * 60 * 60,
     network: str = "",
+    doc_chain_id: str = RSO_DOC_CHAIN_ID_V2,
 ) -> dict[str, object]:
     manifest = load_manifest(snapshot_date)
     return prepare_attestation(
@@ -336,7 +382,7 @@ def build_prepared_attestation(
         contract_address=contract_address,
         attester=attester,
         on_behalf_of=on_behalf_of,
-        doc_chain_id=RSO_DOC_CHAIN_ID,
+        doc_chain_id=doc_chain_id,
         doc_ref=doc_ref_for_date(snapshot_date),
         parent_hash=parent_hash,
         content_hash=content_hash_from_manifest(manifest),
@@ -430,8 +476,13 @@ def state_entry_key(
     )
 
 
-def record_state_entry(path: Path, entry: Mapping[str, object]) -> dict[str, object]:
-    state = load_attestation_state(path)
+def record_state_entry(
+    path: Path,
+    entry: Mapping[str, object],
+    *,
+    schema: str = STATE_SCHEMA_V1,
+) -> dict[str, object]:
+    state = load_attestation_state(path, schema=schema)
     attestations = state["attestations"]
     assert isinstance(attestations, list)
     entry_key = state_entry_key(entry)
@@ -520,12 +571,15 @@ def prepare_sign_one(
     cast: str | None = None,
     parent_hash: str | None = None,
     uri: str | None = None,
+    doc_chain_id: str = RSO_DOC_CHAIN_ID_V2,
+    baseline_parent_hash: str | None = RSO_V1_HEAD_BLOCK_HASH,
 ) -> tuple[PreparedRsoAttestation, dict[str, object]]:
     if parent_hash is None:
         parent_hash = parent_hash_for_date(
             snapshot_date,
             state,
             bootstrap_parent_hash=bootstrap_parent_hash,
+            baseline_parent_hash=baseline_parent_hash,
         )
     else:
         parent_hash = normalize_bytes32(parent_hash)
@@ -541,6 +595,7 @@ def prepare_sign_one(
         uri=uri,
         ttl=ttl,
         network=network,
+        doc_chain_id=doc_chain_id,
     )
     signature = sign_prepared_with_cast(prepared, private_key_env=private_key_env, cast=cast)
     signed = signed_attestation(prepared, signature)

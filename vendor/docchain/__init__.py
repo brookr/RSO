@@ -1,6 +1,7 @@
 """Stdlib-only reference helpers for Doc Chain indexers and attestations."""
 
 from .attestation import (
+    attest_batch_calldata,
     attest_doc_calldata,
     cast_wallet_args_from_env,
     doc_block_hash_payload,
@@ -36,6 +37,7 @@ __all__ = [
     "ScanContext",
     "ScanResult",
     "append_event_cache",
+    "attest_batch_calldata",
     "attest_doc_calldata",
     "build_docchain_index",
     "cast_wallet_args_from_env",

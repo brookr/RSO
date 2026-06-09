@@ -21,6 +21,7 @@ from .model import ZERO_ADDRESS
 
 
 ATTEST_DOC_SELECTOR = "d2b85e96"
+ATTEST_BATCH_SELECTOR = "7fba5650"
 DOC_BLOCK_TYPEHASH = "0xb84212102d711af6fc7ae9fa3e37753befb8b25762a552631b0e9ff9e8d07894"
 DOCCHAIN_DOMAIN_NAME = "Doc Chain"
 DOCCHAIN_DOMAIN_VERSION = "1"
@@ -295,6 +296,40 @@ def attest_doc_calldata(attestation: Mapping[str, object], signature: str) -> st
     return "0x" + ATTEST_DOC_SELECTOR + payload
 
 
+def attest_batch_calldata(items) -> str:
+    """ABI-encode `attestBatch(DocAttestation[],bytes[])` call data.
+
+    `items` is a sequence of `(attestation, signature)` pairs. Requires contract
+    release 2 (`CONTRACT_VERSION >= "2"`). The batch may mix attesters; the
+    contract skips already-recorded attestations, so resubmitting a partially
+    landed batch is safe.
+    """
+    items = list(items)
+    if not items:
+        raise ValueError("attestBatch requires at least one attestation")
+    attestation_tails = []
+    signature_tails = []
+    for attestation, signature in items:
+        doc_block = attestation["docBlock"]
+        if not isinstance(doc_block, Mapping):
+            raise ValueError("docBlock must be an object")
+        attestation_tails.append(_encode_attestation(attestation, doc_block))
+        signature_tails.append(
+            _encode_bytes(bytes.fromhex(normalize_hex_bytes(signature)[2:]))
+        )
+    attestations_encoded = _encode_dynamic_array(attestation_tails)
+    signatures_encoded = _encode_dynamic_array(signature_tails)
+    attestations_offset = 64
+    signatures_offset = attestations_offset + len(attestations_encoded) // 2
+    payload = (
+        _word_uint(attestations_offset)
+        + _word_uint(signatures_offset)
+        + attestations_encoded
+        + signatures_encoded
+    )
+    return "0x" + ATTEST_BATCH_SELECTOR + payload
+
+
 def doc_block_hash_with_cast(
     doc_block: Mapping[str, object],
     *,
@@ -425,6 +460,20 @@ def _encode_attestation(
 def _encode_bytes(payload: bytes) -> str:
     padding = b"\x00" * ((32 - len(payload) % 32) % 32)
     return _word_uint(len(payload)) + (payload + padding).hex()
+
+
+def _encode_dynamic_array(element_tails: list[str]) -> str:
+    """Encode a dynamic array of dynamic elements from pre-encoded tails.
+
+    Element offsets are relative to the first byte after the length word, per
+    the ABI spec for arrays of dynamic types.
+    """
+    heads = []
+    offset = len(element_tails) * 32
+    for tail in element_tails:
+        heads.append(_word_uint(offset))
+        offset += len(tail) // 2
+    return _word_uint(len(element_tails)) + "".join(heads) + "".join(element_tails)
 
 
 def _word_uint(value: int) -> str:

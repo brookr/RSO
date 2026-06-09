@@ -15,13 +15,30 @@ from datetime import datetime, timezone
 from vendor.docchain.model import DocAttested
 from vendor.docchain.store import build_docchain_index
 
+# v1 chain (frozen 2026-06-09, superseded by v2): full-record contentHash over
+# all 39 OMM fields, which Space-Track back-patches in place; head = the
+# 2026-06-07 block both nodes attested. Kept for indexing the historical chain.
 RSO_PROFILE_URI = "https://om.pub/rso/doc-chain/v1"
 RSO_DOC_CHAIN_ID = "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d"
 RSO_LOCATOR_MEDIA_TYPE = "application/vnd.ompub.rso.publication-locator.v1+json"
 
+# v2 chain: contentHash covers only the elset-intrinsic core (see
+# pipeline.snapshot.CONTENT_EXCLUDED_FIELDS); the mutable object-directory
+# fields live in per-day annotations. docChainId = keccak256(profile URI),
+# same derivation as v1. The v2 genesis (docRef 20260420000000) sets its
+# parentHash to the agreed v1 head block, recording supersession on chain.
+RSO_PROFILE_URI_V2 = "https://om.pub/rso/doc-chain/v2"
+RSO_DOC_CHAIN_ID_V2 = "0x7c5d6ad47ba584ce3f34ec8f94b08d17d4828c1d5ee6fbaecb4dfcb986efbc40"
+# blockHash of v1 docRef 20260607000000, attested with identical hashes by
+# github:ompub/rso (tx 0x253a8a4e...) and github:brookr/rso (tx 0x30ef8667...).
+RSO_V1_HEAD_BLOCK_HASH = "0xf6b2b68ed73a5327c1d5d0725edef9dc3d1a875aee29d0fc75579f49abd92ca4"
+
 SEPOLIA_CHAIN_ID = 11155111
 SEPOLIA_DOCCHAIN_ADDRESS = "0x1133895b7b8C4A0A8aae0b5d40B96C652192F5DA"
 SEPOLIA_DEPLOYMENT_BLOCK = 11007365
+# DocChain contract release 2 (adds attestBatch); the v2 RSO chain attests here.
+SEPOLIA_DOCCHAIN_ADDRESS_V2 = "0x2c66585E7b60A20563a3fd2B7a4D75Ae5baa5437"
+SEPOLIA_DEPLOYMENT_BLOCK_V2 = 11025284
 
 ZERO_BYTES32 = "0x" + "0" * 64
 ZERO_ADDRESS = "0x" + "0" * 40
@@ -44,6 +61,9 @@ def build_static_index(
     direct_witnesses: Mapping[str, object] | None = None,
     direct_witnesses_by_date: Mapping[str, object] | None = None,
     indexed_at: str | None = None,
+    doc_chain_id: str = RSO_DOC_CHAIN_ID,
+    profile_uri: str = RSO_PROFILE_URI,
+    chain_profile: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     """Build the RSO static index by decorating the generic Doc Chain index."""
     index = build_docchain_index(
@@ -51,8 +71,8 @@ def build_static_index(
         network=network,
         chain_id=chain_id,
         contract_address=contract_address,
-        doc_chain_id=RSO_DOC_CHAIN_ID,
-        profile_uri=RSO_PROFILE_URI,
+        doc_chain_id=doc_chain_id,
+        profile_uri=profile_uri,
         from_block=from_block,
         to_block=to_block,
         latest_chain_block=latest_chain_block,
@@ -61,6 +81,8 @@ def build_static_index(
     )
     index["schema"] = "rso-docchain-index-v1"
     index["chunkSize"] = chunk_size
+    if chain_profile is not None:
+        index["chainProfile"] = dict(chain_profile)
     if operator_backing is not None:
         index["operatorBacking"] = dict(sorted(operator_backing.items()))
     index["sweeperVerifiedClaimCount"] = len(normalize_verified_claims(verified_claims))
@@ -647,12 +669,15 @@ def normalize_identity_backing(raw: object) -> dict[str, int]:
     return normalize_operator_backing(raw)
 
 
-def filter_rso_events(events: Iterable[DocAttested]) -> list[DocAttested]:
-    """Return only events for the RSO document chain."""
+def filter_rso_events(
+    events: Iterable[DocAttested],
+    doc_chain_id: str = RSO_DOC_CHAIN_ID,
+) -> list[DocAttested]:
+    """Return only events for the requested RSO document chain."""
     return [
         event
         for event in events
-        if normalize_hex(event.doc_chain_id) == RSO_DOC_CHAIN_ID.lower()
+        if normalize_hex(event.doc_chain_id) == doc_chain_id.lower()
     ]
 
 

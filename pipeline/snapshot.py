@@ -32,7 +32,31 @@ from pathlib import Path
 
 CUTOFF_TIME = "00:00:00"
 OPERATOR_RUN_TIME = "00:15:00"
-PIPELINE_VERSION = "0.3.0"
+PIPELINE_VERSION = "0.4.0"
+
+# --- v2 consensus/observation field partition -------------------------------
+# Space-Track mutates object-directory fields on already-published gp_history
+# rows (measured 2026-06-09 across 50 archived windows: DECAY_DATE backfills up
+# to 7,224 days late; OBJECT_NAME/OBJECT_TYPE/TLE_LINE0 flip when TBA objects
+# get named; the rest of the satcat family backfills by the same mechanism).
+# The consensus contentHash therefore covers only elset-intrinsic fields, which
+# the same study showed are immutable once published (50/50 archived day hashes
+# reproduce from a fresh query with these fields excluded). The excluded fields
+# remain in the raw catalog exactly as returned and are tracked per day, with
+# the time we learned them, in annotations.json (the observation plane).
+CONTENT_SCHEMA_V2 = "rso-core-v2"
+CONTENT_EXCLUDED_FIELDS = (
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0",
+)
+ANNOTATIONS_SCHEMA = "rso-annotations-v1"
 
 SPACETRACK_BASE = "https://www.space-track.org"
 SPACETRACK_LOGIN = f"{SPACETRACK_BASE}/ajaxauth/login"
@@ -87,6 +111,7 @@ ARWEAVE_TRANSIENT_HTTP_STATUSES = frozenset({408, 425, 429, 500, 502, 503, 504})
 RELEASE_ARTIFACT_FILENAMES = (
     "catalog.json.gz",
     "manifest.json",
+    "annotations.json",
     "delta.json",
     "audit.json",
     "visibility_state.json",
@@ -488,6 +513,20 @@ def canonicalize(data):
     ).encode("utf-8")
 
 
+def core_record(record):
+    """Project a raw record onto the consensus (elset-intrinsic) field set."""
+    return {key: value for key, value in record.items() if key not in CONTENT_EXCLUDED_FIELDS}
+
+
+def core_records(records):
+    return [core_record(record) for record in records]
+
+
+def core_content_sha256(records):
+    """Consensus contentHash: SHA-256 of the canonical core projection."""
+    return compute_hash(canonicalize(core_records(records)))
+
+
 def compute_hash(canonical_bytes):
     return hashlib.sha256(canonical_bytes).hexdigest()
 
@@ -575,6 +614,120 @@ def query_gp_history_ranges(
         # gap) is enforced centrally by the client rate limiter before each request.
 
     return records, query_paths
+
+
+def validate_annotation_rows(rows, *, context):
+    if not isinstance(rows, list):
+        raise SnapshotError(
+            f"{context} was {type(rows).__name__}, expected list. "
+            "Space-Track may have returned an error payload."
+        )
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise SnapshotError(f"{context} row {index} is not an object")
+        for field, value in row.items():
+            if not isinstance(field, str):
+                raise SnapshotError(f"{context} row {index} has a non-string field name")
+            if value is not None and not isinstance(value, str):
+                raise SnapshotError(
+                    f"{context} row {index} field {field} is "
+                    f"{type(value).__name__}, expected string or null"
+                )
+    return rows
+
+
+def query_annotation_observations(client, previous_cutoff, current_cutoff):
+    """Query Space-Track's own change feeds for the daily window.
+
+    satcat_change (windowed on CHANGE_MADE) records catalog directory edits as
+    previous->current transitions; decay (windowed on MSG_EPOCH) records decay
+    messages. Both catch knowledge that never reaches the gp window capture:
+    a decayed object publishes no further elsets, so a DECAY_DATE stamped onto
+    an already-captured row would otherwise stay invisible (measured: the gp
+    capture alone saw 2 of 118 decay stamps over 50 days). These rows are
+    observation-plane only and never feed the consensus contentHash.
+    """
+    window = f"{previous_cutoff}--{current_cutoff}"
+    satcat_path = build_query_path(
+        "satcat_change",
+        [("CHANGE_MADE", window), ("orderby", "CHANGE_MADE asc")],
+    )
+    satcat_rows = validate_annotation_rows(
+        client.query(satcat_path), context="satcat_change response"
+    )
+    decay_path = build_query_path(
+        "decay",
+        [("MSG_EPOCH", window), ("orderby", "MSG_EPOCH asc")],
+    )
+    decay_rows = validate_annotation_rows(client.query(decay_path), context="decay response")
+    return satcat_rows, decay_rows, [satcat_path, decay_path]
+
+
+def build_annotations(
+    current_date_str,
+    records,
+    previous_records,
+    *,
+    observed_at_utc,
+    window_start_utc=None,
+    window_end_utc=None,
+    satcat_changes=None,
+    decay_messages=None,
+    query_paths=None,
+    baseline=False,
+):
+    """Build the day's observation-plane artifact.
+
+    Records, with the time of recording, everything the node learned about the
+    mutable object-directory fields: the per-object changes visible between the
+    prior and current raw catalogs, plus Space-Track's own satcat_change/decay
+    feeds for the window. The consensus core never includes these fields, so
+    two nodes may legitimately hold different annotations for the same day.
+    """
+    changes = []
+    if not baseline and previous_records is not None:
+        previous_by_id = records_by_cat_id(previous_records or [])
+        for record in records:
+            cat_id = record.get("NORAD_CAT_ID")
+            prior = previous_by_id.get(cat_id)
+            if prior == record:
+                continue
+            for field in CONTENT_EXCLUDED_FIELDS:
+                current_value = record.get(field)
+                previous_value = prior.get(field) if prior is not None else None
+                if prior is None and current_value is None:
+                    continue
+                if prior is not None and current_value == previous_value:
+                    continue
+                changes.append(
+                    {
+                        "norad_cat_id": cat_id,
+                        "field": field,
+                        "previous": previous_value,
+                        "current": current_value,
+                        "first_observation": prior is None,
+                    }
+                )
+        changes.sort(key=lambda item: (int_string_sort_key(item["norad_cat_id"]), item["field"]))
+
+    annotations = {
+        "schema": ANNOTATIONS_SCHEMA,
+        "date": current_date_str,
+        "observed_at_utc": observed_at_utc,
+        "source": "space-track.org",
+        "fields": list(CONTENT_EXCLUDED_FIELDS),
+        "baseline": bool(baseline),
+        "catalog_changes": changes,
+        "satcat_changes": satcat_changes if satcat_changes is not None else [],
+        "decay_messages": decay_messages if decay_messages is not None else [],
+    }
+    if window_start_utc is not None:
+        annotations["window_start_utc"] = window_start_utc
+    if window_end_utc is not None:
+        annotations["window_end_utc"] = window_end_utc
+    if query_paths:
+        annotations["api_query_paths"] = list(query_paths)
+    return annotations
 
 
 def query_current_gp(client, min_count=MIN_OBJECT_COUNT):
@@ -749,6 +902,7 @@ def save_snapshot(
     delta_window_end_utc=None,
     observed_at_utc=None,
     state_as_of_utc=None,
+    annotations=None,
 ):
     day_dir = snapshot_dir(current_date_str)
     day_dir.mkdir(parents=True, exist_ok=True)
@@ -771,6 +925,9 @@ def save_snapshot(
         "cutoff_utc": cutoff_utc,
         "state_as_of_utc": cutoff_utc,
         "sha256": sha256,
+        "content_schema": CONTENT_SCHEMA_V2,
+        "content_excluded_fields": list(CONTENT_EXCLUDED_FIELDS),
+        "content_sha256": core_content_sha256(data),
         "object_count": len(data),
         "raw_bytes": len(canonical_bytes),
         "compressed_bytes": gz_path.stat().st_size,
@@ -796,6 +953,11 @@ def save_snapshot(
         if value is not None:
             manifest[key] = value
 
+    if annotations is not None:
+        annotations_path = day_dir / "annotations.json"
+        write_json(annotations_path, annotations)
+        manifest["annotations_sha256"] = sha256_path(annotations_path)
+
     write_json(day_dir / "manifest.json", manifest)
     return manifest
 
@@ -810,13 +972,24 @@ def save_artifacts(current_date_str, delta=None, audit=None, visibility_state=No
         write_json(day_dir / "visibility_state.json", visibility_state)
 
 
-def cleanup_stale_artifacts(current_date_str, delta=None, audit=None, visibility_state=None):
+def annotations_path(current_date_str):
+    return snapshot_dir(current_date_str) / "annotations.json"
+
+
+def load_annotations(current_date_str):
+    return read_json_if_exists(annotations_path(current_date_str))
+
+
+def cleanup_stale_artifacts(
+    current_date_str, delta=None, audit=None, visibility_state=None, annotations=None
+):
     """Remove optional day artifacts that are not produced by the current run."""
     day_dir = snapshot_dir(current_date_str)
     optional_artifacts = {
         "delta.json": delta,
         "audit.json": audit,
         "visibility_state.json": visibility_state,
+        "annotations.json": annotations,
     }
     for filename, payload in optional_artifacts.items():
         path = day_dir / filename
@@ -835,6 +1008,9 @@ def ledger_entry_from_manifest(manifest):
         "archived_at": manifest["archived_at"],
     }
     for key in (
+        "content_schema",
+        "content_sha256",
+        "annotations_sha256",
         "state_as_of_utc",
         "base_snapshot_date",
         "base_snapshot_sha256",
@@ -892,6 +1068,7 @@ def archive_snapshot(
     delta=None,
     audit=None,
     visibility_state=None,
+    annotations=None,
 ):
     print(f"\n{'=' * 60}")
     print(f"  Date: {current_date_str}")
@@ -925,12 +1102,15 @@ def archive_snapshot(
         delta_window_end_utc=delta_window_end_utc,
         observed_at_utc=observed_at_utc,
         state_as_of_utc=state_as_of_utc,
+        annotations=annotations,
     )
+    print(f"  Content SHA-256 ({CONTENT_SCHEMA_V2}): {manifest['content_sha256']}")
     cleanup_stale_artifacts(
         current_date_str,
         delta=delta,
         audit=audit,
         visibility_state=visibility_state,
+        annotations=annotations,
     )
     save_artifacts(
         current_date_str,
@@ -1090,6 +1270,15 @@ def process_genesis(args, client):
         observed_at_utc,
         query_paths,
     )
+    # The genesis catalog itself is the observation baseline: every mutable
+    # field value it carries is a first observation, recorded in the raw bytes.
+    annotations = build_annotations(
+        current_date_str,
+        data,
+        None,
+        observed_at_utc=observed_at_utc,
+        baseline=True,
+    )
     manifest = archive_snapshot(
         current_date_str,
         data,
@@ -1102,6 +1291,7 @@ def process_genesis(args, client):
         state_as_of_utc=observed_at_utc,
         audit=audit,
         visibility_state=visibility_state,
+        annotations=annotations,
     )
     if manifest:
         print(f"\n  DONE. Hash: {manifest['sha256']}")
@@ -1152,6 +1342,22 @@ def process_daily(args, client):
         range_size=args.range_size,
     )
     observed_at_utc = utc_stamp()
+    satcat_rows, decay_rows, annotation_paths = query_annotation_observations(
+        client,
+        normalize_utc_for_filter(delta["window_start_utc"]),
+        normalize_utc_for_filter(delta["window_end_utc"]),
+    )
+    annotations = build_annotations(
+        current_date_str,
+        data,
+        base_records,
+        observed_at_utc=observed_at_utc,
+        window_start_utc=delta["window_start_utc"],
+        window_end_utc=delta["window_end_utc"],
+        satcat_changes=satcat_rows,
+        decay_messages=decay_rows,
+        query_paths=annotation_paths,
+    )
     audit = None
     visibility_state = None
     if not args.no_audit:
@@ -1182,6 +1388,7 @@ def process_daily(args, client):
         delta=delta,
         audit=audit,
         visibility_state=visibility_state,
+        annotations=annotations,
     )
     if manifest:
         print(f"\n  DONE. Hash: {manifest['sha256']}")
@@ -1231,6 +1438,7 @@ def process_roll_forward(args, client):
             continue
 
         base_state_as_of_utc = last_manifest.get("state_as_of_utc", last_manifest["cutoff_utc"])
+        previous_records = state_records
         data, delta, query_paths = build_snapshot_from_base(
             client,
             current_date_str,
@@ -1238,6 +1446,23 @@ def process_roll_forward(args, client):
             base_state_as_of_utc,
             max_catalog_id=args.max_catalog_id,
             range_size=args.range_size,
+        )
+        observed_at_utc = utc_stamp()
+        satcat_rows, decay_rows, annotation_paths = query_annotation_observations(
+            client,
+            normalize_utc_for_filter(delta["window_start_utc"]),
+            normalize_utc_for_filter(delta["window_end_utc"]),
+        )
+        annotations = build_annotations(
+            current_date_str,
+            data,
+            previous_records,
+            observed_at_utc=observed_at_utc,
+            window_start_utc=delta["window_start_utc"],
+            window_end_utc=delta["window_end_utc"],
+            satcat_changes=satcat_rows,
+            decay_messages=decay_rows,
+            query_paths=annotation_paths,
         )
         manifest = archive_snapshot(
             current_date_str,
@@ -1252,6 +1477,7 @@ def process_roll_forward(args, client):
             delta_window_start_utc=delta["window_start_utc"],
             delta_window_end_utc=delta["window_end_utc"],
             delta=delta,
+            annotations=annotations,
         )
         if manifest:
             archived += 1
@@ -1260,6 +1486,103 @@ def process_roll_forward(args, client):
         current += timedelta(days=1)
 
     print(f"\nRoll-forward complete: {archived} days archived, {skipped} skipped")
+
+
+def process_rebuild_v2(args):
+    """Add v2 consensus/observation artifacts to already-archived days.
+
+    Offline (no Space-Track access): for each day the recorded raw catalog is
+    loaded (local gz or release bundle), its sha256 is verified against the
+    committed manifest -- the integrity gate that proves the rebuild describes
+    exactly the bytes we archived -- and then the manifest gains the v2 content
+    fields while annotations.json is derived from consecutive recorded
+    catalogs with observed_at set to each day's original archived_at. Nothing
+    in the raw record of "what we knew, when" is altered.
+    """
+    days = []
+    current = parse_date(args.start)
+    end = parse_date(args.end)
+    if end < current:
+        raise SnapshotError("--end must be on or after --start")
+    while current <= end:
+        days.append(date_str(current))
+        current += timedelta(days=1)
+
+    print(f"\nRebuilding v2 content fields for {len(days)} days: {args.start} to {args.end}")
+    previous_records = None
+    previous_date_value = previous_date_str(args.start)
+    previous_manifest = read_json_if_exists(snapshot_dir(previous_date_value) / "manifest.json")
+    if previous_manifest is not None:
+        previous_records = json.loads(read_catalog_bytes(previous_date_value))
+
+    rebuilt = 0
+    skipped = 0
+    for day in days:
+        manifest_path = snapshot_dir(day) / "manifest.json"
+        manifest = read_json_if_exists(manifest_path)
+        if manifest is None:
+            raise SnapshotError(f"{day}: no committed manifest; cannot rebuild an unarchived day")
+
+        if (
+            manifest.get("content_schema") == CONTENT_SCHEMA_V2
+            and "annotations_sha256" in manifest
+            and (snapshot_dir(day) / "annotations.json").exists()
+            and not getattr(args, "force", False)
+        ):
+            # Idempotent: hydrated or previously rebuilt days keep their exact
+            # artifacts (re-deriving annotations would change rebuilt_at and
+            # break byte-identity with the published bundle).
+            print(f"  {day}: already carries {CONTENT_SCHEMA_V2} fields; skipping")
+            skipped += 1
+            previous_records = json.loads(read_catalog_bytes(day))
+            continue
+
+        records = json.loads(read_catalog_bytes(day))
+        canonical = canonicalize(records)
+        computed = compute_hash(canonical)
+        if computed != manifest["sha256"]:
+            raise SnapshotError(
+                f"{day}: catalog bytes hash {computed} != recorded manifest sha256 "
+                f"{manifest['sha256']}; refusing to rebuild from unverified bytes"
+            )
+
+        observed_at = str(manifest.get("observed_at_utc") or manifest.get("archived_at"))
+        baseline = previous_records is None
+        annotations = build_annotations(
+            day,
+            records,
+            previous_records,
+            observed_at_utc=observed_at,
+            window_start_utc=manifest.get("delta_window_start_utc"),
+            window_end_utc=manifest.get("delta_window_end_utc"),
+            baseline=baseline,
+        )
+        annotations["rebuilt"] = True
+        annotations["rebuilt_at"] = utc_stamp()
+
+        day_dir = snapshot_dir(day)
+        annotations_file = day_dir / "annotations.json"
+        write_json(annotations_file, annotations)
+
+        manifest["content_schema"] = CONTENT_SCHEMA_V2
+        manifest["content_excluded_fields"] = list(CONTENT_EXCLUDED_FIELDS)
+        manifest["content_sha256"] = core_content_sha256(records)
+        manifest["annotations_sha256"] = sha256_path(annotations_file)
+        write_json(manifest_path, manifest)
+        update_ledger(manifest)
+
+        rebuilt += 1
+        print(
+            f"  {day}: raw={manifest['sha256'][:12]} core={manifest['content_sha256'][:12]} "
+            f"changes={len(annotations['catalog_changes'])}"
+            f"{' (baseline)' if baseline else ''}"
+        )
+        previous_records = records
+
+    print(
+        f"\nRebuild complete: {rebuilt} days now carry {CONTENT_SCHEMA_V2} content fields"
+        + (f"; {skipped} already current" if skipped else "")
+    )
 
 
 def compare_record_sets(replay_records, current_gp_records, sample_size=25):
@@ -1525,6 +1848,18 @@ def release_asset_name(current_date_str):
     return f"rso-archive-{current_date_str}.tar.gz"
 
 
+def release_asset_name_v2(current_date_str):
+    """Backfill asset name for v2 bundles on pre-v2 release tags.
+
+    Historical v1 assets are frozen (their bytes are referenced by v1
+    attestation uriHashes), so the v2 bundle for an already-released day is
+    published as a sibling asset. Days archived after the v2 cutover use the
+    plain asset name: their only bundle is a v2 bundle.
+    """
+    parse_date(current_date_str)
+    return f"rso-archive-{current_date_str}-v2.tar.gz"
+
+
 def release_title(current_date_str):
     parse_date(current_date_str)
     return f"RSO Archive {current_date_str}"
@@ -1780,7 +2115,9 @@ def add_tar_bytes(tar, arcname, data):
     tar.addfile(info, io.BytesIO(data))
 
 
-def build_release_bundle(current_date_str, output_dir=None, min_count=MIN_OBJECT_COUNT):
+def build_release_bundle(
+    current_date_str, output_dir=None, min_count=MIN_OBJECT_COUNT, asset_name=None
+):
     parse_date(current_date_str)
     errors, manifest = validate_snapshot_artifacts(
         current_date_str,
@@ -1802,7 +2139,7 @@ def build_release_bundle(current_date_str, output_dir=None, min_count=MIN_OBJECT
 
     output_dir = Path(output_dir or RELEASE_OUTPUT_DIR)
     output_dir.mkdir(parents=True, exist_ok=True)
-    bundle_path = output_dir / release_asset_name(current_date_str)
+    bundle_path = output_dir / (asset_name or release_asset_name(current_date_str))
 
     bundle_manifest = release_manifest_payload(current_date_str, manifest, artifact_paths)
     bundle_manifest_bytes = canonicalize(bundle_manifest) + b"\n"
@@ -1889,6 +2226,49 @@ def release_bundle_from_existing(current_date_str, output_dir=None):
         "state_as_of_utc": manifest.get("state_as_of_utc"),
         "files": bundle_manifest["files"],
     }
+
+
+def build_v2_backfill_bundle(current_date_str, output_dir=None, min_count=MIN_OBJECT_COUNT):
+    """Build the v2 sibling bundle for an already-released day.
+
+    Always builds locally from the day directory (never fetches the frozen v1
+    asset), requires the day to carry rso-core-v2 fields and annotations, and
+    preserves a v1-era storage receipt as storage-v1.json before the publish
+    steps overwrite storage.json with the v2 publication of record.
+    """
+    manifest = load_manifest(current_date_str)
+    if manifest.get("content_schema") != CONTENT_SCHEMA_V2:
+        raise SnapshotError(
+            f"{current_date_str}: manifest lacks {CONTENT_SCHEMA_V2} fields; run rebuild-v2 first"
+        )
+    if "annotations_sha256" not in manifest:
+        raise SnapshotError(
+            f"{current_date_str}: manifest has no annotations_sha256; run rebuild-v2 first"
+        )
+
+    receipt_path = storage_receipt_path(current_date_str)
+    if receipt_path.exists():
+        receipt = load_storage_receipt(current_date_str)
+        if receipt.get("verified_from_upstream"):
+            raise SnapshotError(
+                f"{current_date_str}: day was adopted from "
+                f"{receipt['verified_from_upstream']}; it is already published there "
+                "(attest the shared locations instead of re-publishing)"
+            )
+        v1_receipt_path = receipt_path.with_name("storage-v1.json")
+        if (
+            receipt.get("asset_name") == release_asset_name(current_date_str)
+            and not v1_receipt_path.exists()
+        ):
+            v1_receipt_path.write_bytes(receipt_path.read_bytes())
+            print(f"  Preserved v1 storage receipt as {v1_receipt_path.name}")
+
+    return build_release_bundle(
+        current_date_str,
+        output_dir=output_dir,
+        min_count=min_count,
+        asset_name=release_asset_name_v2(current_date_str),
+    )
 
 
 def build_or_fetch_release_bundle(current_date_str, output_dir=None, min_count=MIN_OBJECT_COUNT, repo=None):
@@ -2774,7 +3154,13 @@ def process_publish(args):
     results = []
     for current_date_str in dates:
         print(f"\n  Date: {current_date_str}")
-        if args.use_existing_bundle:
+        if getattr(args, "v2_backfill", False):
+            bundle = build_v2_backfill_bundle(
+                current_date_str,
+                output_dir=args.output_dir,
+                min_count=args.min_objects,
+            )
+        elif args.use_existing_bundle:
             bundle = release_bundle_from_existing(
                 current_date_str,
                 output_dir=args.output_dir,
@@ -3369,6 +3755,18 @@ def main():
     )
     verify_parser.add_argument("--date", required=True, help="Date (YYYY-MM-DD)")
 
+    rebuild_v2_parser = subparsers.add_parser(
+        "rebuild-v2",
+        help="Add v2 content fields and annotations to already-archived days (offline)",
+    )
+    rebuild_v2_parser.add_argument("--start", required=True, help="Start date (YYYY-MM-DD)")
+    rebuild_v2_parser.add_argument("--end", required=True, help="End date inclusive (YYYY-MM-DD)")
+    rebuild_v2_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-derive v2 fields even for days that already carry them",
+    )
+
     validate_parser = subparsers.add_parser(
         "validate", help="Validate every committed archive artifact without network access"
     )
@@ -3458,6 +3856,14 @@ def main():
         "--use-existing-bundle",
         action="store_true",
         help="Upload a bundle already present in --output-dir instead of rebuilding it",
+    )
+    publish_parser.add_argument(
+        "--v2-backfill",
+        action="store_true",
+        help=(
+            "Publish v2 sibling bundles (rso-archive-DATE-v2.tar.gz) for days whose "
+            "v1 assets are frozen; requires rebuild-v2 to have run first"
+        ),
     )
     publish_parser.add_argument(
         "--prerelease",
@@ -3574,6 +3980,9 @@ def main():
         return
     if args.command == "mark-prerelease":
         process_mark_prerelease(args)
+        return
+    if args.command == "rebuild-v2":
+        process_rebuild_v2(args)
         return
 
     client = SpaceTrackClient()

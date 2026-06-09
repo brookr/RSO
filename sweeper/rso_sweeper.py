@@ -44,6 +44,7 @@ from vendor.docchain.attestation import (  # noqa: E402
     subprocess_error_detail,
 )
 from vendor.docchain.indexer import EthereumRpc, RpcError  # noqa: E402
+from pipeline.snapshot import CONTENT_SCHEMA_V2, core_content_sha256  # noqa: E402
 
 
 ARWEAVE_GATEWAY = "https://arweave.net"
@@ -873,6 +874,7 @@ def reject_private_host(host: str) -> None:
 def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, config: SweeperConfig) -> None:
     expected_sha = expected_content_hash[2:]
     allowed = {
+        "annotations.json",
         "audit.json",
         "catalog.json.gz",
         "delta.json",
@@ -882,6 +884,7 @@ def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, con
     }
     seen: dict[str, object] = {}
     catalog_gz = None
+    annotations_sha = None
     with tarfile.open(fileobj=io.BytesIO(bundle_bytes), mode="r|gz") as tar:
         for member in tar:
             name = member.name
@@ -899,6 +902,10 @@ def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, con
                 seen[name] = True
             elif name in ("manifest.json", "release-manifest.json"):
                 seen[name] = load_stream_json(extracted, name, config.max_json_bytes)
+            elif name == "annotations.json":
+                annotations_bytes = read_limited(extracted, config.max_json_bytes, label=name)
+                annotations_sha = hashlib.sha256(annotations_bytes).hexdigest()
+                seen[name] = True
             else:
                 read_limited(extracted, config.max_json_bytes, label=name)
                 seen[name] = True
@@ -908,13 +915,42 @@ def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, con
         raise SweeperError("release bundle is missing release-manifest.json")
     if not isinstance(manifest, dict):
         raise SweeperError("release bundle is missing manifest.json")
+    if catalog_gz is None:
+        raise SweeperError("release bundle is missing catalog.json.gz")
+    catalog_bytes = gzip_decompress_limited(catalog_gz, config.max_catalog_bytes)
+
+    if manifest.get("content_schema") == CONTENT_SCHEMA_V2:
+        # v2: the attestation binds the deterministic core projection. Verify
+        # the raw-artifact integrity chain, then independently re-derive the
+        # core hash from the catalog bytes -- the sweeper does not trust the
+        # manifest's claimed content_sha256.
+        raw_sha = manifest.get("sha256")
+        if not isinstance(raw_sha, str) or not raw_sha:
+            raise SweeperError("v2 manifest is missing the raw catalog sha256")
+        if manifest.get("content_sha256") != expected_sha:
+            raise SweeperError("v2 manifest content fingerprint does not match attestation")
+        if release_manifest.get("catalog_sha256") != raw_sha:
+            raise SweeperError("release manifest catalog fingerprint does not match manifest")
+        if hashlib.sha256(catalog_bytes).hexdigest() != raw_sha:
+            raise SweeperError("catalog bytes do not match the manifest raw fingerprint")
+        try:
+            records = json.loads(catalog_bytes)
+        except ValueError as exc:
+            raise SweeperError(f"catalog bytes are not valid JSON: {exc}") from exc
+        if core_content_sha256(records) != expected_sha:
+            raise SweeperError("re-derived core projection does not match attestation")
+        expected_annotations_sha = manifest.get("annotations_sha256")
+        if isinstance(expected_annotations_sha, str) and expected_annotations_sha:
+            if annotations_sha is None:
+                raise SweeperError("manifest records annotations_sha256 but bundle has no annotations.json")
+            if annotations_sha != expected_annotations_sha:
+                raise SweeperError("annotations.json does not match the manifest fingerprint")
+        return
+
     if release_manifest.get("catalog_sha256") != expected_sha:
         raise SweeperError("release manifest catalog fingerprint does not match attestation")
     if manifest.get("sha256") != expected_sha:
         raise SweeperError("manifest fingerprint does not match attestation")
-    if catalog_gz is None:
-        raise SweeperError("release bundle is missing catalog.json.gz")
-    catalog_bytes = gzip_decompress_limited(catalog_gz, config.max_catalog_bytes)
     if hashlib.sha256(catalog_bytes).hexdigest() != expected_sha:
         raise SweeperError("canonical catalog fingerprint does not match attestation")
 
