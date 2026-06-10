@@ -31,6 +31,7 @@ if str(ROOT) not in sys.path:
 
 from attestation.rso_attestation import date_range, snapshot_dir, storage_receipt_path  # noqa: E402
 from pipeline.snapshot import (  # noqa: E402
+    CONTENT_PROJECTIONS,
     CONTENT_SCHEMA,
     MAX_CATALOG_BYTES,
     canonicalize,
@@ -126,8 +127,9 @@ def hydrate_day(args: argparse.Namespace, snapshot_date: str) -> None:
 
     members = extract_bundle(snapshot_date, bundle_bytes)
     manifest = json.loads(members["manifest.json"])
-    if manifest.get("content_schema") != CONTENT_SCHEMA:
-        raise ValueError(f"{snapshot_date}: upstream manifest is not {CONTENT_SCHEMA}")
+    schema = manifest.get("content_schema")
+    if schema not in CONTENT_PROJECTIONS:
+        raise ValueError(f"{snapshot_date}: upstream manifest has unknown content schema {schema!r}")
 
     catalog_bytes = gzip_decompress_limited(
         members["catalog.json.gz"], MAX_CATALOG_BYTES, label="catalog.json.gz"
@@ -137,7 +139,7 @@ def hydrate_day(args: argparse.Namespace, snapshot_date: str) -> None:
     records = json.loads(catalog_bytes)
     if canonicalize(records) != catalog_bytes:
         raise ValueError(f"{snapshot_date}: catalog bytes are not in canonical form")
-    derived_core = core_content_sha256(records)
+    derived_core = core_content_sha256(records, str(schema))
     if derived_core != manifest["content_sha256"]:
         raise ValueError(
             f"{snapshot_date}: re-derived core {derived_core} does not match "

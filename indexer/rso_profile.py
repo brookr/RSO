@@ -193,6 +193,9 @@ def decorate_tdh_support(
     event["nodeAuthorizationStatus"] = (
         "verified" if node_id else "unverified" if claimed_node_id else "not_claimed"
     )
+    event["publicationVerification"] = (
+        str((verification or {}).get("publicationStatus", "")) if node_id else ""
+    )
     event["directWitnessIdentity"] = direct_identity
     event["directWitnessTdh"] = direct_witness_tdh
     event["nodeBackingTdh"] = node_backing_tdh
@@ -497,11 +500,20 @@ def verified_node_id(
     claimed_node_id: str,
     attester: str,
 ) -> str:
-    if not verification or not claimed_node_id:
+    if not verification:
         return ""
     if verification.get("authorizationStatus") != "verified":
         return ""
-    if verification.get("publicationStatus") != "verified":
+    publication_status = verification.get("publicationStatus")
+    if publication_status == "verified":
+        if not claimed_node_id:
+            return ""
+    elif publication_status == "hash_only":
+        # No locator exists, so there is no locator nodeId to match; identity
+        # rests on the sweeper-checked node declaration alone.
+        if claimed_node_id:
+            return ""
+    else:
         return ""
     try:
         node_id = normalize_node_id(str(verification.get("nodeId", "")))
@@ -516,7 +528,7 @@ def verified_node_id(
         )
     except ValueError:
         return ""
-    if node_id != claimed_node_id:
+    if publication_status == "verified" and node_id != claimed_node_id:
         return ""
     if evidence_claimed_node_id != node_id:
         return ""

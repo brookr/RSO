@@ -427,5 +427,65 @@ class AttestationV2Test(unittest.TestCase):
             )
 
 
+
+class HashOnlyTierProfileTest(unittest.TestCase):
+    def verification(self, publication_status, claimed="github:owner/repo"):
+        return {
+            "authorizationStatus": "verified",
+            "publicationStatus": publication_status,
+            "nodeId": "github:owner/repo",
+            "claimedNodeId": claimed,
+            "declaredAttester": "0x" + "bb" * 20,
+            "attestationAttester": "0x" + "bb" * 20,
+        }
+
+    def test_hash_only_claim_yields_verified_node_id_without_locator(self):
+        node_id = rso_profile.verified_node_id(
+            self.verification("hash_only"),
+            claimed_node_id="",
+            attester="0x" + "bb" * 20,
+        )
+        self.assertEqual(node_id, "github:owner/repo")
+
+    def test_hash_only_claim_rejected_when_event_carries_a_locator(self):
+        node_id = rso_profile.verified_node_id(
+            self.verification("hash_only"),
+            claimed_node_id="github:owner/repo",
+            attester="0x" + "bb" * 20,
+        )
+        self.assertEqual(node_id, "")
+
+    def test_publication_verified_path_still_requires_locator_match(self):
+        node_id = rso_profile.verified_node_id(
+            self.verification("verified"),
+            claimed_node_id="",
+            attester="0x" + "bb" * 20,
+        )
+        self.assertEqual(node_id, "")
+
+    def test_decorate_attaches_backing_and_tier_to_hash_only_witness(self):
+        verification = self.verification("hash_only")
+        fingerprint = "ff" * 32
+        event = {
+            "attester": "0x" + "bb" * 20,
+            "onBehalfOf": "0x" + "00" * 20,
+            "uri": "",
+            "claimFingerprint": fingerprint,
+        }
+        with unittest.mock.patch.object(
+            rso_profile, "event_claim_fingerprint", return_value=fingerprint
+        ):
+            rso_profile.decorate_tdh_support(
+                event,
+                {"github:owner/repo": 7},
+                {fingerprint: verification},
+                {},
+            )
+        self.assertEqual(event["nodeId"], "github:owner/repo")
+        self.assertEqual(event["nodeAuthorizationStatus"], "verified")
+        self.assertEqual(event["publicationVerification"], "hash_only")
+        self.assertEqual(event["nodeBackingTdh"], 7)
+        self.assertEqual(event["combinedSupportTdh"], 7)
+
 if __name__ == "__main__":
     unittest.main()

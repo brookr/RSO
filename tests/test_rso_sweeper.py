@@ -897,5 +897,69 @@ def add_tar_bytes(tar: tarfile.TarFile, name: str, data: bytes) -> None:
     tar.addfile(info, io.BytesIO(data))
 
 
+
+class HashOnlySponsorshipTest(unittest.TestCase):
+    def test_hash_only_claim_from_backed_authorized_node_is_sponsored(self):
+        config = config_for_test(dry_run=True)
+        rpc = FakeRpc()
+        artifact = make_artifact(uri="")
+
+        with patch(
+            "sweeper.rso_sweeper.validate_node_authorization",
+            return_value={
+                "nodeBindingStatus": "aligned",
+                "nodeId": "github:owner/repo",
+                "claimedNodeId": "github:owner/repo",
+                "declaredAttester": "0x" + "bb" * 20,
+                "attestationAttester": "0x" + "bb" * 20,
+                "declarationSha256": "cc" * 32,
+            },
+        ):
+            response = handle_signed_attestation(
+                artifact,
+                operator={
+                    "repository": "owner/repo",
+                    "attester": "0x" + "bb" * 20,
+                    "_backing": backed_operator(),
+                },
+                config=config,
+                rpc=rpc,
+                expected_date="2026-06-01",
+            )
+
+        self.assertEqual(response["status"], "simulated")
+        self.assertEqual(response["publicationStatus"], "hash_only")
+        self.assertEqual(response["locations"], [])
+        self.assertEqual(response["contentHash"], "0x" + "22" * 32)
+        self.assertEqual(response["nodeId"], "github:owner/repo")
+
+    def test_hash_only_claim_refused_when_publication_required(self):
+        config = config_for_test(dry_run=True, require_uri=True)
+        artifact = make_artifact(uri="")
+
+        with patch(
+            "sweeper.rso_sweeper.validate_node_authorization",
+            return_value={
+                "nodeBindingStatus": "aligned",
+                "nodeId": "github:owner/repo",
+                "claimedNodeId": "github:owner/repo",
+                "declaredAttester": "0x" + "bb" * 20,
+                "attestationAttester": "0x" + "bb" * 20,
+                "declarationSha256": "cc" * 32,
+            },
+        ):
+            with self.assertRaisesRegex(SweeperError, "publication URI"):
+                handle_signed_attestation(
+                    artifact,
+                    operator={
+                        "repository": "owner/repo",
+                        "attester": "0x" + "bb" * 20,
+                        "_backing": backed_operator(),
+                    },
+                    config=config_for_test(dry_run=True, require_uri=True),
+                    rpc=FakeRpc(),
+                    expected_date="2026-06-01",
+                )
+
 if __name__ == "__main__":
     unittest.main()

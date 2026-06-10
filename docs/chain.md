@@ -1,5 +1,9 @@
 # The RSO Doc Chain: Consensus Core and Observation Log
 
+> The normative rules live in the [chain profile](profile.md) — the document
+> the chain id's profile URI resolves to. This page explains the measurements
+> and design behind them.
+
 Every archived day is hashed and attested on Ethereum. The protocol is built
 around one principle:
 

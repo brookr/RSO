@@ -28,6 +28,7 @@ and publish evidence anyone can verify.
 | Operator and sweeper model | [docs/operator.md](docs/operator.md) |
 | Understand the architecture | [docs/architecture.md](docs/architecture.md) |
 | Understand the snapshot rules | [docs/snapshot-spec.md](docs/snapshot-spec.md) |
+| The chain profile (normative spec) | [docs/profile.md](docs/profile.md) |
 | The chain: consensus core + observation log | [docs/chain.md](docs/chain.md) |
 | Join late and attest from genesis in one tx | [docs/late-join.md](docs/late-join.md) |
 | Build attestations | [docs/attestation-design.md](docs/attestation-design.md) |

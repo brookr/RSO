@@ -56,6 +56,15 @@ CONTENT_EXCLUDED_FIELDS = (
     "SITE",
     "TLE_LINE0",
 )
+# Schema registry: every content schema this implementation can verify, mapped
+# to its excluded-field projection. A protocol revision (for example the drift
+# audit catching a tenth mutable field) adds an entry here and bumps
+# CONTENT_SCHEMA for newly archived days -- the chain id, parent chain, and
+# all previously attested days are untouched, because raw catalogs preserve
+# every field and each manifest names the schema its contentHash used.
+CONTENT_PROJECTIONS = {
+    "rso-core-v1": CONTENT_EXCLUDED_FIELDS,
+}
 ANNOTATIONS_SCHEMA = "rso-annotations-v1"
 # Decay feed recency bounds: reentries up to this many days before the window
 # (covers stamping lag, measured median 1 day / 0-3 typical) and slightly after
@@ -518,18 +527,26 @@ def canonicalize(data):
     ).encode("utf-8")
 
 
-def core_record(record):
-    """Project a raw record onto the consensus (elset-intrinsic) field set."""
-    return {key: value for key, value in record.items() if key not in CONTENT_EXCLUDED_FIELDS}
+def core_record(record, schema=CONTENT_SCHEMA):
+    """Project a raw record onto the consensus field set of a content schema."""
+    excluded = content_excluded_fields(schema)
+    return {key: value for key, value in record.items() if key not in excluded}
 
 
-def core_records(records):
-    return [core_record(record) for record in records]
+def core_records(records, schema=CONTENT_SCHEMA):
+    return [core_record(record, schema) for record in records]
 
 
-def core_content_sha256(records):
+def core_content_sha256(records, schema=CONTENT_SCHEMA):
     """Consensus contentHash: SHA-256 of the canonical core projection."""
-    return compute_hash(canonicalize(core_records(records)))
+    return compute_hash(canonicalize(core_records(records, schema)))
+
+
+def content_excluded_fields(schema):
+    try:
+        return CONTENT_PROJECTIONS[schema]
+    except KeyError:
+        raise SnapshotError(f"unknown content schema {schema!r}") from None
 
 
 def compute_hash(canonical_bytes):
