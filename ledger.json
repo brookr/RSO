@@ -861,5 +861,22 @@
     "query_strategy": "prior_snapshot_plus_bounded_gp_history_delta",
     "sha256": "7c7a6517916c7aa5cd49d76c623bc7ef6ce368cb4e33d04fa8e06141d19c71cb",
     "state_as_of_utc": "2026-06-09T00:00:00Z"
+  },
+  {
+    "annotations_sha256": "f7c70166bd4209f0941c15e08aa53db63cb7d9dee65db552de5d7a202650fa4d",
+    "archived_at": "2026-06-10T03:10:49.528341+00:00",
+    "base_snapshot_date": "2026-06-09",
+    "base_snapshot_sha256": "7c7a6517916c7aa5cd49d76c623bc7ef6ce368cb4e33d04fa8e06141d19c71cb",
+    "compressed_bytes": 11394564,
+    "content_schema": "rso-core-v1",
+    "content_sha256": "c9b50187fd74988ff935435ed3a8645ebe3461a0284c007f8d892ec2796d0754",
+    "date": "2026-06-10",
+    "delta_window_end_utc": "2026-06-10T00:00:00Z",
+    "delta_window_start_utc": "2026-06-09T00:00:00Z",
+    "object_count": 67917,
+    "provenance": "rolling_gp_history_delta",
+    "query_strategy": "prior_snapshot_plus_bounded_gp_history_delta",
+    "sha256": "18a457f6ee2abf8fe8dfbf5bbacc7a2546d508fc22a6d3d65fd6f95a6be31df8",
+    "state_as_of_utc": "2026-06-10T00:00:00Z"
   }
 ]
