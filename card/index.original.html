@@ -1,0 +1,1644 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#020506">
+  <title>RSO Archive: Visit the Record</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f4f7f3;
+      --muted: #8a9b98;
+      --dim: #53635f;
+      --line: rgba(208, 233, 226, 0.19);
+      --accent: #9aa9ff;
+      --rose: #ff75d1;
+      --amber: #ffad55;
+      --magenta: #ff557d;
+      --panel: rgba(2, 7, 8, 0.76);
+      --safe-top: max(18px, env(safe-area-inset-top));
+      --safe-right: max(18px, env(safe-area-inset-right));
+      --safe-bottom: max(18px, env(safe-area-inset-bottom));
+      --safe-left: max(18px, env(safe-area-inset-left));
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #020506;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button {
+      color: inherit;
+      font: inherit;
+    }
+
+    #scene {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+    }
+
+    .eternal-fallback {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 900ms ease;
+      background:
+        radial-gradient(circle at 17% 14%, rgba(255, 174, 92, 0.8) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 68% 8%, rgba(216, 223, 255, 0.8) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 82% 29%, rgba(255, 117, 209, 0.6) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 48% 26%, rgba(255, 202, 120, 0.7) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 34% 45%, rgba(154, 169, 255, 0.8) 0 1px, transparent 1.5px),
+        #020506;
+      background-size: 53px 47px, 71px 67px, 89px 83px, 113px 101px, 131px 127px, auto;
+    }
+
+    .eternal-fallback::before,
+    .eternal-fallback::after {
+      position: absolute;
+      left: 50%;
+      content: "";
+      border-radius: 50%;
+      transform: translateX(-50%);
+    }
+
+    .eternal-fallback::before {
+      top: 43%;
+      width: 125vw;
+      height: 80vw;
+      border: 1px solid rgba(154, 169, 255, 0.5);
+      background:
+        repeating-radial-gradient(
+          ellipse at center,
+          transparent 0 9px,
+          rgba(154, 169, 255, 0.08) 10px,
+          transparent 11px 18px
+        ),
+        radial-gradient(ellipse at center, rgba(50, 42, 128, 0.78), rgba(4, 5, 18, 0.96) 62%);
+      box-shadow: 0 -3px 30px rgba(154, 169, 255, 0.36);
+    }
+
+    .eternal-fallback::after {
+      top: 39%;
+      width: 118vw;
+      height: 38vw;
+      border-top: 2px dotted rgba(255, 174, 92, 0.62);
+      box-shadow:
+        0 -10px 0 -8px rgba(216, 223, 255, 0.42),
+        0 -22px 0 -20px rgba(154, 169, 255, 0.32),
+        0 -36px 0 -34px rgba(154, 169, 255, 0.22);
+    }
+
+    html.webgl-ready .eternal-fallback {
+      opacity: 0;
+    }
+
+    .vignette,
+    .scanlines,
+    .hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .vignette {
+      z-index: 1;
+      box-shadow:
+        inset 0 0 22vmin rgba(0, 0, 0, 0.78),
+        inset 0 -18vh 24vh rgba(0, 0, 0, 0.44);
+    }
+
+    .scanlines {
+      z-index: 2;
+      opacity: 0.12;
+      background-size: 100% 4px;
+      background-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 2px,
+        rgba(164, 174, 255, 0.15) 3px,
+        transparent 4px
+      );
+      mix-blend-mode: screen;
+    }
+
+    .hud {
+      z-index: 3;
+    }
+
+    .corner {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border-color: rgba(164, 174, 255, 0.46);
+      border-style: solid;
+    }
+
+    .corner.tl {
+      top: var(--safe-top);
+      left: var(--safe-left);
+      border-width: 1px 0 0 1px;
+    }
+
+    .corner.tr {
+      top: var(--safe-top);
+      right: var(--safe-right);
+      border-width: 1px 1px 0 0;
+    }
+
+    .corner.bl {
+      bottom: var(--safe-bottom);
+      left: var(--safe-left);
+      border-width: 0 0 1px 1px;
+    }
+
+    .corner.br {
+      right: var(--safe-right);
+      bottom: var(--safe-bottom);
+      border-width: 0 1px 1px 0;
+    }
+
+    .brand {
+      position: absolute;
+      top: calc(var(--safe-top) + 16px);
+      left: calc(var(--safe-left) + 18px);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 9px;
+      height: 9px;
+      margin-top: 5px;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 12px rgba(154, 169, 255, 0.8);
+    }
+
+    .brand-name,
+    .eyebrow,
+    .metric-label,
+    .timeline-label,
+    .status-label,
+    .object-label,
+    .legend span,
+    .jump-label {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .brand-name {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .brand-sub {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+    }
+
+    .record-date {
+      position: absolute;
+      top: calc(var(--safe-top) + 14px);
+      left: 50%;
+      width: min(54vw, 580px);
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 9px;
+      line-height: 1;
+    }
+
+    .date {
+      margin-top: 7px;
+      font-size: clamp(29px, 4.8vh, 60px);
+      font-weight: 300;
+      line-height: 0.92;
+      text-transform: uppercase;
+    }
+
+    .date-index {
+      margin-top: 9px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .status {
+      position: absolute;
+      top: calc(var(--safe-top) + 16px);
+      right: calc(var(--safe-right) + 18px);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 0;
+    }
+
+    .status-light {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--rose);
+      box-shadow: 0 0 13px rgba(255, 117, 209, 0.9);
+    }
+
+    .status-light.loading {
+      background: var(--amber);
+      box-shadow: 0 0 13px rgba(255, 196, 92, 0.9);
+      animation: blink 0.7s steps(2, end) infinite;
+    }
+
+    .status-light.error {
+      background: var(--magenta);
+      box-shadow: 0 0 13px rgba(255, 102, 142, 0.9);
+    }
+
+    .status-label {
+      font-size: 9px;
+      line-height: 1;
+    }
+
+    .metrics {
+      position: absolute;
+      left: calc(var(--safe-left) + 18px);
+      bottom: calc(var(--safe-bottom) + 19px);
+      display: grid;
+      grid-template-columns: repeat(3, minmax(84px, 126px));
+      gap: 18px;
+    }
+
+    .metric {
+      min-width: 0;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 8px;
+      white-space: nowrap;
+    }
+
+    .metric-value {
+      margin-top: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: clamp(15px, 2.4vh, 24px);
+      line-height: 1;
+    }
+
+    .metric-note {
+      margin-top: 5px;
+      color: var(--dim);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 8px;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .witnesses {
+      position: absolute;
+      right: calc(var(--safe-right) + 18px);
+      bottom: calc(var(--safe-bottom) + 19px);
+      width: min(260px, 29vw);
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .witness-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 6px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 8px;
+      text-transform: uppercase;
+    }
+
+    .witness-value {
+      color: var(--ink);
+      text-align: right;
+    }
+
+    .legend {
+      position: absolute;
+      right: calc(var(--safe-right) + 18px);
+      top: 31%;
+      display: grid;
+      gap: 8px;
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 7px;
+      text-shadow: 0 1px 6px #020506, 0 1px 6px #020506;
+    }
+
+    .legend i {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 7px currentColor;
+    }
+
+    .legend .updated i {
+      background: var(--amber);
+    }
+
+    .legend .new i {
+      background: var(--rose);
+    }
+
+    .legend .decayed i {
+      background: var(--magenta);
+    }
+
+    .timeline {
+      position: absolute;
+      top: 22%;
+      left: calc(var(--safe-left) + 20px);
+      width: 32px;
+      height: 40%;
+      pointer-events: auto;
+      touch-action: none;
+    }
+
+    .timeline::before {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 14px;
+      content: "";
+      opacity: 0.3;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(164, 174, 255, 0.46) 0,
+        rgba(164, 174, 255, 0.46) 1px,
+        transparent 1px,
+        transparent 7px
+      );
+    }
+
+    .timeline-track {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 7px;
+      width: 1px;
+      background: rgba(164, 174, 255, 0.24);
+    }
+
+    .timeline-fill {
+      position: absolute;
+      bottom: 0;
+      left: 7px;
+      width: 1px;
+      height: 100%;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(154, 169, 255, 0.5);
+      transform-origin: bottom;
+    }
+
+    .timeline-thumb {
+      position: absolute;
+      left: 2px;
+      width: 11px;
+      height: 11px;
+      margin-top: -5px;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      background: #020506;
+      box-shadow: 0 0 12px rgba(154, 169, 255, 0.75);
+      transform: translateY(0);
+    }
+
+    .timeline-label {
+      position: absolute;
+      left: 19px;
+      width: 70px;
+      color: var(--dim);
+      font-size: 7px;
+      white-space: nowrap;
+    }
+
+    .timeline-label.start {
+      bottom: -3px;
+    }
+
+    .timeline-label.now {
+      top: -3px;
+    }
+
+    .travel-controls {
+      position: absolute;
+      top: 50%;
+      left: calc(var(--safe-left) + 64px);
+      display: grid;
+      gap: 5px;
+      transform: translateY(-50%);
+      pointer-events: auto;
+    }
+
+    .icon-button {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(164, 174, 255, 0.2);
+      background: rgba(2, 7, 8, 0.42);
+      cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+
+    .icon-button:hover,
+    .icon-button:focus-visible {
+      border-color: var(--accent);
+      background: rgba(154, 169, 255, 0.08);
+      outline: none;
+    }
+
+    .icon-button svg {
+      width: 13px;
+      height: 13px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .object-inspector {
+      position: absolute;
+      left: 50%;
+      bottom: calc(var(--safe-bottom) + 145px);
+      width: min(350px, 38vw);
+      padding: 9px 0 0;
+      border-top: 1px solid var(--line);
+      transform: translateX(-50%);
+      text-align: center;
+      opacity: 0;
+      transition: opacity 180ms ease;
+    }
+
+    .object-inspector.visible {
+      opacity: 1;
+    }
+
+    .object-inspector.visible + .loading-note {
+      opacity: 0;
+    }
+
+    .object-label {
+      color: var(--accent);
+      font-size: 7px;
+    }
+
+    .object-name {
+      margin-top: 5px;
+      overflow: hidden;
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .object-details {
+      margin-top: 4px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 7px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .jump {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 180ms ease;
+    }
+
+    .jump.active {
+      opacity: 1;
+    }
+
+    .jump::before,
+    .jump::after {
+      position: absolute;
+      top: 50%;
+      width: 34vw;
+      height: 1px;
+      content: "";
+      background: rgba(154, 169, 255, 0.42);
+      box-shadow: 0 0 18px rgba(154, 169, 255, 0.5);
+    }
+
+    .jump::before {
+      left: 0;
+    }
+
+    .jump::after {
+      right: 0;
+    }
+
+    .jump-date {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: clamp(24px, 5vw, 76px);
+      font-weight: 300;
+      letter-spacing: 0.08em;
+    }
+
+    .jump-label {
+      margin-top: 9px;
+      color: var(--accent);
+      font-size: 8px;
+      text-align: center;
+    }
+
+    .loading-note {
+      position: absolute;
+      left: 50%;
+      bottom: 16%;
+      color: rgba(219, 240, 234, 0.62);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      transform: translateX(-50%);
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0.35;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .brand-sub,
+      .legend,
+      .witnesses,
+      .object-inspector,
+      .metric:nth-child(3) {
+        display: none;
+      }
+
+      .record-date {
+        top: calc(var(--safe-top) + 75px);
+        width: 76vw;
+      }
+
+      .date {
+        font-size: clamp(28px, 9vw, 44px);
+      }
+
+      .status {
+        right: calc(var(--safe-right) + 12px);
+      }
+
+      .status-label {
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .timeline {
+        top: 30%;
+        height: 32%;
+      }
+
+      .travel-controls {
+        left: calc(var(--safe-left) + 55px);
+      }
+
+      .metrics {
+        right: calc(var(--safe-right) + 16px);
+        left: calc(var(--safe-left) + 16px);
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scanlines {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="eternal-fallback" aria-hidden="true"></div>
+  <canvas id="scene" aria-label="A visual journey through the RSO Archive"></canvas>
+  <div class="vignette"></div>
+  <div class="scanlines"></div>
+
+  <main class="hud">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <header class="brand">
+      <span class="brand-mark"></span>
+      <div>
+        <div class="brand-name">RSO Archive</div>
+        <div class="brand-sub">Visit the public record</div>
+      </div>
+    </header>
+
+    <section class="record-date" aria-live="polite">
+      <div class="eyebrow" id="record-state">Archive record</div>
+      <div class="date" id="date">June 8, 2026</div>
+      <div class="date-index" id="date-index">Day 050 / witnessed history</div>
+    </section>
+
+    <div class="status">
+      <span class="status-light loading" id="status-light"></span>
+      <span class="status-label" id="status-label">Locating record</span>
+    </div>
+
+    <div class="timeline" id="timeline" aria-label="Archive date timeline" role="slider" tabindex="0">
+      <div class="timeline-track"></div>
+      <div class="timeline-fill" id="timeline-fill"></div>
+      <div class="timeline-thumb" id="timeline-thumb"></div>
+      <div class="timeline-label now">Today</div>
+      <div class="timeline-label start">Genesis</div>
+    </div>
+
+    <div class="travel-controls">
+      <button class="icon-button" id="newer" aria-label="Travel one day forward" title="Travel one day forward">
+        <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"></path></svg>
+      </button>
+      <button class="icon-button" id="older" aria-label="Travel one day backward" title="Travel one day backward">
+        <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+    </div>
+
+    <section class="metrics">
+      <div class="metric">
+        <div class="metric-label">Objects in record</div>
+        <div class="metric-value" id="object-count">--</div>
+        <div class="metric-note" id="render-count">Building field</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Published updates</div>
+        <div class="metric-value" id="change-count">--</div>
+        <div class="metric-note" id="change-note">Selected UTC day</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Catalog fingerprint</div>
+        <div class="metric-value" id="fingerprint">--------</div>
+        <div class="metric-note">SHA-256 / first 8</div>
+      </div>
+    </section>
+
+    <section class="witnesses">
+      <div class="metric-label">Public witness state</div>
+      <div class="witness-row"><span>Agreement</span><span class="witness-value" id="agreement">Awaiting index</span></div>
+      <div class="witness-row"><span>Attestations</span><span class="witness-value" id="attestations">--</span></div>
+      <div class="witness-row"><span>TDH backing</span><span class="witness-value" id="tdh">--</span></div>
+      <div class="witness-row"><span>Mirrors</span><span class="witness-value" id="mirrors">--</span></div>
+    </section>
+
+    <div class="legend" aria-hidden="true">
+      <span><i></i>carried record</span>
+      <span class="updated"><i></i>updated today</span>
+      <span class="new"><i></i>launched today</span>
+      <span class="decayed"><i></i>decay reported</span>
+    </div>
+
+    <section class="object-inspector" id="inspector">
+      <div class="object-label">Selected record</div>
+      <div class="object-name" id="object-name">--</div>
+      <div class="object-details" id="object-details">Click the river to inspect</div>
+    </section>
+
+    <div class="loading-note" id="loading-note">Scroll to travel through recorded time</div>
+  </main>
+
+  <div class="jump" id="jump">
+    <div>
+      <div class="jump-date" id="jump-date">2026.06.08</div>
+      <div class="jump-label">Traversing the archive</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
+    const CONFIG = {
+      genesis: "2026-04-20",
+      latest: "2026-06-08",
+      repo: "OMPub/RSO",
+      branch: "node",
+      maxPoints: matchMedia("(max-width: 760px)").matches ? 8000 : 16000,
+      backgroundPoints: matchMedia("(max-width: 760px)").matches ? 1700 : 3200,
+      streakCount: matchMedia("(max-width: 760px)").matches ? 500 : 1100,
+      autoLoadCatalog: true
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const canvas = $("scene");
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const state = {
+      selectedDate: CONFIG.latest,
+      pendingDate: CONFIG.latest,
+      record: null,
+      objects: [],
+      traveling: false,
+      travelTimer: 0,
+      loadToken: 0,
+      wheelEnergy: 0,
+      wheelGestureStartedAt: 0,
+      wheelLastAt: 0,
+      wheelLastTravelAt: 0,
+      wheelSteps: 0,
+      wheelDirection: 0,
+      pointerStart: null,
+      selectedObject: null,
+      speed: reducedMotion ? 0.12 : 0.52,
+      speedTarget: reducedMotion ? 0.12 : 0.52,
+      time: 0
+    };
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: false,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+    document.documentElement.classList.add("webgl-ready");
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.setSize(innerWidth, innerHeight, false);
+    renderer.setClearColor(0x020506, 1);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020506, 0.0085);
+
+    const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 600);
+    camera.position.set(0, 16, 10);
+    camera.lookAt(0, -16, -72);
+
+    const riverUniforms = {
+      uTime: { value: 0 },
+      uSpeed: { value: 0.52 },
+      uTravel: { value: 0 },
+      uPixelRatio: { value: renderer.getPixelRatio() }
+    };
+
+    const riverMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexColors: true,
+      uniforms: riverUniforms,
+      vertexShader: `
+        uniform float uTime;
+        uniform float uSpeed;
+        uniform float uTravel;
+        uniform float uPixelRatio;
+        attribute float aSize;
+        attribute float aSeed;
+        attribute float aStatus;
+        attribute float aBand;
+        varying vec3 vColor;
+        varying float vAlpha;
+        varying float vStatus;
+
+        void main() {
+          vec3 p = position;
+          float isMEO = step(0.5, aBand) * (1.0 - step(1.5, aBand));
+          float isGEO = step(1.5, aBand);
+          float lane = clamp(abs(p.x) / 100.0, 0.0, 1.0);
+          float underTrack = 1.0 - lane;
+          float bandSpeed = 1.0 - isMEO * 0.43 - isGEO * 0.87;
+          float laneSpeed = 1.0 + underTrack * (0.28 + isMEO * 0.24) - lane * 0.10;
+          float travelSpeed = uSpeed * (1.0 + uTravel * 24.0) * bandSpeed * laneSpeed;
+          float phase = fract(p.z + uTime * travelSpeed * 0.025);
+          float startAngle = -0.50 - isMEO * 0.18 - isGEO * 0.23;
+          float endAngle = 1.50 - isMEO * 0.92 - isGEO * 1.05;
+          float angle = mix(startAngle, endAngle, phase);
+          float orbitRadius = 106.0 + isMEO * 54.0 + isGEO * 92.0;
+          float lateralParallax = 1.0 + phase * phase * (0.78 + isMEO * 0.18 - isGEO * 0.54);
+
+          p.x *= lateralParallax;
+          p.x += sign(p.x) * phase * phase * lane * (14.0 + isMEO * 10.0);
+          p.x += sin(uTime * 0.09 * bandSpeed + aSeed * 17.0) * (0.18 + phase * 0.55);
+          p.y += -121.0 + orbitRadius * cos(angle);
+          p.y -= (p.x * p.x) / (2.0 * orbitRadius) * (0.92 - isMEO * 0.56 - isGEO * 0.66 - phase * 0.18);
+          p.y += isMEO * phase * phase * 6.0;
+          p.z = -112.0 + orbitRadius * sin(angle);
+          p.z += isMEO * phase * phase * 40.0 + isGEO * phase * phase * 12.0;
+
+          vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+          float perspective = 300.0 / max(10.0, -mvPosition.z);
+          float bandSize = 1.0 + isMEO * 0.34 - isGEO * 0.10;
+          float nearBoost = 1.0 + pow(phase, 4.0) * (1.35 + isMEO * 1.15 - isGEO * 1.05) * (0.82 + underTrack * 0.58);
+          gl_PointSize = min(9.0, aSize * bandSize * nearBoost * perspective * uPixelRatio * (1.0 + uTravel * 0.45));
+
+          float nearFade = smoothstep(3.0, 18.0, -mvPosition.z);
+          float farFade = 1.0 - smoothstep(170.0, 270.0, -mvPosition.z);
+          float twinkle = 0.76 + 0.24 * sin(uTime * 1.3 + aSeed * 31.0);
+          float bandAlpha = 1.0 + isMEO * 0.22 - isGEO * 0.18;
+          vAlpha = nearFade * farFade * twinkle * bandAlpha;
+          vColor = color;
+          vStatus = aStatus;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vColor;
+        varying float vAlpha;
+        varying float vStatus;
+
+        void main() {
+          vec2 q = gl_PointCoord - vec2(0.5);
+          float d = length(q);
+          if (d > 0.5) discard;
+          float core = smoothstep(0.5, 0.04, d);
+          float halo = smoothstep(0.5, 0.18, d) * 0.4;
+          float special = step(0.5, vStatus);
+          vec3 color = vColor * (0.74 + core * 0.74 + special * 0.42);
+          gl_FragColor = vec4(color, (core + halo) * vAlpha);
+        }
+      `
+    });
+
+    const riverGeometry = new THREE.BufferGeometry();
+    const river = new THREE.Points(riverGeometry, riverMaterial);
+    river.frustumCulled = false;
+    scene.add(river);
+
+    const streakUniforms = {
+      uTime: { value: 0 },
+      uTravel: { value: 0 }
+    };
+    const archiveWakeUniforms = {
+      uTime: { value: 0 },
+      uTravel: { value: 0 }
+    };
+
+    const streakGeometry = buildStreakGeometry(CONFIG.streakCount);
+    const streakMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: streakUniforms,
+      vertexShader: `
+        uniform float uTime;
+        uniform float uTravel;
+        attribute float aSeed;
+        attribute float aTail;
+        varying float vAlpha;
+
+        void main() {
+          vec3 p = position;
+          float span = 230.0;
+          p.z = mod(p.z + uTime * (8.0 + uTravel * 175.0) + span, span) - 210.0;
+          p.z -= aTail * (3.0 + uTravel * 42.0);
+          float away = clamp((-p.z) / 210.0, 0.0, 1.0);
+          p.y -= away * away * 25.0;
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          gl_Position = projectionMatrix * mv;
+          vAlpha = min(1.0, uTravel) * (0.36 + 0.82 * aTail) * (1.0 - smoothstep(150.0, 230.0, -mv.z));
+        }
+      `,
+      fragmentShader: `
+        varying float vAlpha;
+        void main() {
+          gl_FragColor = vec4(0.58, 0.64, 1.0, vAlpha);
+        }
+      `
+    });
+    const streaks = new THREE.LineSegments(streakGeometry, streakMaterial);
+    streaks.frustumCulled = false;
+    scene.add(streaks);
+
+    addStars();
+    addArchiveWake();
+    addEarthHorizon();
+
+    function addEarthHorizon() {
+      const geometry = new THREE.SphereGeometry(100, 96, 44, 0, Math.PI * 2, 0, Math.PI * 0.48);
+      const material = new THREE.ShaderMaterial({
+        transparent: false,
+        side: THREE.FrontSide,
+        vertexShader: `
+          varying vec3 vNormal;
+          varying vec3 vPosition;
+          void main() {
+            vNormal = normalize(normalMatrix * normal);
+            vPosition = position;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vNormal;
+          varying vec3 vPosition;
+          void main() {
+            float rim = pow(1.0 - max(0.0, dot(vNormal, vec3(0.0, 0.25, 0.97))), 3.0);
+            float gridLat = smoothstep(0.92, 1.0, abs(sin(vPosition.y * 0.38))) * 0.06;
+            float gridLon = smoothstep(0.94, 1.0, abs(sin(atan(vPosition.z, vPosition.x) * 18.0))) * 0.04;
+            vec3 base = vec3(0.010, 0.010, 0.032);
+            vec3 glow = vec3(0.36, 0.30, 1.0) * rim * 0.62;
+            vec3 grid = vec3(0.24, 0.18, 0.58) * (gridLat + gridLon);
+            gl_FragColor = vec4(base + glow + grid, 1.0);
+          }
+        `
+      });
+      const earth = new THREE.Mesh(geometry, material);
+      earth.position.set(0, -121, -112);
+      earth.rotation.x = -0.06;
+      scene.add(earth);
+
+      const atmosphere = new THREE.Mesh(
+        new THREE.SphereGeometry(101.2, 96, 36, 0, Math.PI * 2, 0, Math.PI * 0.47),
+        new THREE.ShaderMaterial({
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          vertexShader: `
+            varying vec3 vNormal;
+            void main() {
+              vNormal = normalize(normalMatrix * normal);
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            varying vec3 vNormal;
+            void main() {
+              float rim = pow(1.0 - abs(vNormal.z), 6.0);
+              gl_FragColor = vec4(0.46, 0.38, 1.0, rim * 0.7);
+            }
+          `
+        })
+      );
+      atmosphere.position.copy(earth.position);
+      atmosphere.rotation.copy(earth.rotation);
+      scene.add(atmosphere);
+    }
+
+    function addStars() {
+      const count = CONFIG.backgroundPoints;
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const r = 130 + Math.random() * 300;
+        const theta = Math.random() * Math.PI * 2;
+        const y = 5 + Math.random() * 180;
+        positions[i3] = Math.cos(theta) * r;
+        positions[i3 + 1] = y;
+        positions[i3 + 2] = Math.sin(theta) * r - 130;
+        const shade = 0.3 + Math.random() * 0.7;
+        colors[i3] = shade * 0.72;
+        colors[i3 + 1] = shade * 0.9;
+        colors[i3 + 2] = shade;
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      const points = new THREE.Points(
+        geometry,
+        new THREE.PointsMaterial({
+          size: 0.45,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.45,
+          sizeAttenuation: true,
+          depthWrite: false
+        })
+      );
+      scene.add(points);
+    }
+
+    function addArchiveWake() {
+      const ringCount = 12;
+      const segmentCount = 72;
+      const positions = new Float32Array(ringCount * segmentCount * 2 * 3);
+      const ages = new Float32Array(ringCount * segmentCount * 2);
+      let vertex = 0;
+      for (let ring = 0; ring < ringCount; ring++) {
+        const age = ring / (ringCount - 1);
+        const radius = 105 + ring * 3.8;
+        const depth = -115 - ring * 3.2;
+        for (let segment = 0; segment < segmentCount; segment++) {
+          const start = -1.28 + (segment / segmentCount) * Math.PI * 0.82;
+          const end = -1.28 + ((segment + 0.48) / segmentCount) * Math.PI * 0.82;
+          for (const angle of [start, end]) {
+            const index = vertex * 3;
+            positions[index] = Math.sin(angle) * radius * 1.18;
+            positions[index + 1] = -121 + Math.cos(angle) * radius;
+            positions[index + 2] = depth;
+            ages[vertex] = age;
+            vertex += 1;
+          }
+        }
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute("aAge", new THREE.BufferAttribute(ages, 1));
+      const lines = new THREE.LineSegments(
+        geometry,
+        new THREE.ShaderMaterial({
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          uniforms: archiveWakeUniforms,
+          vertexShader: `
+            uniform float uTime;
+            uniform float uTravel;
+            attribute float aAge;
+            varying float vAlpha;
+            varying float vAge;
+            void main() {
+              vec3 p = position;
+              p.y += sin(uTime * 0.32 - aAge * 9.0) * (0.15 + uTravel * 0.55);
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+              float pulse = 0.60 + 0.40 * sin(uTime * 0.45 - aAge * 10.0);
+              vAlpha = (0.14 + uTravel * 0.28) * pulse * (1.0 - aAge * 0.50);
+              vAge = aAge;
+            }
+          `,
+          fragmentShader: `
+            varying float vAlpha;
+            varying float vAge;
+            void main() {
+              vec3 oldRecord = vec3(0.44, 0.38, 1.0);
+              vec3 recentRecord = vec3(0.96, 0.76, 1.0);
+              gl_FragColor = vec4(mix(recentRecord, oldRecord, vAge), vAlpha);
+            }
+          `
+        })
+      );
+      scene.add(lines);
+    }
+
+    function buildStreakGeometry(count) {
+      const positions = new Float32Array(count * 2 * 3);
+      const seeds = new Float32Array(count * 2);
+      const tails = new Float32Array(count * 2);
+      for (let i = 0; i < count; i++) {
+        const x = (Math.random() - 0.5) * 125;
+        const y = -2 - Math.random() * 24;
+        const z = -8 - Math.random() * 220;
+        for (let t = 0; t < 2; t++) {
+          const v = (i * 2 + t);
+          const v3 = v * 3;
+          positions[v3] = x;
+          positions[v3 + 1] = y;
+          positions[v3 + 2] = z;
+          seeds[v] = Math.random();
+          tails[v] = t;
+        }
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
+      geometry.setAttribute("aTail", new THREE.BufferAttribute(tails, 1));
+      return geometry;
+    }
+
+    function setRiverObjects(objects, date, countHint) {
+      const sampled = sampleObjects(objects, CONFIG.maxPoints, date, countHint);
+      state.objects = sampled;
+      const count = sampled.length;
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const sizes = new Float32Array(count);
+      const seeds = new Float32Array(count);
+      const statuses = new Float32Array(count);
+      const bands = new Float32Array(count);
+      const bandCounts = [0, 0, 0];
+      const palette = {
+        carried: new THREE.Color(0xd8dfff),
+        updated: new THREE.Color(0xffa24a),
+        new: new THREE.Color(0xff75d1),
+        decayed: new THREE.Color(0xff557d),
+        debris: new THREE.Color(0x8b94bd),
+        rocket: new THREE.Color(0xffca78)
+      };
+
+      for (let i = 0; i < count; i++) {
+        const object = sampled[i];
+        const seed = hashUnit(object.id || String(i));
+        const seed2 = hashUnit(`${object.id || i}:z`);
+        const i3 = i * 3;
+        const band = Number.isInteger(object.band) && object.band >= 0 && object.band <= 2
+          ? object.band
+          : orbitBand(object.meanMotion, object.id);
+        const spread = band === 0 ? 70 : band === 1 ? 82 : 92;
+        const thickness = band === 0 ? 5 : band === 1 ? 7 : 9;
+        positions[i3] = (seed - 0.5) * spread * 2;
+        positions[i3 + 1] = (hashUnit(`${object.id}:y`) - 0.5) * thickness;
+        positions[i3 + 2] = seed2;
+        const status = object.status || "carried";
+        const type = String(object.type || "").toUpperCase();
+        let color = palette[status] || palette.carried;
+        if (status === "carried" && type.includes("DEBRIS")) color = palette.debris;
+        if (status === "carried" && type.includes("ROCKET")) color = palette.rocket;
+        colors[i3] = color.r;
+        colors[i3 + 1] = color.g;
+        colors[i3 + 2] = color.b;
+        sizes[i] = status === "carried" ? 0.72 + hashUnit(`${object.id}:s`) * 0.8 : 1.5 + seed * 1.8;
+        seeds[i] = seed;
+        statuses[i] = status === "carried" ? 0 : 1;
+        bands[i] = band;
+        bandCounts[band] += 1;
+      }
+      riverGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      riverGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      riverGeometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
+      riverGeometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
+      riverGeometry.setAttribute("aStatus", new THREE.BufferAttribute(statuses, 1));
+      riverGeometry.setAttribute("aBand", new THREE.BufferAttribute(bands, 1));
+      riverGeometry.computeBoundingSphere();
+      $("render-count").textContent = `${formatNumber(bandCounts[0])} LEO / ${formatNumber(bandCounts[1])} MEO / ${formatNumber(bandCounts[2])} GEO`;
+    }
+
+    function sampleObjects(objects, limit, date, countHint) {
+      if (objects.length) {
+        if (objects.length <= limit) return objects;
+        const groups = [0, 1, 2].map((band) => objects.filter((object) => {
+          const objectBand = Number.isInteger(object.band) && object.band >= 0 && object.band <= 2
+            ? object.band
+            : orbitBand(object.meanMotion, object.id);
+          object.band = objectBand;
+          return objectBand === band;
+        }));
+        const quotas = groups.map((group) => Math.floor(limit * group.length / objects.length));
+        while (quotas.reduce((sum, value) => sum + value, 0) < limit) {
+          const band = quotas
+            .map((quota, index) => ({ index, remainder: limit * groups[index].length / objects.length - quota }))
+            .sort((a, b) => b.remainder - a.remainder)[0].index;
+          quotas[band] += 1;
+        }
+        return groups.flatMap((group, band) => {
+          const quota = quotas[band];
+          const rare = group.filter((object) => object.status === "new" || object.status === "decayed");
+          const rareIds = new Set(rare.map((object) => object.id));
+          const representative = group
+            .filter((object) => !rareIds.has(object.id))
+            .sort((a, b) => hashUnit(`${a.id}:${date}`) - hashUnit(`${b.id}:${date}`));
+          return rare.slice(0, quota).concat(representative.slice(0, Math.max(0, quota - rare.length)));
+        });
+      }
+      const count = Math.min(limit, Math.max(4000, Number(countHint) || 12000));
+      return Array.from({ length: count }, (_, i) => {
+        const unit = hashUnit(`${date}:${i}`);
+        let status = "carried";
+        if (unit > 0.992) status = "new";
+        else if (unit > 0.978) status = "updated";
+        else if (unit < 0.002) status = "decayed";
+        const bandUnit = hashUnit(`${date}:${i}:band`);
+        return {
+          id: `PREVIEW-${date}-${i}`,
+          name: `Archive signal ${String(i + 1).padStart(5, "0")}`,
+          type: i % 7 === 0 ? "ROCKET BODY" : i % 3 === 0 ? "DEBRIS" : "PAYLOAD",
+          status,
+          band: bandUnit < 0.906 ? 0 : bandUnit < 0.974 ? 1 : 2
+        };
+      });
+    }
+
+    function orbitBand(meanMotion, id = "") {
+      const value = Number(meanMotion);
+      if (Number.isFinite(value) && value > 0) {
+        if (value >= 0.95 && value <= 1.05) return 2;
+        if (value >= 11.25) return 0;
+        return 1;
+      }
+      const unit = hashUnit(`${id}:band`);
+      return unit < 0.906 ? 0 : unit < 0.974 ? 1 : 2;
+    }
+
+    function orbitBandLabel(band) {
+      return band === 2 ? "GEO" : band === 1 ? "MEO" : "LEO";
+    }
+
+    function hashUnit(value) {
+      let h = 2166136261;
+      const string = String(value);
+      for (let i = 0; i < string.length; i++) {
+        h ^= string.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0) / 4294967295;
+    }
+
+    async function loadDate(date) {
+      const token = ++state.loadToken;
+      state.selectedDate = date;
+      updateDateHud(date);
+      setStatus("loading", "Locating record");
+      $("record-state").textContent = "Archive preview";
+      $("loading-note").textContent = "Resolving public archive record";
+
+      const path = date.replaceAll("-", "/");
+      const base = `https://raw.githubusercontent.com/${CONFIG.repo}/${CONFIG.branch}/data/${path}`;
+      let manifest = null;
+      let storage = null;
+      let audit = null;
+      let delta = null;
+
+      try {
+        [manifest, storage, audit, delta] = await Promise.all([
+          fetchJson(`${base}/manifest.json`),
+          fetchJson(`${base}/storage.json`),
+          fetchJson(`${base}/audit.json`, true),
+          fetchJson(`${base}/delta.json`, true)
+        ]);
+        if (token !== state.loadToken) return;
+        state.record = { manifest, storage, audit, delta };
+        updateRecordHud(state.record);
+        setRiverObjects([], date, manifest.object_count);
+        setStatus("loading", "Fetching record");
+        $("record-state").textContent = "Manifest verified";
+
+        if (CONFIG.autoLoadCatalog) {
+          const location = preferredBundleLocation(storage);
+          if (location) {
+            const catalog = await loadCatalogBundle(location);
+            if (token !== state.loadToken) return;
+            const objects = mapCatalog(catalog, date, delta);
+            setRiverObjects(objects, date, manifest.object_count);
+            $("record-state").textContent = state.record?.witnessed ? "Publicly attested" : "Archive record";
+            setStatus("ready", "Record loaded");
+            $("loading-note").textContent = "Scroll to travel / click the river to inspect";
+            return;
+          }
+        }
+        $("record-state").textContent = "Manifest record";
+        setStatus("ready", "Manifest loaded");
+        $("loading-note").textContent = "Scroll to travel through recorded time";
+      } catch (error) {
+        if (token !== state.loadToken) return;
+        console.warn("Archive load fell back to preview:", error);
+        const previewCount = 67000 + Math.floor(hashUnit(date) * 1200);
+        setRiverObjects([], date, previewCount);
+        updateRecordHud({
+          manifest: {
+            date,
+            object_count: previewCount,
+            sha256: "preview",
+            provenance: "deterministic_preview"
+          },
+          storage: null,
+          audit: null,
+          delta: null
+        });
+        $("record-state").textContent = "Deterministic preview";
+        setStatus("error", "Record unavailable");
+        $("loading-note").textContent = "Archive record unavailable / preview field shown";
+      }
+    }
+
+    async function fetchJson(url, optional = false) {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        if (optional && response.status === 404) return null;
+        throw new Error(`${response.status} ${url}`);
+      }
+      return response.json();
+    }
+
+    function preferredBundleLocation(storage) {
+      const destinations = storage?.destinations || {};
+      if (destinations.arweave?.transaction_url) return destinations.arweave.transaction_url;
+      return destinations.github_release?.asset_url || null;
+    }
+
+    async function loadCatalogBundle(url) {
+      const response = await fetch(url, { cache: "force-cache" });
+      if (!response.ok) throw new Error(`Bundle fetch failed: ${response.status}`);
+      const compressed = await response.arrayBuffer();
+      const tar = await gunzip(compressed);
+      const catalogGzip = extractTarFile(tar, "catalog.json.gz");
+      if (!catalogGzip) throw new Error("catalog.json.gz not found in bundle");
+      const catalogBytes = await gunzip(catalogGzip);
+      return JSON.parse(new TextDecoder().decode(catalogBytes));
+    }
+
+    async function gunzip(buffer) {
+      if (!("DecompressionStream" in window)) throw new Error("Browser gzip decompression unavailable");
+      const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
+      return new Response(stream).arrayBuffer();
+    }
+
+    function extractTarFile(tarBuffer, wantedSuffix) {
+      const bytes = new Uint8Array(tarBuffer);
+      const decoder = new TextDecoder();
+      let offset = 0;
+      while (offset + 512 <= bytes.length) {
+        const header = bytes.subarray(offset, offset + 512);
+        if (header.every((value) => value === 0)) break;
+        const name = decoder.decode(header.subarray(0, 100)).replace(/\0.*$/, "");
+        const sizeText = decoder.decode(header.subarray(124, 136)).replace(/\0.*$/, "").trim();
+        const size = parseInt(sizeText || "0", 8);
+        offset += 512;
+        if (name.endsWith(wantedSuffix)) return bytes.slice(offset, offset + size).buffer;
+        offset += Math.ceil(size / 512) * 512;
+      }
+      return null;
+    }
+
+    function mapCatalog(catalog, date, delta) {
+      const list = Array.isArray(catalog) ? catalog : catalog?.data || [];
+      const newIds = new Set((delta?.new_norad_cat_ids || []).map(String));
+      const updatedIds = new Set((delta?.updated_norad_cat_ids || []).map(String));
+      return list.map((row, index) => {
+        const id = String(row.NORAD_CAT_ID ?? row.norad_cat_id ?? index);
+        const meanMotion = Number(row.MEAN_MOTION ?? row.mean_motion ?? 0);
+        const decay = String(row.DECAY_DATE || row.decay_date || "").slice(0, 10);
+        let status = updatedIds.has(id) ? "updated" : "carried";
+        if (newIds.has(id)) status = "new";
+        if (decay === date) status = "decayed";
+        return {
+          id,
+          name: row.OBJECT_NAME || row.object_name || `NORAD ${id}`,
+          type: row.OBJECT_TYPE || row.object_type || "UNKNOWN",
+          status,
+          meanMotion,
+          band: orbitBand(meanMotion, id),
+          country: row.COUNTRY_CODE || row.country_code || "--",
+          launch: String(row.LAUNCH_DATE || row.launch_date || "").slice(0, 10),
+          decay
+        };
+      });
+    }
+
+    function updateRecordHud(record) {
+      const { manifest, storage, delta } = record;
+      $("object-count").textContent = formatNumber(manifest?.object_count ?? 0);
+      const updateCount = Array.isArray(delta)
+        ? delta.length
+        : delta?.deduped_update_count ?? delta?.updated_object_count ?? delta?.rows?.length ?? 0;
+      $("change-count").textContent = formatNumber(updateCount);
+      $("change-note").textContent = delta
+        ? `${formatNumber(delta.new_object_count || 0)} new / ${formatNumber(delta.carried_forward_count || 0)} carried`
+        : "Selected UTC day";
+      $("fingerprint").textContent = String(manifest?.sha256 || "--------").slice(0, 8);
+      const destinations = storage?.destinations || {};
+      $("mirrors").textContent = String(Object.values(destinations).filter((item) => item?.status === "created" || item?.status === "submitted").length || "--");
+      updateWitnessHud(manifest?.date);
+    }
+
+    async function updateWitnessHud(date) {
+      try {
+        const url = `https://raw.githubusercontent.com/${CONFIG.repo}/main/indexer/generated/sepolia/rso-docchain-index.json`;
+        const index = await fetchJson(url);
+        const docRef = `${date.replaceAll("-", "")}000000`;
+        const record = index.docRefs?.[docRef];
+        const groups = record?.agreementGroups || [];
+        const strongest = groups.slice().sort((a, b) => (b.combinedSupportTdh || 0) - (a.combinedSupportTdh || 0))[0];
+        $("agreement").textContent = groups.length === 1 ? "One agreement group" : groups.length > 1 ? `${groups.length} competing records` : "Not yet attested";
+        $("attestations").textContent = strongest ? formatNumber(strongest.attestationCount || 0) : "--";
+        $("tdh").textContent = strongest ? formatNumber(strongest.combinedSupportTdh || 0) : "--";
+        if (state.record && state.record.manifest?.date === date) {
+          state.record.witnessed = groups.length > 0;
+          if (groups.length > 0) $("record-state").textContent = "Publicly attested";
+        }
+      } catch {
+        $("agreement").textContent = "Index unavailable";
+        $("attestations").textContent = "--";
+        $("tdh").textContent = "--";
+      }
+    }
+
+    function updateDateHud(date) {
+      const parsed = parseDate(date);
+      const day = daysBetween(CONFIG.genesis, date) + 1;
+      const total = daysBetween(CONFIG.genesis, CONFIG.latest) + 1;
+      $("date").textContent = new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC"
+      }).format(parsed);
+      $("date-index").textContent = `Day ${String(day).padStart(3, "0")} / ${String(total).padStart(3, "0")} witnessed days`;
+      $("jump-date").textContent = date.replaceAll("-", ".");
+      const progress = total <= 1 ? 1 : (day - 1) / (total - 1);
+      $("timeline-fill").style.transform = `scaleY(${progress})`;
+      $("timeline-thumb").style.top = `${(1 - progress) * 100}%`;
+    }
+
+    function setStatus(type, label) {
+      $("status-light").className = `status-light ${type === "ready" ? "" : type}`.trim();
+      $("status-label").textContent = label;
+    }
+
+    function travelTo(date, power = 1) {
+      const clamped = clampDate(date);
+      if (clamped === state.pendingDate && state.traveling) return;
+      state.pendingDate = clamped;
+      state.traveling = true;
+      state.speedTarget = reducedMotion ? 0.18 : 16 + Math.min(22, Math.max(0, power - 1) * 11);
+      $("jump").classList.add("active");
+      $("jump-date").textContent = clamped.replaceAll("-", ".");
+      clearTimeout(state.travelTimer);
+      state.travelTimer = setTimeout(() => {
+        state.traveling = false;
+        state.speedTarget = reducedMotion ? 0.12 : 0.52;
+        $("jump").classList.remove("active");
+        loadDate(state.pendingDate);
+      }, reducedMotion ? 80 : 620);
+    }
+
+    function offsetDate(date, amount) {
+      const parsed = parseDate(date);
+      parsed.setUTCDate(parsed.getUTCDate() + amount);
+      return parsed.toISOString().slice(0, 10);
+    }
+
+    function clampDate(date) {
+      if (date < CONFIG.genesis) return CONFIG.genesis;
+      if (date > CONFIG.latest) return CONFIG.latest;
+      return date;
+    }
+
+    function parseDate(value) {
+      return new Date(`${value}T00:00:00Z`);
+    }
+
+    function daysBetween(a, b) {
+      return Math.round((parseDate(b) - parseDate(a)) / 86400000);
+    }
+
+    function formatNumber(value) {
+      return Number(value || 0).toLocaleString("en-US");
+    }
+
+    function inspectObject(clientX, clientY) {
+      if (!state.objects.length) return;
+      const heightFraction = Math.max(0, Math.min(1, clientY / innerHeight));
+      const targetBand = heightFraction < 0.28 ? 2 : heightFraction < 0.66 ? 1 : 0;
+      const tierObjects = state.objects.filter((object) => object.band === targetBand);
+      const candidates = tierObjects.length ? tierObjects : state.objects;
+      const fraction = Math.max(0, Math.min(1, clientX / innerWidth));
+      const index = Math.min(candidates.length - 1, Math.floor(fraction * candidates.length));
+      const object = candidates[index];
+      state.selectedObject = object;
+      $("inspector").querySelector(".object-label").textContent = `Selected ${orbitBandLabel(object.band)} record`;
+      $("object-name").textContent = object.name || object.id;
+      $("object-details").textContent = `NORAD ${object.id} / ${orbitBandLabel(object.band)} / ${object.type || "UNKNOWN"} / ${object.status || "carried"}${object.country ? ` / ${object.country}` : ""}`;
+      $("inspector").classList.add("visible");
+      clearTimeout(inspectObject.timer);
+      inspectObject.timer = setTimeout(() => $("inspector").classList.remove("visible"), 4800);
+    }
+
+    function animate(now) {
+      const dt = Math.min(0.05, (now - (animate.last || now)) / 1000);
+      animate.last = now;
+      state.time += dt;
+      state.speed += (state.speedTarget - state.speed) * Math.min(1, dt * 4.5);
+      const travel = Math.max(0, Math.min(1.8, (state.speed - 0.52) / 10));
+      riverUniforms.uTime.value = state.time;
+      riverUniforms.uSpeed.value = state.speed;
+      riverUniforms.uTravel.value = travel;
+      streakUniforms.uTime.value = state.time;
+      streakUniforms.uTravel.value = travel;
+      archiveWakeUniforms.uTime.value = state.time;
+      archiveWakeUniforms.uTravel.value = travel;
+      camera.position.x = Math.sin(state.time * 0.12) * 0.36;
+      camera.rotation.z = Math.sin(state.time * 0.08) * 0.0025;
+      renderer.render(scene, camera);
+    }
+
+    function resize() {
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+      renderer.setSize(innerWidth, innerHeight, false);
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      riverUniforms.uPixelRatio.value = renderer.getPixelRatio();
+    }
+
+    addEventListener("resize", resize);
+    addEventListener("wheel", (event) => {
+      event.preventDefault();
+      const now = performance.now();
+      const direction = event.deltaY > 0 ? -1 : 1;
+      const newGesture = direction !== state.wheelDirection || now - state.wheelLastAt > 700;
+      if (newGesture) {
+        state.wheelEnergy = 0;
+        state.wheelGestureStartedAt = now;
+        state.wheelSteps = 0;
+        state.wheelDirection = direction;
+      }
+      state.wheelLastAt = now;
+      state.wheelEnergy += Math.abs(event.deltaY);
+      if (state.wheelEnergy < 24) return;
+      state.wheelEnergy = 0;
+      state.wheelSteps += 1;
+
+      const heldFor = now - state.wheelGestureStartedAt;
+      if (state.wheelSteps > 1 && heldFor < 900) return;
+      if (now - state.wheelLastTravelAt < 180) return;
+      state.wheelLastTravelAt = now;
+      let stride = 1;
+      if (heldFor > 2600 && state.wheelSteps > 10) stride = 7;
+      else if (heldFor > 1500 && state.wheelSteps > 6) stride = 4;
+      else if (heldFor > 800 && state.wheelSteps > 3) stride = 2;
+      const power = 1 + Math.min(2, Math.max(0, state.wheelSteps - 2) * 0.22);
+      travelTo(offsetDate(state.pendingDate, direction * stride), power);
+    }, { passive: false });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.pointerStart = { x: event.clientX, y: event.clientY };
+    });
+    canvas.addEventListener("pointerup", (event) => {
+      if (!state.pointerStart) return;
+      const dx = event.clientX - state.pointerStart.x;
+      const dy = event.clientY - state.pointerStart.y;
+      if (Math.hypot(dx, dy) <= 12) inspectObject(event.clientX, event.clientY);
+      state.pointerStart = null;
+    });
+    canvas.addEventListener("pointercancel", () => {
+      state.pointerStart = null;
+    });
+
+    $("older").addEventListener("click", () => travelTo(offsetDate(state.pendingDate, -1)));
+    $("newer").addEventListener("click", () => travelTo(offsetDate(state.pendingDate, 1)));
+
+    function timelineTravel(event) {
+      const rect = $("timeline").getBoundingClientRect();
+      const progress = 1 - Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+      const total = daysBetween(CONFIG.genesis, CONFIG.latest);
+      travelTo(offsetDate(CONFIG.genesis, Math.round(progress * total)));
+    }
+    $("timeline").addEventListener("pointerdown", (event) => {
+      $("timeline").setPointerCapture(event.pointerId);
+      timelineTravel(event);
+    });
+    $("timeline").addEventListener("pointermove", (event) => {
+      if ($("timeline").hasPointerCapture(event.pointerId)) timelineTravel(event);
+    });
+    $("timeline").addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown") travelTo(offsetDate(state.pendingDate, -1));
+      if (event.key === "ArrowUp") travelTo(offsetDate(state.pendingDate, 1));
+    });
+
+    renderer.setAnimationLoop(animate);
+
+    async function boot() {
+      try {
+        const ledger = await fetchJson(`https://raw.githubusercontent.com/${CONFIG.repo}/${CONFIG.branch}/ledger.json`);
+        const latest = Array.isArray(ledger) ? ledger.at(-1)?.date : null;
+        if (latest) {
+          CONFIG.latest = latest;
+          state.selectedDate = latest;
+          state.pendingDate = latest;
+        }
+      } catch (error) {
+        console.warn("Using built-in latest archive date:", error);
+      }
+      setRiverObjects([], CONFIG.latest, 67915);
+      updateDateHud(CONFIG.latest);
+      loadDate(CONFIG.latest);
+    }
+    boot();
+
+    window.__RSO_CARD__ = {
+      state,
+      travelTo,
+      loadDate,
+      renderer,
+      scene,
+      CONFIG
+    };
+  </script>
+</body>
+</html>

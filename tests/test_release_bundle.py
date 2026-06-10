@@ -736,5 +736,84 @@ class RebuiltBundleTests(ReleaseBundleTests):
                 "2026-04-18", output_dir=self.root / "out", min_count=1
             )
 
+
+class ConsumerPointerTests(ReleaseBundleTests):
+    def receipt(self, date="2026-04-18", arweave=True):
+        receipt = {
+            "date": date,
+            "asset_name": f"rso-archive-{date}.tar.gz",
+            "bundle_sha256": "ab" * 32,
+            "destinations": {
+                "github_release": {
+                    "status": "created",
+                    "asset_url": f"https://github.com/o/r/releases/download/rso-archive-{date}/rso-archive-{date}.tar.gz",
+                }
+            },
+        }
+        if arweave:
+            receipt["destinations"]["arweave"] = {
+                "status": "submitted",
+                "transaction_id": "txABC",
+                "bundle_sha256": "ab" * 32,
+            }
+        return receipt
+
+    def test_publication_fields_extracts_locations_and_hashes(self):
+        fields = snapshot.publication_fields_from_receipt(self.receipt())
+        self.assertEqual(fields["bundle_sha256"], "ab" * 32)
+        self.assertTrue(fields["asset_url"].endswith("rso-archive-2026-04-18.tar.gz"))
+        self.assertEqual(fields["arweave_tx"], "txABC")
+
+    def test_publication_fields_ignores_stale_arweave_upload(self):
+        receipt = self.receipt()
+        receipt["destinations"]["arweave"]["bundle_sha256"] = "cd" * 32
+        fields = snapshot.publication_fields_from_receipt(receipt)
+        self.assertNotIn("arweave_tx", fields)
+
+    def test_ledger_carries_publication_fields_after_publish(self):
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"):
+            manifest = self.archive_day()
+            snapshot.write_json(
+                snapshot.storage_receipt_path("2026-04-18"), self.receipt()
+            )
+            snapshot.update_ledger(manifest)
+            ledger = json.loads((self.root / "ledger.json").read_text())
+        entry = ledger[-1]
+        self.assertEqual(entry["arweave_tx"], "txABC")
+        self.assertTrue(entry["asset_url"].endswith(".tar.gz"))
+        self.assertEqual(entry["bundle_sha256"], "ab" * 32)
+
+    def test_latest_pointer_describes_newest_day(self):
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"), patch.object(
+            snapshot, "LATEST_POINTER_PATH", self.root / "latest.json"
+        ):
+            manifest = self.archive_day()
+            snapshot.write_json(
+                snapshot.storage_receipt_path("2026-04-18"), self.receipt()
+            )
+            snapshot.update_ledger(manifest)
+            pointer = snapshot.write_latest_pointer()
+            stored = json.loads((self.root / "latest.json").read_text())
+
+        self.assertEqual(pointer, stored)
+        self.assertEqual(stored["schema"], "rso-latest-v1")
+        self.assertEqual(stored["date"], "2026-04-18")
+        self.assertEqual(stored["tag"], "rso-archive-2026-04-18")
+        self.assertEqual(stored["content_schema"], "rso-core-v1")
+        self.assertEqual(stored["sha256"], manifest["sha256"])
+        self.assertEqual(stored["content_sha256"], manifest["content_sha256"])
+        self.assertEqual(stored["arweave_tx"], "txABC")
+        self.assertTrue(stored["asset_url"].endswith(".tar.gz"))
+
+    def test_latest_pointer_without_receipt_still_points(self):
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"), patch.object(
+            snapshot, "LATEST_POINTER_PATH", self.root / "latest.json"
+        ):
+            manifest = self.archive_day()
+            snapshot.update_ledger(manifest)
+            pointer = snapshot.write_latest_pointer()
+        self.assertEqual(pointer["date"], "2026-04-18")
+        self.assertNotIn("asset_url", pointer)
+
 if __name__ == "__main__":
     unittest.main()

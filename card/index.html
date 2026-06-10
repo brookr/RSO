@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#020506">
+  <title>RSO Archive — The Orbital Witness</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f4f7f3; --muted: #8a9b98; --dim: #53635f;
+      --line: rgba(208, 233, 226, 0.19);
+      --accent: #9aa9ff; --rose: #ff75d1; --amber: #ffad55; --magenta: #ff557d; --seal: #9affd6;
+      --panel: rgba(2, 7, 8, 0.78);
+      --safe-top: max(18px, env(safe-area-inset-top));
+      --safe-right: max(18px, env(safe-area-inset-right));
+      --safe-bottom: max(18px, env(safe-area-inset-bottom));
+      --safe-left: max(18px, env(safe-area-inset-left));
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #020506; color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+
+    .vignette, .scanlines, .hud, .warpwash { position: fixed; inset: 0; pointer-events: none; }
+    .vignette { z-index: 1; box-shadow: inset 0 0 22vmin rgba(0,0,0,0.66), inset 0 -16vh 22vh rgba(0,0,0,0.42); transition: box-shadow 220ms ease; }
+    body.warping .vignette { box-shadow: inset 0 0 34vmin rgba(0,0,0,0.88), inset 0 0 9vmin rgba(154,169,255,0.12); }
+    .scanlines { z-index: 2; opacity: 0.09; background-size: 100% 4px; mix-blend-mode: screen;
+      background-image: linear-gradient(to bottom, transparent 0, transparent 2px, rgba(164,174,255,0.15) 3px, transparent 4px); }
+    .warpwash { z-index: 1; opacity: 0; transition: opacity 200ms ease;
+      background: radial-gradient(circle at 50% 50%, rgba(154,169,255,0) 26%, rgba(154,169,255,0.05) 55%, rgba(120,150,255,0.18) 100%); }
+    body.warping .warpwash { opacity: 1; }
+
+    .hud { z-index: 3; }
+    .corner { position: absolute; width: 40px; height: 40px; border-color: rgba(164,174,255,0.4); border-style: solid; }
+    .corner.tl { top: var(--safe-top); left: var(--safe-left); border-width: 1px 0 0 1px; }
+    .corner.tr { top: var(--safe-top); right: var(--safe-right); border-width: 1px 1px 0 0; }
+    .corner.bl { bottom: var(--safe-bottom); left: var(--safe-left); border-width: 0 0 1px 1px; }
+    .corner.br { right: var(--safe-right); bottom: var(--safe-bottom); border-width: 0 1px 1px 0; }
+
+    .mono, .brand-name, .eyebrow, .readout-label, .status-label, .hint, .insp-label {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.12em; }
+
+    .brand { position: absolute; top: calc(var(--safe-top) + 16px); left: calc(var(--safe-left) + 18px); display: flex; align-items: flex-start; gap: 12px; }
+    .brand-mark { width: 9px; height: 9px; margin-top: 5px; border: 1px solid var(--accent); border-radius: 50%; box-shadow: 0 0 12px rgba(154,169,255,0.8); }
+    .brand-name { font-size: 12px; font-weight: 700; line-height: 1; }
+    .brand-sub { margin-top: 5px; color: var(--muted); font-size: 9px; line-height: 1; text-transform: uppercase; letter-spacing: 0.18em; }
+
+    .record-date { position: absolute; top: calc(var(--safe-top) + 14px); left: 50%; width: min(60vw, 620px); transform: translateX(-50%); text-align: center; }
+    .eyebrow { color: var(--accent); font-size: 9px; line-height: 1; transition: color 220ms ease; }
+    .eyebrow.attested { color: var(--seal); }
+    .date { margin-top: 7px; font-size: clamp(28px, 4.6vh, 56px); font-weight: 300; line-height: 0.92; text-transform: uppercase; }
+    .date-index { margin-top: 9px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; }
+
+    .status { position: absolute; top: calc(var(--safe-top) + 16px); right: calc(var(--safe-right) + 18px); display: flex; align-items: center; gap: 9px; }
+    .status-light { width: 7px; height: 7px; border-radius: 50%; background: var(--seal); box-shadow: 0 0 13px rgba(154,255,214,0.9); }
+    .status-light.loading { background: var(--amber); box-shadow: 0 0 13px rgba(255,196,92,0.9); animation: blink 0.7s steps(2,end) infinite; }
+    .status-light.error { background: var(--magenta); box-shadow: 0 0 13px rgba(255,102,142,0.9); }
+    .status-label { font-size: 9px; }
+
+
+    .readout { position: absolute; left: calc(var(--safe-left) + 18px); bottom: calc(var(--safe-bottom) + 18px); display: grid; gap: 26px; min-width: 238px; }
+    .readout-block { padding-top: 7px; border-top: 1px solid var(--line); }
+    .readout-label { color: var(--muted); font-size: 8px; }
+    .readout-value { margin-top: 5px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: clamp(15px, 2.3vh, 22px); line-height: 1; }
+    .readout-note { margin-top: 4px; color: var(--dim); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 8px; text-transform: uppercase; }
+    .readout-note .leo { color: var(--accent); } .readout-note .meo { color: #cdb6ff; } .readout-note .geo { color: var(--amber); }
+    /* tap-to-rotate 4-sided data prism (a real quarter-turn each tap) */
+    .prism { position: relative; cursor: pointer; perspective: 1000px; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+    .prism-inner { position: relative; height: 82px; transform-style: preserve-3d; transition: transform 0.62s cubic-bezier(0.45,0.05,0.2,1); }
+    /* the border + dots live ON each face, so they rotate as part of the prism */
+    .face { position: absolute; inset: 0; backface-visibility: hidden; padding-top: 8px; border-top: 1px solid var(--line); }
+    .face:nth-child(1) { transform: rotateX(0deg)   translateZ(41px); }
+    .face:nth-child(2) { transform: rotateX(90deg)  translateZ(41px); }
+    .face:nth-child(3) { transform: rotateX(180deg) translateZ(41px); }
+    .face:nth-child(4) { transform: rotateX(270deg) translateZ(41px); }
+    /* axial / centre-gutter alignment: counts right-align to a shared centreline (tabular figures),
+       labels left-align off it — each column grows outward as needed */
+    .readout-rows { margin-top: 7px; display: grid; grid-template-columns: 1fr 3fr; column-gap: 14px; row-gap: 3px; align-items: baseline;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-variant-numeric: tabular-nums; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .readout-rows .lbl { text-align: left; color: var(--muted); white-space: nowrap; }
+    .readout-rows b { text-align: right; color: var(--ink); font-weight: 600; }
+    .readout-rows .hd { font-size: 8px; color: var(--muted); font-weight: 400; letter-spacing: 0.1em; padding-bottom: 5px; } /* face title, aligned to the same axis */
+    /* altitude = neutral cool-grey brightness ramp (low→high), distinct from the categorical class colours */
+    .readout-rows b.leo { color: #6e7790; } .readout-rows b.meo { color: #99a1b8; } .readout-rows b.geo { color: #d2d8ea; }
+    /* object type = the same hues as the dots flying past */
+    .readout-rows b.pay { color: #7088ff; } .readout-rows b.rok { color: var(--amber); } .readout-rows b.deb { color: #ff7099; } .readout-rows b.unk { color: #82bdab; }
+    .readout-rows .u { color: var(--dim); }
+    .readout-value.sm { font-size: clamp(12px, 1.7vh, 15px); }
+    .readout-note b { color: var(--ink); font-weight: 600; }
+    .pager { position: absolute; top: 11px; right: 2px; display: flex; gap: 4px; }
+    .pager i { width: 4px; height: 4px; border-radius: 50%; background: rgba(164,174,255,0.22); transition: background 0.2s, box-shadow 0.2s; }
+    .pager i.on { background: var(--accent); box-shadow: 0 0 6px rgba(154,169,255,0.7); }
+
+    .witness { position: absolute; right: calc(var(--safe-right) + 18px); bottom: calc(var(--safe-bottom) + 18px); width: min(290px, 36vw); padding-top: 7px; border-top: 1px solid var(--line); text-align: right; }
+    .witness-state { margin-top: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; transition: color 220ms ease; }
+    .witness-state.attested { color: var(--seal); }
+    .witness-hash { margin-top: 5px; color: var(--dim); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 8px; word-break: break-all; }
+
+    .timebar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(164,174,255,0.10); }
+    .timebar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, rgba(154,169,255,0.5), var(--seal)); box-shadow: 0 0 10px rgba(154,255,214,0.6); }
+
+    .hint { position: absolute; left: 50%; bottom: calc(var(--safe-bottom) + 26px); transform: translateX(-50%); color: rgba(219,240,234,0.6); font-size: 8px; text-align: center; transition: opacity 700ms ease; }
+    .hint.gone { opacity: 0; }
+
+    /* object inspector */
+    .inspector { position: absolute; left: 50%; bottom: calc(var(--safe-bottom) + 96px); width: min(360px, 80vw); transform: translateX(-50%) translateY(8px);
+      padding: 11px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; backdrop-filter: blur(7px);
+      text-align: center; opacity: 0; pointer-events: none; transition: opacity 200ms ease, transform 200ms ease; z-index: 3; }
+    .inspector.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .insp-label { color: var(--accent); font-size: 8px; }
+    .insp-name { margin-top: 5px; font-size: 14px; line-height: 1.1; }
+    .insp-meta { margin-top: 6px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .jump { position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; opacity: 0; transition: opacity 160ms ease; }
+    .jump.active { opacity: 1; }
+    .jump::before, .jump::after { position: absolute; top: 50%; width: 36vw; height: 1px; content: ""; background: rgba(154,169,255,0.4); box-shadow: 0 0 18px rgba(154,169,255,0.5); }
+    .jump::before { left: 0; } .jump::after { right: 0; }
+    .jump-inner { text-align: center; text-shadow: 0 2px 30px #020506, 0 0 16px #020506; }
+    .jump-date { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: clamp(26px, 5vw, 76px); font-weight: 300; letter-spacing: 0.08em; }
+    .jump-label { margin-top: 9px; color: var(--accent); font-size: 8px; text-transform: uppercase; letter-spacing: 0.16em; }
+
+    .brand { text-decoration: none; color: inherit; pointer-events: auto; transition: opacity 160ms ease; }
+    .brand:hover { opacity: 0.7; }
+    /* icon buttons (download / settings) next to the status light */
+    .icon-btn { pointer-events: auto; cursor: pointer; width: 22px; height: 22px; display: grid; place-items: center; margin-left: 4px;
+      color: var(--muted); background: rgba(2,7,8,0.3); border: 1px solid rgba(164,174,255,0.18); border-radius: 4px; transition: color 150ms, border-color 150ms; }
+    .icon-btn:hover { color: var(--ink); border-color: var(--accent); }
+    /* lens legend (right side, where the altitude scale used to be) */
+    .lens-legend { position: absolute; right: calc(var(--safe-right) + 18px); top: 50%; transform: translateY(-50%); display: grid; gap: 7px; justify-items: end; }
+    .lg-title { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.12em; font-size: 8px; color: var(--accent); margin-bottom: 3px; }
+    .lg-row { display: flex; align-items: center; justify-content: flex-end; gap: 7px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; color: var(--muted); white-space: nowrap; }
+    .lg-row i { width: 7px; height: 7px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
+    .lg-grad { width: 116px; height: 7px; border-radius: 3px; background: linear-gradient(90deg, rgb(107,77,217), rgb(64,204,235), rgb(255,209,102)); }
+    .lg-years { display: flex; justify-content: space-between; width: 116px; font-family: ui-monospace, monospace; font-size: 8px; color: var(--dim); margin-top: 2px; }
+    /* mode toast (centre, brief) */
+    .mode-toast { position: fixed; left: 50%; top: 22%; transform: translate(-50%, 6px); z-index: 6; pointer-events: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.28em; font-size: 12px; color: var(--ink);
+      text-shadow: 0 2px 24px #020506; opacity: 0; transition: opacity 240ms ease, transform 240ms ease; }
+    .mode-toast.show { opacity: 1; transform: translate(-50%, 0); }
+    /* tilt-to-look chip (mobile permission) */
+    .tilt-chip { position: fixed; left: 50%; bottom: calc(var(--safe-bottom) + 18px); transform: translateX(-50%); z-index: 6; display: none;
+      pointer-events: auto; cursor: pointer; color: var(--accent); background: rgba(2,7,8,0.6); border: 1px solid rgba(154,169,255,0.35); border-radius: 999px;
+      padding: 7px 14px; font-family: ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; }
+    .tilt-chip.gone { display: none !important; }
+    /* settings panel */
+    .settings { position: fixed; inset: 0; z-index: 7; display: none; align-items: center; justify-content: center; background: rgba(2,5,6,0.55); backdrop-filter: blur(3px); }
+    .settings.open { display: flex; }
+    .settings-panel { width: min(360px, 86vw); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px 20px; }
+    .settings-head { display: flex; justify-content: space-between; align-items: center; font-family: ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink); margin-bottom: 16px; }
+    .settings-close { background: none; border: none; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; }
+    .settings-close:hover { color: var(--ink); }
+    .set-row { margin-bottom: 18px; }
+    .set-label { font-family: ui-monospace, monospace; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: flex; justify-content: space-between; margin-bottom: 7px; }
+    .set-label b { color: var(--seal); font-weight: 600; }
+    .set-row input[type=range] { width: 100%; accent-color: #9aa9ff; }
+    .set-note { margin-top: 5px; font-size: 9px; color: var(--dim); line-height: 1.4; }
+    .settings-foot { margin-bottom: 0; }
+    .set-save { font-family: ui-monospace, monospace; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 7px; cursor: pointer; }
+    /* Zen mode: hide every overlay, leave the field + Earth */
+    body.zen .hud { opacity: 0; pointer-events: none; transition: opacity 400ms ease; }
+
+    @keyframes blink { 50% { opacity: 0.35; } }
+    @media (max-width: 760px) { .brand-sub, .witness { display: none; } .record-date { top: calc(var(--safe-top) + 60px); width: 82vw; } }
+    @media (prefers-reduced-motion: reduce) { .scanlines { display: none; } }
+  </style>
+</head>
+<body>
+  <canvas id="scene" aria-label="A first-person flight through the RSO Archive"></canvas>
+  <div class="warpwash"></div>
+  <div class="vignette"></div>
+  <div class="scanlines"></div>
+
+  <main class="hud">
+    <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+
+    <a class="brand" href="https://om.pub/rso" target="_blank" rel="noopener" title="About the RSO archive">
+      <span class="brand-mark"></span>
+      <div><div class="brand-name">RSO Archive</div><div class="brand-sub">The orbital witness</div></div>
+    </a>
+
+    <section class="record-date" aria-live="polite">
+      <div class="eyebrow" id="record-state">Archive record</div>
+      <div class="date" id="date">—</div>
+      <div class="date-index" id="date-index">—</div>
+    </section>
+
+    <div class="status">
+      <span class="status-light loading" id="status-light"></span><span class="status-label" id="status-label">Entering orbit</span>
+      <button class="icon-btn" id="download-btn" title="Download this frame (PNG)" aria-label="Download frame">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+      </button>
+      <button class="icon-btn" id="settings-btn" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
+      </button>
+    </div>
+
+    <aside class="lens-legend" id="lens-legend"></aside>
+
+
+    <section class="readout">
+      <div class="prism" id="prism-obj" title="tap to rotate">
+        <div class="prism-inner">
+          <div class="face">
+            <div class="pager"><i class="on"></i><i></i><i></i><i></i></div>
+            <div class="readout-label">On orbit now</div>
+            <div class="readout-value" id="onorbit-count">—</div>
+            <div class="readout-note">of <b id="tracked-count">—</b> in record · <b id="reentered-count">—</b> re-entered</div>
+          </div>
+          <div class="face">
+            <div class="pager"><i></i><i class="on"></i><i></i><i></i></div>
+            <div class="readout-rows">
+              <b class="hd">On orbit</b><span class="lbl hd">by altitude</span>
+              <b class="leo" id="leo-count">—</b><span class="lbl">LEO <span class="u">160–2,000 km</span></span>
+              <b class="meo" id="meo-count">—</b><span class="lbl">MEO <span class="u">2,000–35,786 km</span></span>
+              <b class="geo" id="geo-count">—</b><span class="lbl">GEO <span class="u">35,786 km</span></span>
+            </div>
+          </div>
+          <div class="face">
+            <div class="pager"><i></i><i></i><i class="on"></i><i></i></div>
+            <div class="readout-rows">
+              <b class="hd">On orbit</b><span class="lbl hd">by type</span>
+              <b class="pay" id="t-pay">—</b><span class="lbl">payload</span>
+              <b class="rok" id="t-rok">—</b><span class="lbl">rocket body</span>
+              <b class="deb" id="t-deb">—</b><span class="lbl">debris</span>
+              <b class="unk" id="t-unk">—</b><span class="lbl">unknown / other</span>
+            </div>
+          </div>
+          <div class="face">
+            <div class="pager"><i></i><i></i><i></i><i class="on"></i></div>
+            <div class="readout-label">Updated this doc-day</div>
+            <div class="readout-value" id="d-upd">—</div>
+            <div class="readout-note"><b id="d-new">—</b> launched · <b id="d-dec">—</b> re-entered</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prism" id="prism-fp" title="tap to rotate">
+        <div class="prism-inner">
+          <div class="face">
+            <div class="pager"><i class="on"></i><i></i><i></i><i></i></div>
+            <div class="readout-label">Catalog fingerprint</div>
+            <div class="readout-value" id="fingerprint">—</div>
+            <div class="readout-note">SHA-256</div>
+          </div>
+          <div class="face">
+            <div class="pager"><i></i><i class="on"></i><i></i><i></i></div>
+            <div class="readout-label">Provenance</div>
+            <div class="readout-value sm" id="fp-prov">—</div>
+            <div class="readout-note" id="fp-src">—</div>
+          </div>
+          <div class="face">
+            <div class="pager"><i></i><i></i><i class="on"></i><i></i></div>
+            <div class="readout-label">Archive bundle</div>
+            <div class="readout-value sm" id="fp-size">—</div>
+            <div class="readout-note" id="fp-fmt">—</div>
+          </div>
+          <div class="face">
+            <div class="pager"><i></i><i></i><i></i><i class="on"></i></div>
+            <div class="readout-label">On-chain block</div>
+            <div class="readout-value sm" id="fp-block">—</div>
+            <div class="readout-note" id="fp-blocknote">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="witness">
+      <div class="readout-label">Public witness</div>
+      <div class="witness-state" id="witness-state">Awaiting index</div>
+      <div class="witness-hash" id="witness-hash">&nbsp;</div>
+    </section>
+
+    <section class="inspector" id="inspector">
+      <div class="insp-label" id="insp-label">Tracked object</div>
+      <div class="insp-name" id="insp-name">—</div>
+      <div class="insp-meta" id="insp-meta">—</div>
+    </section>
+
+    <div class="timebar"><div class="timebar-fill" id="timebar-fill"></div></div>
+  </main>
+
+  <div class="jump" id="jump"><div class="jump-inner"><div class="jump-date" id="jump-date">—</div><div class="jump-label">Traversing the archive</div></div></div>
+
+  <!-- kept outside .hud so they survive Zen mode -->
+  <div class="mode-toast" id="mode-toast"></div>
+  <button class="tilt-chip" id="tilt-chip">⊕ tilt&nbsp;to&nbsp;look</button>
+
+  <div class="settings" id="settings" aria-hidden="true">
+    <div class="settings-panel">
+      <div class="settings-head"><span>Witness settings</span><button class="settings-close" id="settings-close" aria-label="Close">×</button></div>
+      <div class="set-row">
+        <div class="set-label">Ethereum attestation rank <b id="set-eth-val">≥ 1 TDH</b></div>
+        <input type="range" id="set-eth" min="0" max="6" step="1" value="0">
+        <div class="set-note">minimum on-chain TDH backing to count a day as attested</div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">Operator index source <b id="set-op-val">ompub/rso</b></div>
+        <input type="range" id="set-op" min="0" max="2" step="1" value="0">
+        <div class="set-note">which operator's published index to read — your own node, for real decentralization</div>
+      </div>
+      <div class="set-row settings-foot"><label class="set-save"><input type="checkbox" id="set-persist" checked> remember on this device</label></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "./three.module.js";
+
+    // ════════════════════════════════════════════════════════════════════
+    // CONFIG — live sources + tunable feel
+    // ════════════════════════════════════════════════════════════════════
+    const CONFIG = {
+      repo: "OMPub/RSO", branch: "node", indexBranch: "main",
+      genesis: "2026-04-20", latest: "2026-06-08",
+      autoLoadCatalog: true
+    };
+    const mobile = matchMedia("(max-width: 760px)").matches;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const FIELD = mobile ? 5000 : 11000;
+
+    // Objects ride circular orbital arcs around the Earth centre, keyed by altitude shell
+    // (radius from EC). The camera orbits just above LEO, so LEO flows UNDER you, MEO grazes
+    // you at eye level, GEO arcs high overhead — real curvature, real parallax.
+    const BAND = {
+      0: { r0: 392, r1: 430, speed: 1.5,  name: "LEO" }, // R < camera radius (446) → passes below you
+      1: { r0: 432, r1: 478, speed: 1.0,  name: "MEO" }, // straddles the camera radius → crosses your plane, grazes you
+      2: { r0: 500, r1: 720, speed: 0.42, name: "GEO" }  // R ≫ → high overhead, slow, sparse
+    };
+    const PROP = { bands: { LEO: 0.905, MEO: 0.066, GEO: 0.029 } };
+    const COLORS = {                                  // distinct hues that survive the brightness clip
+      payload: [0.34, 0.48, 1.0],   // deeper blue — stays blue (not white) when bright/near
+      rocket:  [1.0, 0.62, 0.24],   // amber / orange
+      debris:  [0.96, 0.44, 0.62],  // rose-magenta (now clearly ≠ payload)
+      unknown: [0.50, 0.74, 0.66],  // teal
+      tba:     [0.45, 0.52, 0.52],
+      ghost:   [0.40, 0.44, 0.52],  // dim grey — already decayed / re-entered (no longer up there)
+      newObj:  [0.55, 1.0, 0.86],   // cyan — launched this day
+      decayed: [1.0, 0.40, 0.22],   // re-entry red — decay reported this day
+      seal:    [0.6, 1.0, 0.84]
+    };
+    // scene geometry: camera orbits the Earth; objects sweep curved arcs around EC.
+    const CAM = { x: 0, y: 0, z: 0 };
+    const EC = { x: 0, y: -420, z: -150 };       // Earth far below → limb sits in the bottom ~20%. |CAM-EC| ≈ 446
+    const ER = 330;                              // Earth visual radius (large → gentle curve corner-to-corner)
+    const BETA0 = -2.36, BETA_SPAN = 3.52;       // arc: behind-the-limb (low) → through the viewer's plane → under & behind
+    const NEARZ = 30, CORRIDOR = 380;            // (used only by the wormhole-tunnel morph)
+
+    // ════════════════════════════════════════════════════════════════════
+    const canvas = document.getElementById("scene");
+    const $ = (id) => document.getElementById(id);
+
+    const DAYMS = 86400000;
+    const pd = (s) => new Date(`${s}T00:00:00Z`);
+    const fmtDate = (s) => new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(pd(s));
+    const fmtNum = (n) => Number(n || 0).toLocaleString("en-US");
+    const isoFor = (i) => new Date(pd(CONFIG.genesis).getTime() + Math.round(i) * DAYMS).toISOString().slice(0, 10);
+    function hashUnit(v) { let h = 2166136261; const s = String(v); for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; }
+    // strong integer hash (good avalanche) for per-object placement — avoids the visible banding/
+    // "objects strung in a line" that FNV-of-a-string produced for sequential indices
+    function rand2(i, salt) { let h = (Math.imul(i, 374761393) + Math.imul(salt, 668265263)) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+
+    let TOTAL = Math.round((pd(CONFIG.latest) - pd(CONFIG.genesis)) / DAYMS);
+    const ledgerByDate = new Map();   // date -> {count, sha(full), bands?, raw}
+    const bandCountsByDate = new Map(); // date -> {leo,meo,geo}      (real, once a day's catalog loads)
+    const typeCountsByDate = new Map(); // date -> {payload,rocket,debris,unknown,tba}  (on-orbit)
+    const orbitByDate = new Map();      // date -> {onOrbit, reentered, total}
+    const deltaByDate = new Map();      // date -> {updated,new,decayed,carried}
+    const attestByDate = new Map();   // date -> {blockHash, contentHash, tdh, attesters}
+    // first4…last4, the way eth hashes/addresses are usually shown (0x-aware)
+    const shortHex = (h) => { if (!h) return "—"; const x = h.startsWith("0x") ? h.slice(2) : h; return (h.startsWith("0x") ? "0x" : "") + x.slice(0, 4) + "…" + x.slice(-4); };
+    const mb = (b) => b ? (b / 1048576).toFixed(1) + " MB" : "—";
+    const titleize = (s) => s ? String(s).replace(/_/g, " ") : "—";
+
+    const state = {
+      cursor: TOTAL, target: TOTAL, shownDay: -1,
+      time: 0, warp: 0, warpBlend: 0, vel: 0, spin: 0,
+      flickVel: 0, timeDir: 1, lastWheel: 0,
+      attested: false, pulseY: 0, pulseStr: 0,
+      maxSpeed: reduced ? 6 : 24, accel: 30,
+      yaw: 0, pitch: 0, yawT: 0, pitchT: 0, wasTraveling: false,
+      pointer: null, loadToken: 0,
+      lens: 0, keys: new Set(), tilt: null,   // tilt = {base:{b,g}} once enabled
+      ethRank: 1, opSource: 0,                // witness settings
+      objects: [], catalogDate: null
+    };
+    const LOOK_YAW = 0.5, LOOK_PITCH = 0.28;   // a few degrees of freedom — the gentle range we like
+
+    // ── three setup ──
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.setSize(innerWidth, innerHeight, false);
+    renderer.setClearColor(0x020506, 1);
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020506, 0.0021);
+    const camera = new THREE.PerspectiveCamera(mobile ? 80 : 72, innerWidth / innerHeight, 0.1, 2000);
+    camera.position.set(CAM.x, CAM.y, CAM.z);
+
+    // ── field: CPU positions → points (dots) + line segments (real motion-blur) ──
+    const O = [];                                  // object render records
+    const pPos = new Float32Array(FIELD * 3), pCol = new Float32Array(FIELD * 3), pAlpha = new Float32Array(FIELD), pSize = new Float32Array(FIELD), pFocus = new Float32Array(FIELD);
+    const lPos = new Float32Array(FIELD * 2 * 3), lCol = new Float32Array(FIELD * 2 * 3);
+
+    const pointGeo = new THREE.BufferGeometry();
+    pointGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
+    pointGeo.setAttribute("color", new THREE.BufferAttribute(pCol, 3));
+    pointGeo.setAttribute("aAlpha", new THREE.BufferAttribute(pAlpha, 1));
+    pointGeo.setAttribute("aSize", new THREE.BufferAttribute(pSize, 1));
+    pointGeo.setAttribute("aFocus", new THREE.BufferAttribute(pFocus, 1));
+    const pointMat = new THREE.ShaderMaterial({
+      transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
+      uniforms: { uPixel: { value: renderer.getPixelRatio() } },
+      vertexShader: `
+        attribute float aAlpha, aSize, aFocus; uniform float uPixel; varying vec3 vColor; varying float vAlpha; varying float vFocus;
+        void main(){
+          vec4 mv = modelViewMatrix * vec4(position,1.0);
+          vec4 clip = projectionMatrix * mv;
+          gl_Position = clip;
+          float dist = max(6.0, -mv.z);
+          // every object starts a pinpoint; it swells as it nears — and far more if it's bearing
+          // down on the CENTRE of view (coming right at you) than if it veers to the edge.
+          vec2 ndc = clip.xy / max(0.0001, clip.w);
+          float central  = 1.0 - smoothstep(0.05, 0.95, length(ndc));   // 1 at screen centre, 0 at the edge
+          float nearness = 1.0 - smoothstep(26.0, 250.0, dist);          // 0 far (pinpoint) … 1 right on top of you
+          float swell    = nearness * central * 4.2;
+          float base     = aSize * (40.0/dist + 0.55) * uPixel;
+          gl_PointSize = clamp(base * (1.0 + swell), 1.0, 19.0);
+          vColor = color; vAlpha = aAlpha; vFocus = aFocus;
+        }`,
+      // near objects render as a crisp, bright, defined disc (looming); far ones stay soft pinpoints
+      fragmentShader: `
+        varying vec3 vColor; varying float vAlpha; varying float vFocus;
+        void main(){ vec2 q = gl_PointCoord - 0.5; float d = length(q); if(d>0.5) discard;
+          float edge = mix(0.03, 0.40, vFocus);              // focus 0 → soft gradient; focus 1 → filled crisp disc
+          float core = smoothstep(0.5, edge, d);
+          float halo = smoothstep(0.5, 0.12, d) * (0.42 - vFocus*0.3);
+          vec3 c = vColor * (0.55 + core*0.82 + vFocus*0.33); // keep brightness off the white-clip so hue survives
+          gl_FragColor = vec4(c, (core + halo) * vAlpha); }`
+    });
+    const points = new THREE.Points(pointGeo, pointMat); points.frustumCulled = false; scene.add(points);
+
+    const lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute("position", new THREE.BufferAttribute(lPos, 3));
+    lineGeo.setAttribute("color", new THREE.BufferAttribute(lCol, 3));
+    const lineMat = new THREE.LineBasicMaterial({ transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true });
+    const lines = new THREE.LineSegments(lineGeo, lineMat); lines.frustumCulled = false; scene.add(lines);
+
+    // Object world position as a function of its along-orbit phase t∈[0,1).
+    // It rides a circular arc of radius o.R about the Earth centre EC, in a plane at azimuth
+    // o.az: it rises from behind the limb (low, far), climbs to graze the camera, and flows
+    // under & behind. During warp this morphs into a radial tunnel around the flight axis.
+    const _v = new THREE.Vector3();
+    function worldPos(o, t, out) {
+      const beta = BETA0 + t * BETA_SPAN;
+      const cb = Math.cos(beta), sb = Math.sin(beta);
+      const yArc = o.R * cb;                       // height along the orbital arc
+      // cross-track tilt (o.cg/o.sg) fans the arcs around the flight axis so they DON'T
+      // converge at the apex — objects rise over the limb across the whole view and pass under.
+      let x = -yArc * o.sg;
+      let y = EC.y + yArc * o.cg;
+      let z = EC.z + o.R * sb;
+      const wb = state.warpBlend;                 // 0 = orbital arcs, 1 = radial wormhole
+      if (wb > 0.001) {
+        const prox = t;
+        const fanT = 0.55 + prox * prox * 3.4;
+        const tx = Math.cos(o.ta) * o.tr * fanT, ty = Math.sin(o.ta) * o.tr * fanT;
+        const tz = NEARZ - (1 - t) * CORRIDOR;
+        x = x * (1 - wb) + tx * wb;
+        y = y * (1 - wb) + (CAM.y + ty) * wb;
+        z = z * (1 - wb) + tz * wb;
+      }
+      // spiral / roll about the flight axis (direction depends on travel direction → 4D feel)
+      const a = state.spin;
+      const dx = x - CAM.x, dy = y - CAM.y;
+      out.set(CAM.x + dx * Math.cos(a) - dy * Math.sin(a), CAM.y + dx * Math.sin(a) + dy * Math.cos(a), z);
+      return out;
+    }
+
+    function assignField(objects) {
+      state.objects = objects;
+      for (let i = 0; i < FIELD; i++) {
+        const src = objects.length ? objects[i % objects.length] : null;
+        const band = src ? src.band : (hashUnit(`b${i}`) < PROP.bands.LEO ? 0 : hashUnit(`b${i}`) < PROP.bands.LEO + PROP.bands.MEO ? 1 : 2);
+        const B = BAND[band];
+        const klass = src ? src.klass : pickClass(i);
+        let baseSize = klass === 0 ? 2.0 : klass === 1 ? 1.9 : klass === 2 ? 1.25 : 1.6;
+        baseSize *= band === 2 ? 1.7 : band === 1 ? 1.4 : 0.95;   // GEO & MEO read larger
+        baseSize *= 0.8 + hashUnit(`z${i}`) * 0.6;
+        const o = O[i] || (O[i] = {});
+        o.band = band;
+        o.R = B.r0 + (B.r1 - B.r0) * rand2(i, 11);            // orbit radius within the shell
+        const g = (rand2(i, 23) - 0.5) * (band === 0 ? 1.5 : 2.1); // cross-track tilt → spread across the view
+        o.cg = Math.cos(g); o.sg = Math.sin(g);
+        o.spd = B.speed * (0.82 + rand2(i, 31) * 0.36);
+        o.phase = rand2(i, 47); o.pt = o.phase % 1;
+        o.ta = rand2(i, 53) * 6.2832; o.tr = 7 + Math.pow(rand2(i, 59), 0.7) * 44; // wormhole angle/radius
+        o.klass = klass; o.status = src ? src.status : "carried"; o.meta = src; o.baseSize = baseSize;
+        o.reentered = !!(src && src.reentered);
+        o.country = src ? (src.country || "—") : "—";
+        o.launchYear = src && src.launch ? parseInt(src.launch.slice(0, 4)) || 0 : 0;
+        o.hasPrev = false;
+      }
+      recolor();
+    }
+    function pickClass(i) { const r = hashUnit(`c${i}`); return r < 0.363 ? 0 : r < 0.46 ? 1 : r < 0.968 ? 2 : r < 0.998 ? 3 : 4; }
+
+    // ── colour lenses ───────────────────────────────────────────────────
+    const LENSES = ["Object type", "Operator", "Launch age", "Status", "Zen"];
+    const TYPE_COLS = [COLORS.payload, COLORS.rocket, COLORS.debris, COLORS.unknown, COLORS.tba];
+    const OPERATORS = [
+      { code: "US",  name: "United States",  col: [0.36, 0.55, 1.0] },
+      { code: "CIS", name: "Russia / CIS",   col: [1.0, 0.40, 0.36] },
+      { code: "PRC", name: "China",          col: [1.0, 0.80, 0.28] },
+      { code: "ESA", name: "Europe / ESA",   col: [0.36, 0.95, 0.82] },
+      { code: "JPN", name: "Japan",          col: [1.0, 0.55, 0.85] },
+      { code: "IND", name: "India",          col: [0.55, 0.90, 0.45] },
+      { code: "FR",  name: "France",         col: [0.62, 0.72, 1.0] },
+      { code: "UK",  name: "United Kingdom", col: [0.80, 0.60, 1.0] }
+    ];
+    const OP_MAP = Object.fromEntries(OPERATORS.map((o) => [o.code, o.col]));
+    const OTHER_COL = [0.52, 0.54, 0.58], STATUS_ONORBIT = [0.55, 0.70, 1.0], STATUS_REENT = [0.95, 0.42, 0.40];
+    function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+    function ageColor(year) {
+      if (!year) return OTHER_COL;
+      const t = Math.max(0, Math.min(1, (year - 1958) / 68));   // 1958 → 2026
+      return t < 0.5 ? lerp3([0.42, 0.30, 0.85], [0.25, 0.80, 0.92], t * 2)   // violet → cyan
+                     : lerp3([0.25, 0.80, 0.92], [1.0, 0.82, 0.40], (t - 0.5) * 2); // cyan → gold
+    }
+    function recolor() {
+      const lens = state.lens;
+      for (let i = 0; i < FIELD; i++) {
+        const o = O[i]; if (!o) continue;
+        const re = o.reentered;
+        let col, size = o.baseSize, aMul;
+        if (lens === 1) {                 // operator
+          col = re ? COLORS.ghost : (OP_MAP[o.country] || OTHER_COL); aMul = re ? 0.3 : 1;
+        } else if (lens === 2) {          // launch age
+          col = re ? COLORS.ghost : ageColor(o.launchYear); aMul = re ? 0.3 : 1;
+        } else if (lens === 3) {          // status
+          if (o.status === "new") { col = COLORS.newObj; size = Math.max(size, 3.2); aMul = 1.4; }
+          else if (o.status === "decayed") { col = COLORS.decayed; size = Math.max(size, 2.9); aMul = 1.4; }
+          else if (re) { col = STATUS_REENT; aMul = 0.5; }   // came down — shown red (not hidden)
+          else { col = STATUS_ONORBIT; aMul = 1; }            // still up there
+        } else {                          // object type (default + zen)
+          col = TYPE_COLS[o.klass]; aMul = o.klass === 2 ? 0.74 : 1.0;
+          if (o.status === "new") { col = COLORS.newObj; size = Math.max(size, 3.2); aMul = 1.4; }
+          else if (o.status === "decayed") { col = COLORS.decayed; size = Math.max(size, 2.9); aMul = 1.4; }
+          else if (re) { col = COLORS.ghost; size *= 0.8; aMul = 0.32; }
+        }
+        if (o.band === 1 && !re) aMul *= 1.15;   // MEO pops at eye level
+        o.col = col; o.size = size; o.aMul = aMul;
+      }
+    }
+
+    function updateField(dt) {
+      const warpC = Math.min(1, state.warp);
+      const flow = 20.8 + state.warp * 760 * state.timeDir;   // ambient drift at 80%; backward time reverses the stream
+      const twBase = state.time * 1.4;
+      const showLines = state.warp > 0.02; lines.visible = showLines;   // streaks only during travel
+      const cpx = camera.position.x, cpy = camera.position.y, cpz = camera.position.z;
+      const fwd = (state.timeDir + 1) * 0.5;                 // 0 = receding (back), 1 = approaching (forward)
+      for (let i = 0; i < FIELD; i++) {
+        const o = O[i]; if (!o) continue;
+        o.phase += o.spd * flow * 0.0016 * dt;
+        const t = o.phase - Math.floor(o.phase);
+        worldPos(o, t, _v);
+        const i3 = i * 3;
+        pPos[i3] = _v.x; pPos[i3 + 1] = _v.y; pPos[i3 + 2] = _v.z;
+        const ddx = _v.x - cpx, ddy = _v.y - cpy, ddz = _v.z - cpz;
+        const dist = Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
+        const fadeBehind = 1 - smooth(6, 46, ddz);          // fade once it slips behind the camera
+        const fadeFar = 1 - smooth(560, 780, dist);          // fade into the deep distance
+        const focus = 1 - smooth(32, 170, dist);             // near → crisp point, far → soft glow
+        const tw = 0.72 + 0.28 * Math.sin(twBase + o.size * 11.0 + i);
+        pAlpha[i] = Math.max(0, fadeBehind * fadeFar * tw * o.aMul * (1 - 0.5 * warpC));
+        pSize[i] = o.size * (1 + warpC * 0.4);
+        pFocus[i] = focus;
+        pCol[i3] = o.col[0]; pCol[i3 + 1] = o.col[1]; pCol[i3 + 2] = o.col[2];
+        if (state.pulseStr > 0.01) {                 // attestation wavefront washes objects cyan as it passes
+          const dy = Math.abs(_v.y - state.pulseY);
+          if (dy < 7) { const bb = (1 - dy / 7) * state.pulseStr * 0.9;
+            pCol[i3] += (0.6 - pCol[i3]) * bb; pCol[i3 + 1] += (1.0 - pCol[i3 + 1]) * bb; pCol[i3 + 2] += (0.84 - pCol[i3 + 2]) * bb;
+            pAlpha[i] = Math.min(1, pAlpha[i] + bb * 0.5); }
+        }
+        // motion-blur line: previous world pos → current (real displacement = streak length)
+        if (showLines) {
+          const v0 = i * 6;
+          if (o.hasPrev && Math.abs(t - o.pt) < 0.5) {
+            lPos[v0] = o.px; lPos[v0 + 1] = o.py; lPos[v0 + 2] = o.pz;
+            lPos[v0 + 3] = _v.x; lPos[v0 + 4] = _v.y; lPos[v0 + 5] = _v.z;
+          } else { // wrapped or first frame → no streak
+            lPos[v0] = _v.x; lPos[v0 + 1] = _v.y; lPos[v0 + 2] = _v.z;
+            lPos[v0 + 3] = _v.x; lPos[v0 + 4] = _v.y; lPos[v0 + 5] = _v.z;
+          }
+          const lb = warpC * fadeFar;
+          // forward in time → blue-white (approach / blue-shift); backward → amber (recede / red-shift)
+          const cr = 1.0 - 0.32 * fwd, cg = 0.7 + 0.1 * fwd, cb = 0.42 + 0.58 * fwd;
+          lCol[v0] = lCol[v0 + 1] = lCol[v0 + 2] = 0;             // tail dark
+          lCol[v0 + 3] = cr * lb; lCol[v0 + 4] = cg * lb; lCol[v0 + 5] = cb * lb; // head bright
+        }
+        o.px = _v.x; o.py = _v.y; o.pz = _v.z; o.pt = t; o.hasPrev = true;
+      }
+      pointGeo.attributes.position.needsUpdate = true;
+      pointGeo.attributes.color.needsUpdate = true;
+      pointGeo.attributes.aAlpha.needsUpdate = true;
+      pointGeo.attributes.aSize.needsUpdate = true;
+      pointGeo.attributes.aFocus.needsUpdate = true;
+      if (showLines) { lineGeo.attributes.position.needsUpdate = true; lineGeo.attributes.color.needsUpdate = true; }
+    }
+    function smooth(a, b, x) { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
+
+    // ── Earth: a dark body (occludes far-low objects so they rise from behind the limb) wrapped
+    //    in a soft pale-blue atmosphere whose limb curves gently across the bottom of the view ──
+    function addEarth() {
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(ER, 180, 90),
+        new THREE.ShaderMaterial({
+          vertexShader: `varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} `,
+          fragmentShader: `varying vec3 vN; void main(){
+            float up = clamp(dot(vN, normalize(vec3(0.0,1.0,0.35))), 0.0, 1.0);
+            vec3 col = vec3(0.006,0.009,0.020) + vec3(0.035,0.07,0.17)*pow(up,1.8);
+            gl_FragColor = vec4(col, 1.0);} `
+        }));
+      earth.position.set(EC.x, EC.y, EC.z); scene.add(earth);
+      // Atmospheric glow computed PER-PIXEL from the view ray's grazing altitude → a true
+      // vertical GRADIENT: brightest where the line of sight skims the surface, fading smoothly to
+      // nothing by ~the edge of space. (A thin shell mesh can't do this — all its pixels sit at one
+      // altitude, so it can only ever be a flat band. This integrates along each sightline instead.)
+      const ATM_H = 7.0;                                   // gradient height in scene units (~135 km; bulk fades by ~60 mi)
+      const atmo = new THREE.Mesh(new THREE.SphereGeometry(1000, 48, 32),
+        new THREE.ShaderMaterial({
+          transparent: true, depthWrite: false, depthTest: true, side: THREE.BackSide, blending: THREE.AdditiveBlending,
+          uniforms: { uCam: { value: new THREE.Vector3() }, uEC: { value: new THREE.Vector3(EC.x, EC.y, EC.z) }, uER: { value: ER }, uTop: { value: ER + ATM_H } },
+          vertexShader: `varying vec3 vW; void main(){ vW = (modelMatrix*vec4(position,1.0)).xyz; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0);} `,
+          fragmentShader: `
+            uniform vec3 uCam, uEC; uniform float uER, uTop; varying vec3 vW;
+            void main(){
+              vec3 rd = normalize(vW - uCam);
+              vec3 oc = uEC - uCam;
+              float tca = dot(oc, rd);
+              float b = sqrt(max(0.0, dot(oc,oc) - tca*tca));      // closest approach of the sightline to Earth's centre
+              float g = smoothstep(uTop, uER, b) * step(0.0, tca);  // 1 grazing the surface → 0 by the top of atmosphere
+              g = pow(g, 1.4);
+              vec3 col = mix(vec3(0.28,0.48,0.95), vec3(0.64,0.82,1.0), g);
+              gl_FragColor = vec4(col, g * 0.9);
+            }`
+        }));
+      atmo.frustumCulled = false;
+      atmo.onBeforeRender = () => atmo.material.uniforms.uCam.value.copy(camera.position);
+      scene.add(atmo);
+    }
+    function addStars() {
+      const n = mobile ? 1400 : 2800; const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { const r = 500 + hashUnit(`st${i}`) * 700, th = hashUnit(`sa${i}`) * 6.283, ph = (hashUnit(`sp${i}`) - 0.3) * 2.4;
+        pos[i*3]=Math.cos(th)*Math.cos(ph)*r; pos[i*3+1]=Math.sin(ph)*r*0.7+120; pos[i*3+2]=Math.sin(th)*Math.cos(ph)*r-200;
+        const s = 0.4 + hashUnit(`sc${i}`) * 0.6; col[i*3]=s*0.72; col[i*3+1]=s*0.85; col[i*3+2]=s; }
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+      scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 1.0, vertexColors: true, transparent: true, opacity: 0.5, sizeAttenuation: true, depthWrite: false })));
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // DATA — indexer + ledger on boot; download/unzip the day's archive on stop
+    // ════════════════════════════════════════════════════════════════════
+    async function fetchJson(url, optional = false) {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) { if (optional && r.status === 404) return null; throw new Error(`${r.status} ${url}`); }
+      return r.json();
+    }
+    async function boot() {
+      try {
+        const ledger = await fetchJson(`https://raw.githubusercontent.com/${CONFIG.repo}/${CONFIG.branch}/ledger.json`);
+        if (Array.isArray(ledger) && ledger.length) {
+          // forward-compatible: if the ledger/index ever carries per-day band counts, use them directly
+          ledger.forEach((e) => ledgerByDate.set(e.date, { count: e.object_count, sha: String(e.sha256 || ""), bands: e.band_counts || e.bands || null, raw: e }));
+          CONFIG.genesis = ledger[0].date; CONFIG.latest = ledger[ledger.length - 1].date;
+          TOTAL = Math.round((pd(CONFIG.latest) - pd(CONFIG.genesis)) / DAYMS);
+          state.cursor = TOTAL; state.target = TOTAL; state.shownDay = -1;
+        }
+      } catch (e) { console.warn("ledger unavailable, using built-ins", e); }
+      await fetchIndex();
+      // start the field immediately (deterministic, real proportions) then load the latest day's real catalog
+      assignField([]);
+      showDay(isoFor(state.cursor));
+      loadDayCatalog(isoFor(state.cursor));
+    }
+
+    function bandFromMM(mm) { const v = Number(mm); if (Number.isFinite(v) && v > 0) { if (v >= 0.9 && v <= 1.1) return 2; if (v >= 11.0) return 0; return 1; } return 1; }
+    function klassFromType(t) { t = String(t || "").toUpperCase(); return t.includes("DEBRIS") ? 2 : t.includes("ROCKET") ? 1 : t.includes("PAYLOAD") ? 0 : 3; }
+
+    async function gunzip(buf) { const s = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip")); return new Response(s).arrayBuffer(); }
+    function untar(buf, suffix) {
+      const b = new Uint8Array(buf), dec = new TextDecoder(); let off = 0;
+      while (off + 512 <= b.length) {
+        const h = b.subarray(off, off + 512); if (h.every((v) => v === 0)) break;
+        const name = dec.decode(h.subarray(0, 100)).replace(/\0.*$/, "");
+        const size = parseInt(dec.decode(h.subarray(124, 136)).replace(/\0.*$/, "").trim() || "0", 8);
+        off += 512; if (name.endsWith(suffix)) return b.slice(off, off + size).buffer; off += Math.ceil(size / 512) * 512;
+      }
+      return null;
+    }
+    const catalogCache = new Map();
+    async function loadCatalog(date) {
+      if (catalogCache.has(date)) return catalogCache.get(date);
+      const path = date.replaceAll("-", "/");
+      const base = `https://raw.githubusercontent.com/${CONFIG.repo}/${CONFIG.branch}/data/${path}`;
+      const [storage, delta] = await Promise.all([fetchJson(`${base}/storage.json`, true), fetchJson(`${base}/delta.json`, true)]);
+      const dest = storage?.destinations || {};
+      // Prefer Arweave (CORS-friendly, permanent). Only fall back to the GitHub release if there
+      // is NO arweave mirror at all — GitHub release downloads CORS-fail in the browser and would
+      // spam the console with errors, so we don't attempt them when arweave exists.
+      const urls = [];
+      if (dest.arweave?.transaction_url) urls.push(dest.arweave.transaction_url);
+      else if (dest.github_release?.asset_url) urls.push(dest.github_release.asset_url);
+      let ab = null;
+      for (const u of urls) { try { const r = await fetch(u, { cache: "force-cache" }); if (r.ok) { ab = await r.arrayBuffer(); break; } } catch (e) { /* try next mirror */ } }
+      if (!ab) throw new Error("no bundle mirror reachable");
+      const tar = await gunzip(ab);
+      const cgz = untar(tar, "catalog.json.gz"); if (!cgz) throw new Error("catalog missing");
+      const cat = JSON.parse(new TextDecoder().decode(await gunzip(cgz)));
+      const list = Array.isArray(cat) ? cat : cat?.data || [];
+      const newIds = new Set((delta?.new_norad_cat_ids || []).map(String));
+      const objs = list.map((row) => {
+        const id = String(row.NORAD_CAT_ID ?? row.norad_cat_id ?? "");
+        const decay = String(row.DECAY_DATE || row.decay_date || "").slice(0, 10);
+        const reentered = !!decay && decay <= date;                 // already came down (no longer up there)
+        const status = newIds.has(id) ? "new" : decay === date ? "decayed" : "carried";
+        return { id, name: row.OBJECT_NAME || `NORAD ${id}`, type: row.OBJECT_TYPE || "UNKNOWN",
+          band: bandFromMM(row.MEAN_MOTION), klass: klassFromType(row.OBJECT_TYPE), status, reentered,
+          country: row.COUNTRY_CODE || "—", launch: String(row.LAUNCH_DATE || "").slice(0, 10), decay };
+      });
+      // breakdowns of WHAT'S STILL UP THERE (on-orbit); decayed objects are recorded but counted apart
+      const bc = { leo: 0, meo: 0, geo: 0 };
+      const tc = { payload: 0, rocket: 0, debris: 0, unknown: 0, tba: 0 };
+      const TN = ["payload", "rocket", "debris", "unknown", "tba"];
+      let onOrbit = 0, reenteredTot = 0, launched = 0, decToday = 0;
+      for (const o of objs) {
+        if (o.status === "decayed") decToday++;
+        if (o.reentered) { reenteredTot++; continue; }              // not part of "what's up there"
+        onOrbit++;
+        bc[o.band === 0 ? "leo" : o.band === 1 ? "meo" : "geo"]++;
+        tc[TN[o.klass]]++;
+        if (o.status === "new") launched++;
+      }
+      bandCountsByDate.set(date, bc);
+      typeCountsByDate.set(date, tc);
+      orbitByDate.set(date, { onOrbit, reentered: reenteredTot, total: objs.length });
+      deltaByDate.set(date, {
+        updated: delta?.deduped_update_count ?? delta?.updated_object_count ?? 0,
+        new: delta?.new_object_count ?? launched, decayed: decToday, carried: delta?.carried_forward_count ?? 0
+      });
+      const sampled = sampleByBand(objs, FIELD, date);
+      catalogCache.set(date, sampled);
+      return sampled;
+    }
+    function sampleByBand(objs, limit, date) {
+      if (objs.length <= limit) return objs;
+      const groups = [[], [], []]; objs.forEach((o) => groups[o.band].push(o));
+      const quotas = groups.map((g) => Math.floor(limit * g.length / objs.length));
+      let s = quotas.reduce((a, b) => a + b, 0); let bi = 0; while (s < limit) { quotas[bi % 3]++; s++; bi++; }
+      return groups.flatMap((g, b) => {
+        const rare = g.filter((o) => o.status === "new" || o.status === "decayed");
+        const rest = g.filter((o) => o.status === "carried").sort((a, x) => hashUnit(`${a.id}:${date}`) - hashUnit(`${x.id}:${date}`));
+        return rare.concat(rest).slice(0, quotas[b]);
+      });
+    }
+
+    // ── HUD ──
+    function setStatus(type, label) { $("status-light").className = `status-light ${type === "ready" || type === "attested" ? "" : type}`.trim(); $("status-label").textContent = label; }
+    function recordMeta(date) {
+      const led = ledgerByDate.get(date), raw = led ? led.raw : null;
+      const count = led ? led.count : Math.round(67000 + hashUnit(date) * 1500);
+      const sha = led ? led.sha : (Math.floor(hashUnit(date) * 0xffffffff).toString(16).padStart(8, "0"));
+      // Prefer aggregates carried in the INDEX (instant, no catalog needed). Fall back to the
+      // values computed from the full catalog on stop, then to a proportional estimate.
+      const bands = bandCountsByDate.get(date) || (led && led.bands) || (raw && raw.band_counts) || null;
+      const types = typeCountsByDate.get(date) || (raw && raw.type_counts) || null;
+      const delta = deltaByDate.get(date) || (raw && (raw.delta || raw.delta_summary)) || null;
+      const orbit = orbitByDate.get(date) || (raw && raw.on_orbit_count != null
+        ? { onOrbit: raw.on_orbit_count, reentered: raw.reentered_count ?? raw.decayed_count ?? 0, total: count } : null);
+      return { date, count, sha, bands, types, delta, orbit, raw, verified: !!led, attest: attestByDate.get(date) || null };
+    }
+    function applyHud(rec) {
+      const attest = rec.attest && (rec.attest.tdh || 0) >= state.ethRank ? rec.attest : null; // honour the ETH-rank threshold
+      state.attested = !!attest;
+      $("date").textContent = fmtDate(rec.date);
+      const day = Math.round(state.cursor) + 1;
+      $("date-index").textContent = `Day ${String(day).padStart(3, "0")} / ${TOTAL + 1} witnessed days`;
+      // ── objects prism ── (what's still up there vs the full record)
+      const orb = rec.orbit;
+      $("onorbit-count").textContent = orb ? fmtNum(orb.onOrbit) : fmtNum(rec.count);
+      $("tracked-count").textContent = fmtNum(rec.count);
+      $("reentered-count").textContent = orb ? fmtNum(orb.reentered) : "—";
+      const b = rec.bands; // real on-orbit band counts when known, else proportional estimate
+      $("leo-count").textContent = fmtNum(b ? b.leo : Math.round(rec.count * PROP.bands.LEO));
+      $("meo-count").textContent = fmtNum(b ? b.meo : Math.round(rec.count * PROP.bands.MEO));
+      $("geo-count").textContent = fmtNum(b ? b.geo : Math.round(rec.count * PROP.bands.GEO));
+      const t = rec.types;
+      $("t-pay").textContent = t ? fmtNum(t.payload) : "—";
+      $("t-rok").textContent = t ? fmtNum(t.rocket) : "—";
+      $("t-deb").textContent = t ? fmtNum(t.debris) : "—";
+      $("t-unk").textContent = t ? fmtNum(t.unknown + t.tba) : "—";
+      const d = rec.delta;
+      $("d-upd").textContent = d ? fmtNum(d.updated) : "—";
+      $("d-new").textContent = d ? fmtNum(d.new) : "—";
+      $("d-dec").textContent = d ? fmtNum(d.decayed) : "—";
+      // ── fingerprint prism ──
+      $("fingerprint").textContent = shortHex(rec.sha);
+      const r = rec.raw;
+      $("fp-prov").textContent = r ? titleize(r.provenance || r.query_strategy) : "—";
+      $("fp-src").textContent = r ? (r.source || "space-track.org") : "—";
+      $("fp-size").textContent = r ? mb(r.compressed_bytes) : "—";
+      $("fp-fmt").textContent = r ? `${r.format || "OMM/JSON"} · gzip` : "—";
+      if (attest) { $("fp-block").textContent = shortHex(attest.blockHash); $("fp-blocknote").textContent = `Ethereum · TDH ${attest.tdh}`; }
+      else { $("fp-block").textContent = "—"; $("fp-blocknote").textContent = "awaiting attestation"; }
+      // ── attestation (one place: the witness panel + the eyebrow flag) ──
+      const es = $("record-state");
+      if (attest) {
+        es.textContent = "Publicly attested"; es.classList.add("attested");
+        $("witness-state").textContent = `Agreement · TDH ${attest.tdh} · ${attest.attesters} node${attest.attesters === 1 ? "" : "s"}`;
+        $("witness-state").classList.add("attested");
+        $("witness-hash").textContent = `block ${shortHex(attest.blockHash)}`;
+      } else {
+        es.textContent = "Archive record"; es.classList.remove("attested");
+        $("witness-state").textContent = rec.verified ? "Snapshot verified · not yet attested" : "Not yet attested";
+        $("witness-state").classList.remove("attested"); $("witness-hash").innerHTML = "&nbsp;";
+      }
+      $("timebar-fill").style.width = `${(TOTAL ? Math.round(state.cursor) / TOTAL : 1) * 100}%`;
+    }
+
+    function showDay(date) { applyHud(recordMeta(date)); }   // cheap HUD tick while travelling
+    async function loadDayCatalog(date) {                     // heavy archive download — only when stopped
+      if (!CONFIG.autoLoadCatalog || state.catalogDate === date) return;
+      const token = ++state.loadToken;
+      setStatus("loading", "Downloading archive");
+      try {
+        const objs = await loadCatalog(date);
+        if (token !== state.loadToken) return;
+        state.catalogDate = date; assignField(objs);
+        setStatus("ready", "Live record"); applyHud(recordMeta(date));
+      } catch (e) {
+        if (token !== state.loadToken) return;
+        console.info("archive bundle not reachable; showing representative field", date);
+        setStatus("ready", "Live record");
+      }
+    }
+
+    // ── travel ──
+    function setTarget(i) { state.target = Math.max(0, Math.min(TOTAL, i)); state.flickVel = 0; $("jump-date").textContent = isoFor(Math.round(state.target)).replaceAll("-", "."); hideHint(); }
+    let hintGone = false; function hideHint() { if (!hintGone) { hintGone = true; const h = $("hint"); if (h) h.classList.add("gone"); } }
+
+    const clampLook = () => { state.yawT = Math.max(-LOOK_YAW, Math.min(LOOK_YAW, state.yawT)); state.pitchT = Math.max(-LOOK_PITCH, Math.min(LOOK_PITCH, state.pitchT)); };
+
+    // ── view modes / colour lenses: swipe left/right + spacebar ──
+    let modeAt = 0;
+    function cycleMode(dir) { const now = performance.now(); if (now - modeAt < 320) return; modeAt = now; state.lens = (state.lens + dir + LENSES.length) % LENSES.length; applyMode(); }
+    function applyMode() { document.body.classList.toggle("zen", state.lens === 4); recolor(); populateLegend(); flashMode(LENSES[state.lens]); }
+    function flashMode(name) { const t = $("mode-toast"); t.textContent = name; t.classList.add("show"); clearTimeout(flashMode.t); flashMode.t = setTimeout(() => t.classList.remove("show"), 1100); }
+    const rgbStr = (c) => `rgb(${Math.round(c[0]*255)},${Math.round(c[1]*255)},${Math.round(c[2]*255)})`;
+    function populateLegend() {
+      const el = $("lens-legend"), lens = state.lens;
+      if (lens === 4) { el.innerHTML = ""; return; }
+      const sw = (c, label) => `<div class="lg-row"><i style="background:${rgbStr(c)};color:${rgbStr(c)}"></i>${label}</div>`;
+      let rows = "";
+      if (lens === 0) rows = sw(TYPE_COLS[0], "Payload") + sw(TYPE_COLS[1], "Rocket body") + sw(TYPE_COLS[2], "Debris") + sw(TYPE_COLS[3], "Unknown");
+      else if (lens === 1) rows = OPERATORS.map((o) => sw(o.col, o.name)).join("") + sw(OTHER_COL, "Other");
+      else if (lens === 2) rows = `<div class="lg-grad"></div><div class="lg-years"><span>1958</span><span>2026</span></div>`;
+      else if (lens === 3) rows = sw(STATUS_ONORBIT, "On orbit") + sw(STATUS_REENT, "Re-entered") + sw(COLORS.newObj, "Launched") + sw(COLORS.decayed, "Decayed today");
+      el.innerHTML = `<div class="lg-title">${LENSES[lens]}</div>${rows}`;
+    }
+
+    // ── scroll: vertical = time (page-per-day momentum), horizontal = cycle lens ──
+    let wheelAccum = 0, wheelAccumX = 0;
+    const WHEEL_NOTCH = 95, FLICK_IMPULSE = 3.4, FLICK_MAX = 22;
+    addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {            // horizontal → lens
+        wheelAccumX += e.deltaX;
+        while (wheelAccumX >= 90) { wheelAccumX -= 90; cycleMode(1); }
+        while (wheelAccumX <= -90) { wheelAccumX += 90; cycleMode(-1); }
+        return;
+      }
+      wheelAccum += e.deltaY; state.lastWheel = performance.now();
+      while (wheelAccum >= WHEEL_NOTCH) { wheelAccum -= WHEEL_NOTCH; addFlick(-1); }
+      while (wheelAccum <= -WHEEL_NOTCH) { wheelAccum += WHEEL_NOTCH; addFlick(1); }
+    }, { passive: false });
+    function addFlick(dir) { state.flickVel = Math.max(-FLICK_MAX, Math.min(FLICK_MAX, state.flickVel + dir * FLICK_IMPULSE)); hideHint(); }
+
+    // ── keyboard: arrows + WASD look; space cycles lens; Home/End jump the timeline ──
+    const LOOK_KEYS = new Set(["arrowleft", "arrowright", "arrowup", "arrowdown", "w", "a", "s", "d"]);
+    addEventListener("keydown", (e) => {
+      if (e.target && /^(input|textarea)$/i.test(e.target.tagName)) return;
+      const k = e.key.toLowerCase();
+      if (LOOK_KEYS.has(k)) { state.keys.add(k); e.preventDefault(); }
+      else if (k === " " || k === "spacebar") { cycleMode(1); e.preventDefault(); }
+      else if (k === "home") setTarget(0); else if (k === "end") setTarget(TOTAL);
+    });
+    addEventListener("keyup", (e) => state.keys.delete(e.key.toLowerCase()));
+    addEventListener("blur", () => state.keys.clear());
+
+    // ── pointer: drag = look (a few degrees); touch vertical = time, horizontal = lens; tap = inspect ──
+    canvas.addEventListener("pointerdown", (e) => { state.pointer = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t: performance.now(), type: e.pointerType, accX: 0, accY: 0 }; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener("pointermove", (e) => {
+      const p = state.pointer; if (!p) return;
+      const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+      if (p.type === "touch") {                                  // touch: vertical = time, horizontal = lens
+        p.accY += dy; p.accX += dx; state.lastWheel = performance.now();
+        while (p.accY >= 34) { p.accY -= 34; addFlick(-1); }
+        while (p.accY <= -34) { p.accY += 34; addFlick(1); }
+        while (p.accX >= 90) { p.accX -= 90; cycleMode(1); }
+        while (p.accX <= -90) { p.accX += 90; cycleMode(-1); }
+      } else {                                                   // mouse drag = look around
+        state.yawT += dx * 0.0016; state.pitchT -= dy * 0.0013; clampLook();
+      }
+    });
+    function endPointer(e) {
+      const p = state.pointer; state.pointer = null; if (!p) return;
+      const moved = Math.hypot(e.clientX - p.x0, e.clientY - p.y0), held = performance.now() - p.t;
+      if (moved < 9 && held < 500) inspectAt(e.clientX, e.clientY);
+    }
+    canvas.addEventListener("pointerup", endPointer);
+    canvas.addEventListener("pointercancel", () => { state.pointer = null; });
+
+    // ── tilt to look (mobile) ──
+    function enableTilt() {
+      addEventListener("deviceorientation", (e) => {
+        if (e.beta == null && e.gamma == null) return;
+        if (!state.tilt) state.tilt = { b: e.beta || 0, g: e.gamma || 0 };   // capture the neutral hold
+        state.yawT = Math.max(-LOOK_YAW, Math.min(LOOK_YAW, ((e.gamma || 0) - state.tilt.g) * 0.014));
+        state.pitchT = Math.max(-LOOK_PITCH, Math.min(LOOK_PITCH, -((e.beta || 0) - state.tilt.b) * 0.014));
+      }, true);
+    }
+    (function setupTilt() {
+      const D = window.DeviceOrientationEvent;
+      if (D && typeof D.requestPermission === "function") {       // iOS — needs a tap
+        const chip = $("tilt-chip"); chip.style.display = "block";
+        chip.addEventListener("click", () => D.requestPermission().then((s) => { if (s === "granted") { enableTilt(); chip.classList.add("gone"); } }).catch(() => {}));
+      } else if (D) { enableTilt(); }                             // Android (desktop simply never fires)
+    })();
+
+    // ── download current frame, settings panel ──
+    $("download-btn").addEventListener("click", () => {
+      renderer.render(scene, camera);                            // ensure latest frame in the buffer
+      const a = document.createElement("a");
+      a.download = `rso-${isoFor(Math.round(state.cursor))}.png`;
+      a.href = renderer.domElement.toDataURL("image/png"); a.click();
+    });
+    const settings = $("settings");
+    $("settings-btn").addEventListener("click", () => settings.classList.add("open"));
+    $("settings-close").addEventListener("click", () => settings.classList.remove("open"));
+    settings.addEventListener("click", (e) => { if (e.target === settings) settings.classList.remove("open"); });
+    const OP_SOURCES = [
+      { id: "ompub/rso",  repo: "OMPub/RSO",  branch: "main" },
+      { id: "brookr/rso", repo: "brookr/RSO", branch: "main" },
+      { id: "ompub/rso (mirror)", repo: "OMPub/RSO", branch: "main" }
+    ];
+    // read the attestation index from the chosen operator's node — switching source is the
+    // decentralization knob: a node that hasn't published shows "not yet attested", and so on.
+    async function fetchIndex() {
+      const src = OP_SOURCES[state.opSource]; attestByDate.clear();
+      try {
+        const idx = await fetchJson(`https://raw.githubusercontent.com/${src.repo}/${src.branch}/indexer/generated/sepolia/rso-docchain-index.json`);
+        for (const [ref, rec] of Object.entries(idx.docRefs || {})) {
+          const groups = rec.agreementGroups || [];
+          const strongest = groups.slice().sort((a, b) => (b.combinedSupportTdh || 0) - (a.combinedSupportTdh || 0))[0];
+          if (strongest) attestByDate.set(rec.date, { blockHash: (rec.blockHashes || [strongest.blockHash])[0], tdh: strongest.combinedSupportTdh || 0, attesters: (strongest.attesters || []).length });
+        }
+      } catch (e) { console.info("index source unreachable:", src.id); }
+      if (state.shownDay >= 0) applyHud(recordMeta(isoFor(state.shownDay)));
+    }
+    function applyEthRank() { $("set-eth-val").textContent = `≥ ${state.ethRank} TDH`; if (state.shownDay >= 0) applyHud(recordMeta(isoFor(state.shownDay))); }
+    function applyOpSource() { $("set-op-val").textContent = OP_SOURCES[state.opSource].id; }
+    $("set-eth").addEventListener("input", (e) => { state.ethRank = +e.target.value; applyEthRank(); persistSettings(); });
+    $("set-op").addEventListener("input", (e) => { state.opSource = +e.target.value; applyOpSource(); fetchIndex(); persistSettings(); });
+    function persistSettings() {
+      if (!$("set-persist").checked) return;
+      try { localStorage.setItem("rso-settings", JSON.stringify({ ethRank: state.ethRank, opSource: state.opSource, lens: state.lens })); } catch (e) {}
+    }
+    function loadSettings() {
+      try {
+        const s = JSON.parse(localStorage.getItem("rso-settings") || "null");
+        if (s) { state.ethRank = s.ethRank ?? 1; state.opSource = s.opSource ?? 0; state.lens = s.lens ?? 0;
+          $("set-eth").value = state.ethRank; $("set-op").value = state.opSource; }
+      } catch (e) {}
+    }
+
+    // ── click to inspect: nearest projected object to the tap ──
+    const _proj = new THREE.Vector3();
+    function inspectAt(cx, cy) {
+      let best = -1, bestD = 28 * 28;
+      for (let i = 0; i < FIELD; i++) {
+        const o = O[i]; if (!o || pAlpha[i] < 0.08) continue;
+        _proj.set(pPos[i * 3], pPos[i * 3 + 1], pPos[i * 3 + 2]).project(camera);
+        if (_proj.z > 1) continue;
+        const sx = (_proj.x * 0.5 + 0.5) * innerWidth, sy = (-_proj.y * 0.5 + 0.5) * innerHeight;
+        const d = (sx - cx) * (sx - cx) + (sy - cy) * (sy - cy);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      if (best < 0) { $("inspector").classList.remove("visible"); return; }
+      const o = O[best], m = o.meta;
+      const bandName = BAND[o.band].name;
+      $("insp-label").textContent = o.status === "new" ? "Launched this day" : o.status === "decayed" ? "Decay reported" : "Tracked object";
+      $("insp-name").textContent = m ? m.name : "Archive object";
+      $("insp-meta").textContent = m
+        ? `NORAD ${m.id} · ${bandName} · ${m.type}${m.country && m.country !== "—" ? " · " + m.country : ""}${m.launch ? " · ↑" + m.launch : ""}`
+        : `${bandName} · ${["payload", "rocket body", "debris", "unknown", "tba"][pickClass(best)]}`;
+      $("inspector").classList.add("visible");
+      clearTimeout(inspectAt.timer); inspectAt.timer = setTimeout(() => $("inspector").classList.remove("visible"), 5200);
+    }
+
+    // ── loop ──
+    function animate(now) {
+      const dt = Math.min(0.05, (now - (animate.last || now)) / 1000); animate.last = now; state.time += dt;
+
+      // momentum scrubbing: flick velocity integrates into the (float) day target, then snaps to a page
+      state.target += state.flickVel * dt;
+      state.flickVel *= Math.exp(-dt * 3.4);
+      const idle = performance.now() - state.lastWheel > 150;
+      if (idle && Math.abs(state.flickVel) < 0.4) { state.target += (Math.round(state.target) - state.target) * Math.min(1, dt * 3); state.flickVel = 0; }
+      state.target = Math.max(0, Math.min(TOTAL, state.target));
+      $("jump-date").textContent = isoFor(Math.round(state.target)).replaceAll("-", ".");
+
+      // velocity-slew the cursor toward the target day
+      const dist = state.target - state.cursor, adist = Math.abs(dist), dir = Math.sign(dist);
+      const eIn = Math.min(1, adist / 2.6), cruise = Math.min(state.maxSpeed, adist * 2.6 + 0.5) * eIn, acc = state.accel * dt;
+      state.vel += Math.max(-acc, Math.min(acc, dir * cruise - state.vel));
+      state.cursor += state.vel * dt;
+      if (adist < 0.02 && Math.abs(state.vel) < 0.04) { state.cursor = state.target; state.vel = 0; }
+      const speed = Math.abs(state.vel), traveling = adist > 0.03 || speed > 0.05;
+
+      // travel direction → the "4D" feel (smoothed; holds last direction at rest)
+      const dirTarget = window.__HOLD_DIR__ != null ? window.__HOLD_DIR__ : (state.vel > 0.06 ? 1 : state.vel < -0.06 ? -1 : state.timeDir);
+      state.timeDir += (dirTarget - state.timeDir) * Math.min(1, dt * 3);
+
+      const warpT = window.__HOLD_WARP__ != null ? window.__HOLD_WARP__ : Math.min(reduced ? 0.2 : 1.4, speed / 11);
+      state.warp += (warpT - state.warp) * Math.min(1, dt * (warpT > state.warp ? 5 : 2.4)); // ease OUT slowly → soft, un-abrupt stop
+      state.warpBlend = smooth(0.28, 0.92, Math.min(1, state.warp));
+      // a subtle directional roll tied DIRECTLY to warp → it returns to zero AS the warp
+      // decelerates, so there's no accumulated twist to unwind at the end of a jump
+      const spinTarget = state.warp * 0.11 * (state.timeDir >= 0 ? 1 : -1);
+      state.spin += (spinTarget - state.spin) * Math.min(1, dt * 3);
+      // witness pulse: a cyan wavefront rises through the field on attested days
+      if (state.attested && state.warp < 0.2) { const pp = (state.time % 6.5) / 6.5; state.pulseY = -95 + pp * 200; state.pulseStr = Math.pow(1 - pp, 1.4); }
+      else state.pulseStr = 0;
+
+      updateField(dt);
+
+      // keyboard look (arrows + WASD steer a few degrees)
+      const ks = state.keys;
+      if (ks.size) {
+        const step = dt * 1.5;
+        if (ks.has("arrowleft") || ks.has("a")) state.yawT -= step;
+        if (ks.has("arrowright") || ks.has("d")) state.yawT += step;
+        if (ks.has("arrowup") || ks.has("w")) state.pitchT += step;
+        if (ks.has("arrowdown") || ks.has("s")) state.pitchT -= step;
+        clampLook();
+      }
+      // camera: gentle look + directional dolly (forward time pushes in, backward pulls out)
+      state.yaw += (state.yawT - state.yaw) * Math.min(1, dt * 4);
+      state.pitch += (state.pitchT - state.pitch) * Math.min(1, dt * 4);
+      camera.position.set(CAM.x + Math.sin(state.time * 0.13) * 0.4, CAM.y + Math.cos(state.time * 0.11) * 0.3, CAM.z - state.warp * 8 * state.timeDir);
+      camera.rotation.set(-0.02 + state.pitch + Math.sin(state.time * 0.09) * 0.004, state.yaw, Math.sin(state.time * 0.06) * 0.003 + state.spin * 0.045);
+
+      document.body.classList.toggle("warping", state.warp > 0.1);
+      $("jump").classList.toggle("active", traveling && adist > 0.5);
+      $("timebar-fill").style.width = `${(TOTAL ? state.cursor / TOTAL : 1) * 100}%`;
+
+      const shown = Math.round(state.cursor);
+      if (shown !== state.shownDay) { state.shownDay = shown; showDay(isoFor(shown)); }
+      if (!state.wasTraveling && traveling) setStatus("loading", "Scanning the chain…");  // moving through days — no download yet
+      if (state.wasTraveling && !traveling) {                                             // arrived on a day → only now fetch it
+        const d = isoFor(shown);
+        if (state.catalogDate === d) setStatus("ready", "Live record");                    // already have this day
+        else loadDayCatalog(d);                                                            // download just this one
+      }
+      state.wasTraveling = traveling;
+
+      renderer.render(scene, camera);
+    }
+    function resize() { renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); pointMat.uniforms.uPixel.value = renderer.getPixelRatio(); }
+    addEventListener("resize", resize);
+
+    // ── tap-to-rotate 4-sided data prism: each tap is a real 90° quarter-turn forward.
+    //    The border + pager dots live on each face, so they turn as part of the prism. ──
+    function setupPrism(prismId) {
+      const prism = $(prismId), inner = prism.querySelector(".prism-inner");
+      let turns = 0;
+      prism.addEventListener("click", () => { turns += 1; inner.style.transform = `rotateX(${-turns * 90}deg)`; });
+    }
+    setupPrism("prism-obj"); setupPrism("prism-fp");
+
+    loadSettings(); applyEthRank(); applyOpSource(); document.body.classList.toggle("zen", state.lens === 4); populateLegend();
+    addEarth(); addStars(); assignField([]); renderer.setAnimationLoop(animate); boot();
+    window.__RSO_CARD__ = { state, setTarget, recordMeta, isoFor, get TOTAL() { return TOTAL; }, camera, O };
+  </script>
+</body>
+</html>

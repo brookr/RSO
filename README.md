@@ -33,6 +33,7 @@ and publish evidence anyone can verify.
 | Join late and attest from genesis in one tx | [docs/late-join.md](docs/late-join.md) |
 | Build attestations | [docs/attestation-design.md](docs/attestation-design.md) |
 | Verify a daily archive | [docs/verification.md](docs/verification.md) |
+| Consume the archive (pointers, latest.json) | [docs/consuming.md](docs/consuming.md) |
 | Develop locally | [docs/development.md](docs/development.md) |
 | Catch up a node | [docs/roll-forward.md](docs/roll-forward.md) |
 | Learn the Science | [docs/glossary.md](docs/glossary.md) |

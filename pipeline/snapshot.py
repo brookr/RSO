@@ -94,6 +94,7 @@ DEFAULT_RETAINED_CATALOG_COUNT = int(os.environ.get("RSO_RETAINED_CATALOG_COUNT"
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 LEDGER_PATH = Path(__file__).parent.parent / "ledger.json"
+LATEST_POINTER_PATH = Path(__file__).parent.parent / "latest.json"
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
 RELEASE_OUTPUT_DIR = Path(__file__).parent.parent / ".release"
 
@@ -1063,6 +1064,70 @@ def ledger_entry_from_manifest(manifest):
     return entry
 
 
+def publication_fields_from_receipt(receipt):
+    """Consumer pointer fields recorded by a day's publish step."""
+    if not isinstance(receipt, dict):
+        return {}
+    fields = {}
+    bundle_sha = receipt.get("bundle_sha256")
+    if isinstance(bundle_sha, str) and bundle_sha:
+        fields["bundle_sha256"] = bundle_sha
+    destinations = receipt.get("destinations")
+    destinations = destinations if isinstance(destinations, dict) else {}
+    github_release = destinations.get("github_release")
+    if isinstance(github_release, dict):
+        asset_url = github_release.get("asset_url")
+        if isinstance(asset_url, str) and asset_url:
+            fields["asset_url"] = asset_url
+    arweave = destinations.get("arweave")
+    if (
+        isinstance(arweave, dict)
+        and arweave.get("status") == "submitted"
+        and isinstance(arweave.get("transaction_id"), str)
+        and arweave.get("transaction_id")
+        and arweave.get("bundle_sha256") == receipt.get("bundle_sha256")
+    ):
+        fields["arweave_tx"] = arweave["transaction_id"]
+    return fields
+
+
+def write_latest_pointer():
+    """Write latest.json: a machine-readable pointer to the newest archived day.
+
+    Consumers resolve "the latest archive" through this file (and any past day
+    through its storage.json) instead of constructing asset URLs: the pointer
+    carries the locations plus every hash needed to verify the bytes against
+    the chain. Each node publishes its own copy at the same path, so partners
+    can source from any node and verify regardless of which one served them.
+    """
+    if not LEDGER_PATH.exists():
+        return None
+    with open(LEDGER_PATH, encoding="utf-8") as f:
+        ledger = json.load(f)
+    if not isinstance(ledger, list) or not ledger:
+        return None
+    entry = max(ledger, key=lambda item: item.get("date", ""))
+    date = str(entry["date"])
+    manifest = read_json_if_exists(snapshot_dir(date) / "manifest.json")
+    if manifest is None:
+        return None
+    pointer = {
+        "schema": "rso-latest-v1",
+        "date": date,
+        "tag": release_tag(date),
+        "asset_name": release_asset_name(date),
+        "sha256": manifest["sha256"],
+        "object_count": manifest["object_count"],
+        "generated_at_utc": utc_stamp(),
+    }
+    for key in ("content_schema", "content_sha256", "annotations_sha256"):
+        if key in manifest:
+            pointer[key] = manifest[key]
+    pointer.update(publication_fields_from_receipt(load_storage_receipt(date)))
+    write_json(LATEST_POINTER_PATH, pointer)
+    return pointer
+
+
 def update_ledger(manifest):
     ledger = []
     if LEDGER_PATH.exists():
@@ -1075,6 +1140,7 @@ def update_ledger(manifest):
                 ledger = []
 
     new_entry = ledger_entry_from_manifest(manifest)
+    new_entry.update(publication_fields_from_receipt(load_storage_receipt(manifest["date"])))
     replaced = False
     for index, entry in enumerate(ledger):
         if entry.get("date") == manifest["date"]:
@@ -1624,6 +1690,37 @@ def process_rebuild_content(args):
         f"\nRebuild complete: {rebuilt} days now carry {CONTENT_SCHEMA} content fields"
         + (f"; {skipped} already current" if skipped else "")
     )
+
+
+def process_update_pointers(args):
+    """Merge publish receipts into ledger entries and refresh latest.json."""
+    if bool(getattr(args, "start", None)) != bool(getattr(args, "end", None)):
+        raise SnapshotError("--start and --end must be given together")
+    if getattr(args, "start", None):
+        days = []
+        current = parse_date(args.start)
+        end = parse_date(args.end)
+        if end < current:
+            raise SnapshotError("--end must be on or after --start")
+        while current <= end:
+            days.append(date_str(current))
+            current += timedelta(days=1)
+    else:
+        days = sorted(
+            manifest_path.parent.name
+            and f"{manifest_path.parts[-4]}-{manifest_path.parts[-3]}-{manifest_path.parts[-2]}"
+            for manifest_path in DATA_DIR.glob("*/*/*/manifest.json")
+        )
+    updated = 0
+    for day in days:
+        manifest = read_json_if_exists(snapshot_dir(day) / "manifest.json")
+        if manifest is None:
+            continue
+        update_ledger(manifest)
+        updated += 1
+    pointer = write_latest_pointer()
+    print(f"Pointers refreshed: {updated} ledger entries"
+          + (f"; latest.json -> {pointer['date']}" if pointer else ""))
 
 
 def compare_record_sets(replay_records, current_gp_records, sample_size=25):
@@ -3263,6 +3360,16 @@ def process_publish(args):
     summary = {}
     for result in results:
         summary[result["status"]] = summary.get(result["status"], 0) + 1
+    # refresh consumer pointers: publication fields into the ledger entries,
+    # then the latest.json pointer at the repo root
+    for current_date_str in dates:
+        manifest = read_json_if_exists(snapshot_dir(current_date_str) / "manifest.json")
+        if manifest is not None:
+            update_ledger(manifest)
+    pointer = write_latest_pointer()
+    if pointer is not None:
+        print(f"  Pointer: latest.json -> {pointer['date']}")
+
     print("\nPublish complete")
     for key in sorted(summary):
         print(f"  {key}: {summary[key]}")
@@ -3815,6 +3922,13 @@ def main():
         help="Re-derive content fields even for days that already carry them",
     )
 
+    update_pointers_parser = subparsers.add_parser(
+        "update-pointers",
+        help="Refresh ledger publication fields and the latest.json pointer (offline)",
+    )
+    update_pointers_parser.add_argument("--start", help="Start date (YYYY-MM-DD); defaults to all archived days")
+    update_pointers_parser.add_argument("--end", help="End date inclusive (YYYY-MM-DD)")
+
     validate_parser = subparsers.add_parser(
         "validate", help="Validate every committed archive artifact without network access"
     )
@@ -4031,6 +4145,9 @@ def main():
         return
     if args.command == "rebuild-content":
         process_rebuild_content(args)
+        return
+    if args.command == "update-pointers":
+        process_update_pointers(args)
         return
 
     client = SpaceTrackClient()
