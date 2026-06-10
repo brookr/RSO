@@ -57,6 +57,11 @@ CONTENT_EXCLUDED_FIELDS = (
     "TLE_LINE0",
 )
 ANNOTATIONS_SCHEMA = "rso-annotations-v1"
+# Decay feed recency bounds: reentries up to this many days before the window
+# (covers stamping lag, measured median 1 day / 0-3 typical) and slightly after
+# it (messages for reentries inside the window dated by a later orbit fix).
+DECAY_EPOCH_LOOKBACK_DAYS = 30
+DECAY_EPOCH_LOOKAHEAD_DAYS = 7
 
 SPACETRACK_BASE = "https://www.space-track.org"
 SPACETRACK_LOGIN = f"{SPACETRACK_BASE}/ajaxauth/login"
@@ -655,9 +660,28 @@ def query_annotation_observations(client, previous_cutoff, current_cutoff):
     satcat_rows = validate_annotation_rows(
         client.query(satcat_path), context="satcat_change response"
     )
+    # Historical decay messages record confirmed reentries -- the knowledge
+    # the observation plane exists to capture. Two exclusions keep the feed an
+    # event log instead of a table dump: Prediction messages are a rolling
+    # forecast for most of the catalog, and Space-Track episodically reissues
+    # the entire historical decay ledger in one day (35k+ Historical rows with
+    # decades-old DECAY_EPOCHs observed). The feed therefore keeps only
+    # reentries from the recent past; late corrections to old decays still
+    # surface through satcat_change's previous->current log.
+    decay_epoch_floor = (
+        datetime.strptime(previous_cutoff[:10], "%Y-%m-%d") - timedelta(days=DECAY_EPOCH_LOOKBACK_DAYS)
+    ).strftime("%Y-%m-%d")
+    decay_epoch_ceiling = (
+        datetime.strptime(current_cutoff[:10], "%Y-%m-%d") + timedelta(days=DECAY_EPOCH_LOOKAHEAD_DAYS)
+    ).strftime("%Y-%m-%d")
     decay_path = build_query_path(
         "decay",
-        [("MSG_EPOCH", window), ("orderby", "MSG_EPOCH asc")],
+        [
+            ("MSG_EPOCH", window),
+            ("MSG_TYPE", "Historical"),
+            ("DECAY_EPOCH", f"{decay_epoch_floor}--{decay_epoch_ceiling}"),
+            ("orderby", "MSG_EPOCH asc"),
+        ],
     )
     decay_rows = validate_annotation_rows(client.query(decay_path), context="decay response")
     return satcat_rows, decay_rows, [satcat_path, decay_path]

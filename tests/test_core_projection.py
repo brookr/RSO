@@ -236,6 +236,22 @@ class AnnotationsTest(unittest.TestCase):
         self.assertEqual(annotations["decay_messages"], decay)
         self.assertEqual(len(annotations["api_query_paths"]), 2)
 
+    def test_decay_feed_queries_historical_messages_only(self):
+        captured = []
+
+        class Client:
+            def query(self, path):
+                captured.append(path)
+                return []
+
+        snapshot.query_annotation_observations(
+            Client(), "2026-06-09T00:00:00", "2026-06-10T00:00:00"
+        )
+        decay_paths = [p for p in captured if "/class/decay/" in p]
+        self.assertEqual(len(decay_paths), 1)
+        self.assertIn("/MSG_TYPE/Historical/", decay_paths[0])
+        self.assertIn("/DECAY_EPOCH/2026-05-10--2026-06-17/", decay_paths[0])
+
     def test_validate_annotation_rows_rejects_non_string_values(self):
         with self.assertRaises(snapshot.SnapshotError):
             snapshot.validate_annotation_rows(
