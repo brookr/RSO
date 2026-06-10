@@ -39,6 +39,7 @@ from pipeline.snapshot import (  # noqa: E402
     fetch_url_bytes_with_redirects,
     gzip_decompress_limited,
     read_limited,
+    update_ledger,
     utc_stamp,
     validate_github_download_url,
     write_json,
@@ -149,6 +150,9 @@ def hydrate_day(args: argparse.Namespace, snapshot_date: str) -> None:
         if name == "release-manifest.json":
             continue
         (day_dir / name).write_bytes(payload)
+
+    # the ledger mirrors committed manifests; adopted days must be reflected
+    update_ledger(manifest)
 
     write_json(
         storage_receipt_path(snapshot_date),

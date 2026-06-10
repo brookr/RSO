@@ -227,6 +227,7 @@ class HydrateFromUpstreamTest(unittest.TestCase):
                 branch="node",
                 timeout=10.0,
             )
+            ledger_calls = []
             with patch.object(
                 hydrate_from_upstream, "fetch_upstream_receipt", return_value=receipt
             ), patch.object(
@@ -237,8 +238,12 @@ class HydrateFromUpstreamTest(unittest.TestCase):
                 hydrate_from_upstream,
                 "storage_receipt_path",
                 lambda d: tmp_path / d / "storage.json",
+            ), patch.object(
+                hydrate_from_upstream, "update_ledger", ledger_calls.append
             ):
                 hydrate_from_upstream.hydrate_day(args, "2026-04-20")
+            self.assertEqual(len(ledger_calls), 1)
+            self.assertEqual(ledger_calls[0]["content_schema"], snapshot.CONTENT_SCHEMA)
 
             day_dir = tmp_path / "2026-04-20"
             self.assertTrue((day_dir / "manifest.json").exists())
