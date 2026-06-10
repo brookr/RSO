@@ -1,5 +1,5 @@
 {
-  "annotations_sha256": "409f61851978cc218ffc0bd5b6fc044f7f28d5b047f410873fd515c8daca1af0",
+  "annotations_sha256": "9e178b2f2d7dbfaddba841ca43d75e9c7f115be1f8ba37c4ab8032dce5058f3e",
   "api_query_base": "https://www.space-track.org/basicspacedata/query",
   "api_query_paths": [
     "/class/gp_history/NORAD_CAT_ID/0--9999/CREATION_DATE/2026-05-06T00:00:00--2026-05-07T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
@@ -52,7 +52,7 @@
     "SITE",
     "TLE_LINE0"
   ],
-  "content_schema": "rso-core-v2",
+  "content_schema": "rso-core-v1",
   "content_sha256": "f72c94f4a4d8e5ed9354beb3f1a864edef280bde2f0dc2bdf136f3059beff1c7",
   "cutoff_utc": "2026-05-07T00:00:00Z",
   "date": "2026-05-07",
