@@ -16,15 +16,9 @@ if str(ROOT) not in sys.path:
 
 from indexer.rso_profile import (  # noqa: E402
     RSO_DOC_CHAIN_ID,
-    RSO_DOC_CHAIN_ID_V2,
-    RSO_PROFILE_URI,
-    RSO_PROFILE_URI_V2,
-    RSO_V1_HEAD_BLOCK_HASH,
     SEPOLIA_CHAIN_ID,
     SEPOLIA_DEPLOYMENT_BLOCK,
-    SEPOLIA_DEPLOYMENT_BLOCK_V2,
     SEPOLIA_DOCCHAIN_ADDRESS,
-    SEPOLIA_DOCCHAIN_ADDRESS_V2,
     build_static_index,
     filter_rso_events,
     normalize_verified_claims,
@@ -46,59 +40,17 @@ NETWORKS = {
     },
 }
 
-# Per-chain-profile defaults. v1 is the frozen historical chain (full-record
-# contentHash, contract release 1); v2 is the live chain (core projection
-# contentHash, contract release 2). On sepolia each profile selects its own
-# contract address, scan start, docChainId, and output namespace.
-PROFILES = {
-    "v1": {
-        "doc_chain_id": RSO_DOC_CHAIN_ID,
-        "profile_uri": RSO_PROFILE_URI,
-        "sepolia_address": SEPOLIA_DOCCHAIN_ADDRESS,
-        "sepolia_from_block": SEPOLIA_DEPLOYMENT_BLOCK,
-        "suffix": "",
-        "chain_profile": {
-            "version": "v1",
-            "status": "superseded",
-            "supersededBy": {
-                "profileUri": RSO_PROFILE_URI_V2,
-                "docChainId": RSO_DOC_CHAIN_ID_V2,
-            },
-            "headBlockHash": RSO_V1_HEAD_BLOCK_HASH,
-        },
-    },
-    "v2": {
-        "doc_chain_id": RSO_DOC_CHAIN_ID_V2,
-        "profile_uri": RSO_PROFILE_URI_V2,
-        "sepolia_address": SEPOLIA_DOCCHAIN_ADDRESS_V2,
-        "sepolia_from_block": SEPOLIA_DEPLOYMENT_BLOCK_V2,
-        "suffix": "-v2",
-        "chain_profile": {
-            "version": "v2",
-            "status": "active",
-            "supersedes": {
-                "profileUri": RSO_PROFILE_URI,
-                "docChainId": RSO_DOC_CHAIN_ID,
-                "v1HeadBlockHash": RSO_V1_HEAD_BLOCK_HASH,
-            },
-        },
-    },
-}
-
-
 def main() -> int:
     args = parse_args()
     try:
-        profile = PROFILES[args.profile]
         config = network_config(args)
         rpc = EthereumRpc(args.rpc_url, timeout=args.timeout)
         latest_block = rpc.block_number()
         from_block = parse_block(args.from_block) if args.from_block else config["from_block"]
         to_block = resolve_to_block(args.to_block, latest_block, args.confirmations)
-        suffix = profile["suffix"]
-        cache_path = args.cache or f"indexer/cache/{args.network}{suffix}/doc-attested.jsonl"
-        checkpoint_path = args.checkpoint or f"indexer/cache/{args.network}{suffix}/checkpoint.json"
-        out_path = args.out or f"indexer/generated/{args.network}/rso-docchain-index{suffix}.json"
+        cache_path = args.cache or f"indexer/cache/{args.network}/doc-attested.jsonl"
+        checkpoint_path = args.checkpoint or f"indexer/cache/{args.network}/checkpoint.json"
+        out_path = args.out or f"indexer/generated/{args.network}/rso-docchain-index.json"
         support_path = args.tdh_support or args.backing
         operator_backing = load_operator_backing(support_path) if support_path and not args.tdh_support else None
         operator_backing_by_date = None
@@ -116,12 +68,12 @@ def main() -> int:
             from_block=from_block,
             to_block=to_block,
             chunk_size=args.chunk_size,
-            doc_chain_id=profile["doc_chain_id"],
+            doc_chain_id=RSO_DOC_CHAIN_ID,
             chain_id=config["chain_id"],
             network=args.network,
             progress=progress_callback(args),
         )
-        events = filter_rso_events(load_event_cache(cache_path), profile["doc_chain_id"])
+        events = filter_rso_events(load_event_cache(cache_path))
 
         index = build_static_index(
             network=args.network,
@@ -137,9 +89,6 @@ def main() -> int:
             operator_backing_by_date=operator_backing_by_date,
             verified_claims=verified_claims,
             direct_witnesses_by_date=direct_witnesses_by_date,
-            doc_chain_id=profile["doc_chain_id"],
-            profile_uri=profile["profile_uri"],
-            chain_profile=profile["chain_profile"],
         )
         write_json_file(Path(out_path), index)
         if not args.quiet:
@@ -160,15 +109,6 @@ def parse_args() -> argparse.Namespace:
         description="Build the RSO static Doc Chain attestation index.",
     )
     parser.add_argument("--network", choices=sorted(NETWORKS), default="sepolia")
-    parser.add_argument(
-        "--profile",
-        choices=sorted(PROFILES),
-        default="v1",
-        help=(
-            "RSO chain profile: v1 (frozen historical chain) or v2 (active core-projection "
-            "chain). Selects docChainId, sepolia contract/start block, and output namespace."
-        ),
-    )
     parser.add_argument(
         "--rpc-url",
         default=(
@@ -375,14 +315,6 @@ def network_config(args: argparse.Namespace) -> dict[str, object]:
     if args.chunk_size < 1:
         raise ValueError("--chunk-size must be at least 1")
     config = dict(NETWORKS[args.network])
-    if args.network == "sepolia":
-        profile = PROFILES[getattr(args, "profile", "v1")]
-        config.update(
-            {
-                "address": profile["sepolia_address"],
-                "from_block": profile["sepolia_from_block"],
-            }
-        )
     if args.network == "custom":
         chain_id = args.chain_id or int_env("RSO_DOCCHAIN_CHAIN_ID") or int_env("DOCCHAIN_CHAIN_ID")
         address = args.contract_address or os.environ.get("RSO_DOCCHAIN_ADDRESS") or os.environ.get("DOCCHAIN_ADDRESS")

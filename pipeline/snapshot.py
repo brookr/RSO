@@ -32,9 +32,9 @@ from pathlib import Path
 
 CUTOFF_TIME = "00:00:00"
 OPERATOR_RUN_TIME = "00:15:00"
-PIPELINE_VERSION = "0.4.0"
+PIPELINE_VERSION = "1.0.0"
 
-# --- v2 consensus/observation field partition -------------------------------
+# --- consensus/observation field partition -----------------------------------
 # Space-Track mutates object-directory fields on already-published gp_history
 # rows (measured 2026-06-09 across 50 archived windows: DECAY_DATE backfills up
 # to 7,224 days late; OBJECT_NAME/OBJECT_TYPE/TLE_LINE0 flip when TBA objects
@@ -44,7 +44,7 @@ PIPELINE_VERSION = "0.4.0"
 # reproduce from a fresh query with these fields excluded). The excluded fields
 # remain in the raw catalog exactly as returned and are tracked per day, with
 # the time we learned them, in annotations.json (the observation plane).
-CONTENT_SCHEMA_V2 = "rso-core-v2"
+CONTENT_SCHEMA = "rso-core-v1"
 CONTENT_EXCLUDED_FIELDS = (
     "COUNTRY_CODE",
     "DECAY_DATE",
@@ -925,7 +925,7 @@ def save_snapshot(
         "cutoff_utc": cutoff_utc,
         "state_as_of_utc": cutoff_utc,
         "sha256": sha256,
-        "content_schema": CONTENT_SCHEMA_V2,
+        "content_schema": CONTENT_SCHEMA,
         "content_excluded_fields": list(CONTENT_EXCLUDED_FIELDS),
         "content_sha256": core_content_sha256(data),
         "object_count": len(data),
@@ -1104,7 +1104,7 @@ def archive_snapshot(
         state_as_of_utc=state_as_of_utc,
         annotations=annotations,
     )
-    print(f"  Content SHA-256 ({CONTENT_SCHEMA_V2}): {manifest['content_sha256']}")
+    print(f"  Content SHA-256 ({CONTENT_SCHEMA}): {manifest['content_sha256']}")
     cleanup_stale_artifacts(
         current_date_str,
         delta=delta,
@@ -1488,8 +1488,8 @@ def process_roll_forward(args, client):
     print(f"\nRoll-forward complete: {archived} days archived, {skipped} skipped")
 
 
-def process_rebuild_v2(args):
-    """Add v2 consensus/observation artifacts to already-archived days.
+def process_rebuild_content(args):
+    """Add consensus/observation artifacts to already-archived days.
 
     Offline (no Space-Track access): for each day the recorded raw catalog is
     loaded (local gz or release bundle), its sha256 is verified against the
@@ -1508,7 +1508,7 @@ def process_rebuild_v2(args):
         days.append(date_str(current))
         current += timedelta(days=1)
 
-    print(f"\nRebuilding v2 content fields for {len(days)} days: {args.start} to {args.end}")
+    print(f"\nRebuilding content fields for {len(days)} days: {args.start} to {args.end}")
     previous_records = None
     previous_date_value = previous_date_str(args.start)
     previous_manifest = read_json_if_exists(snapshot_dir(previous_date_value) / "manifest.json")
@@ -1524,7 +1524,7 @@ def process_rebuild_v2(args):
             raise SnapshotError(f"{day}: no committed manifest; cannot rebuild an unarchived day")
 
         if (
-            manifest.get("content_schema") == CONTENT_SCHEMA_V2
+            manifest.get("content_schema") == CONTENT_SCHEMA
             and "annotations_sha256" in manifest
             and (snapshot_dir(day) / "annotations.json").exists()
             and not getattr(args, "force", False)
@@ -1532,7 +1532,7 @@ def process_rebuild_v2(args):
             # Idempotent: hydrated or previously rebuilt days keep their exact
             # artifacts (re-deriving annotations would change rebuilt_at and
             # break byte-identity with the published bundle).
-            print(f"  {day}: already carries {CONTENT_SCHEMA_V2} fields; skipping")
+            print(f"  {day}: already carries {CONTENT_SCHEMA} fields; skipping")
             skipped += 1
             previous_records = json.loads(read_catalog_bytes(day))
             continue
@@ -1564,7 +1564,7 @@ def process_rebuild_v2(args):
         annotations_file = day_dir / "annotations.json"
         write_json(annotations_file, annotations)
 
-        manifest["content_schema"] = CONTENT_SCHEMA_V2
+        manifest["content_schema"] = CONTENT_SCHEMA
         manifest["content_excluded_fields"] = list(CONTENT_EXCLUDED_FIELDS)
         manifest["content_sha256"] = core_content_sha256(records)
         manifest["annotations_sha256"] = sha256_path(annotations_file)
@@ -1580,7 +1580,7 @@ def process_rebuild_v2(args):
         previous_records = records
 
     print(
-        f"\nRebuild complete: {rebuilt} days now carry {CONTENT_SCHEMA_V2} content fields"
+        f"\nRebuild complete: {rebuilt} days now carry {CONTENT_SCHEMA} content fields"
         + (f"; {skipped} already current" if skipped else "")
     )
 
@@ -1846,18 +1846,6 @@ def release_tag(current_date_str):
 def release_asset_name(current_date_str):
     parse_date(current_date_str)
     return f"rso-archive-{current_date_str}.tar.gz"
-
-
-def release_asset_name_v2(current_date_str):
-    """Backfill asset name for v2 bundles on pre-v2 release tags.
-
-    Historical v1 assets are frozen (their bytes are referenced by v1
-    attestation uriHashes), so the v2 bundle for an already-released day is
-    published as a sibling asset. Days archived after the v2 cutover use the
-    plain asset name: their only bundle is a v2 bundle.
-    """
-    parse_date(current_date_str)
-    return f"rso-archive-{current_date_str}-v2.tar.gz"
 
 
 def release_title(current_date_str):
@@ -2228,22 +2216,22 @@ def release_bundle_from_existing(current_date_str, output_dir=None):
     }
 
 
-def build_v2_backfill_bundle(current_date_str, output_dir=None, min_count=MIN_OBJECT_COUNT):
-    """Build the v2 sibling bundle for an already-released day.
+def build_rebuilt_bundle(current_date_str, output_dir=None, min_count=MIN_OBJECT_COUNT):
+    """Rebuild a day's bundle locally for re-publication.
 
-    Always builds locally from the day directory (never fetches the frozen v1
-    asset), requires the day to carry rso-core-v2 fields and annotations, and
-    preserves a v1-era storage receipt as storage-v1.json before the publish
-    steps overwrite storage.json with the v2 publication of record.
+    Requires the day to carry content fields and annotations, refuses days
+    adopted from an upstream node (they are already published there; attest
+    the shared locations instead), and rematerializes a pruned catalog from
+    the published bundle, verified against the committed manifest.
     """
     manifest = load_manifest(current_date_str)
-    if manifest.get("content_schema") != CONTENT_SCHEMA_V2:
+    if manifest.get("content_schema") != CONTENT_SCHEMA:
         raise SnapshotError(
-            f"{current_date_str}: manifest lacks {CONTENT_SCHEMA_V2} fields; run rebuild-v2 first"
+            f"{current_date_str}: manifest lacks {CONTENT_SCHEMA} fields; run rebuild-content first"
         )
     if "annotations_sha256" not in manifest:
         raise SnapshotError(
-            f"{current_date_str}: manifest has no annotations_sha256; run rebuild-v2 first"
+            f"{current_date_str}: manifest has no annotations_sha256; run rebuild-content first"
         )
 
     receipt_path = storage_receipt_path(current_date_str)
@@ -2255,13 +2243,6 @@ def build_v2_backfill_bundle(current_date_str, output_dir=None, min_count=MIN_OB
                 f"{receipt['verified_from_upstream']}; it is already published there "
                 "(attest the shared locations instead of re-publishing)"
             )
-        v1_receipt_path = receipt_path.with_name("storage-v1.json")
-        if (
-            receipt.get("asset_name") == release_asset_name(current_date_str)
-            and not v1_receipt_path.exists()
-        ):
-            v1_receipt_path.write_bytes(receipt_path.read_bytes())
-            print(f"  Preserved v1 storage receipt as {v1_receipt_path.name}")
 
     ensure_local_catalog(current_date_str, manifest)
 
@@ -2269,7 +2250,6 @@ def build_v2_backfill_bundle(current_date_str, output_dir=None, min_count=MIN_OB
         current_date_str,
         output_dir=output_dir,
         min_count=min_count,
-        asset_name=release_asset_name_v2(current_date_str),
     )
 
 
@@ -3181,8 +3161,8 @@ def process_publish(args):
     results = []
     for current_date_str in dates:
         print(f"\n  Date: {current_date_str}")
-        if getattr(args, "v2_backfill", False):
-            bundle = build_v2_backfill_bundle(
+        if getattr(args, "rebuild", False):
+            bundle = build_rebuilt_bundle(
                 current_date_str,
                 output_dir=args.output_dir,
                 min_count=args.min_objects,
@@ -3782,16 +3762,16 @@ def main():
     )
     verify_parser.add_argument("--date", required=True, help="Date (YYYY-MM-DD)")
 
-    rebuild_v2_parser = subparsers.add_parser(
-        "rebuild-v2",
-        help="Add v2 content fields and annotations to already-archived days (offline)",
+    rebuild_content_parser = subparsers.add_parser(
+        "rebuild-content",
+        help="Add content fields and annotations to already-archived days (offline)",
     )
-    rebuild_v2_parser.add_argument("--start", required=True, help="Start date (YYYY-MM-DD)")
-    rebuild_v2_parser.add_argument("--end", required=True, help="End date inclusive (YYYY-MM-DD)")
-    rebuild_v2_parser.add_argument(
+    rebuild_content_parser.add_argument("--start", required=True, help="Start date (YYYY-MM-DD)")
+    rebuild_content_parser.add_argument("--end", required=True, help="End date inclusive (YYYY-MM-DD)")
+    rebuild_content_parser.add_argument(
         "--force",
         action="store_true",
-        help="Re-derive v2 fields even for days that already carry them",
+        help="Re-derive content fields even for days that already carry them",
     )
 
     validate_parser = subparsers.add_parser(
@@ -3885,11 +3865,11 @@ def main():
         help="Upload a bundle already present in --output-dir instead of rebuilding it",
     )
     publish_parser.add_argument(
-        "--v2-backfill",
+        "--rebuild",
         action="store_true",
         help=(
-            "Publish v2 sibling bundles (rso-archive-DATE-v2.tar.gz) for days whose "
-            "v1 assets are frozen; requires rebuild-v2 to have run first"
+            "Rebuild bundles locally from the day directories instead of fetching "
+            "existing release assets; requires rebuild-content to have run first"
         ),
     )
     publish_parser.add_argument(
@@ -4008,8 +3988,8 @@ def main():
     if args.command == "mark-prerelease":
         process_mark_prerelease(args)
         return
-    if args.command == "rebuild-v2":
-        process_rebuild_v2(args)
+    if args.command == "rebuild-content":
+        process_rebuild_content(args)
         return
 
     client = SpaceTrackClient()

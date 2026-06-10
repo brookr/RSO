@@ -285,15 +285,15 @@ class RebuildV2Test(unittest.TestCase):
                 self._archive_day("2026-04-20", day_one)
                 self._archive_day("2026-04-21", day_two)
 
-                snapshot.process_rebuild_v2(
-                    argparse.Namespace(start="2026-04-20", end="2026-04-21")
+                snapshot.process_rebuild_content(
+                    argparse.Namespace(start="2026-04-20", end="2026-04-21", force=False)
                 )
 
                 for day, records in (("2026-04-20", day_one), ("2026-04-21", day_two)):
                     manifest = json_module.loads(
                         (snapshot.snapshot_dir(day) / "manifest.json").read_text()
                     )
-                    self.assertEqual(manifest["content_schema"], "rso-core-v2")
+                    self.assertEqual(manifest["content_schema"], "rso-core-v1")
                     self.assertEqual(
                         manifest["content_sha256"], snapshot.core_content_sha256(records)
                     )
@@ -339,8 +339,8 @@ class RebuildV2Test(unittest.TestCase):
                     handle.write(tampered)
 
                 with self.assertRaises(snapshot.SnapshotError):
-                    snapshot.process_rebuild_v2(
-                        argparse.Namespace(start="2026-04-20", end="2026-04-20")
+                    snapshot.process_rebuild_content(
+                        argparse.Namespace(start="2026-04-20", end="2026-04-20", force=False)
                     )
 
 
@@ -357,21 +357,22 @@ class AttestationV2Test(unittest.TestCase):
             rso_attestation.content_hash_from_manifest(manifest), "0x" + "aa" * 32
         )
 
-    def test_v2_doc_chain_id_derivation_is_pinned(self):
-        # keccak256("https://om.pub/rso/doc-chain/v2"); same derivation as v1.
+    def test_doc_chain_id_derivation_is_pinned(self):
+        # keccak256("https://om.pub/rso/doc-chain") -- the unversioned protocol id.
         self.assertEqual(
-            rso_profile.RSO_DOC_CHAIN_ID_V2,
-            "0x7c5d6ad47ba584ce3f34ec8f94b08d17d4828c1d5ee6fbaecb4dfcb986efbc40",
+            rso_profile.RSO_DOC_CHAIN_ID,
+            "0x6011620b5a3faa23f8078c2af0bb1a87bb85a68f784abdf3dbae67939c399bea",
         )
-        self.assertNotEqual(rso_profile.RSO_DOC_CHAIN_ID_V2, rso_profile.RSO_DOC_CHAIN_ID)
+        self.assertEqual(rso_profile.RSO_PROFILE_URI, "https://om.pub/rso/doc-chain")
 
-    def test_baseline_parent_links_v1_head(self):
+    def test_baseline_parent_override_is_honored(self):
+        override = "0x" + "ab" * 32
         parent = rso_attestation.parent_hash_for_date(
             "2026-04-20",
             {"attestations": []},
-            baseline_parent_hash=rso_profile.RSO_V1_HEAD_BLOCK_HASH,
+            baseline_parent_hash=override,
         )
-        self.assertEqual(parent, rso_profile.RSO_V1_HEAD_BLOCK_HASH)
+        self.assertEqual(parent, override)
 
     def test_baseline_without_parent_stays_zero(self):
         parent = rso_attestation.parent_hash_for_date("2026-04-20", {"attestations": []})
@@ -389,25 +390,21 @@ class AttestationV2Test(unittest.TestCase):
                 "blockHash": "0x" + "11" * 32,
             }
             state = rso_attestation.record_state_entry(
-                path, entry, schema=rso_attestation.STATE_SCHEMA_V2
+                path, entry, schema=rso_attestation.STATE_SCHEMA
             )
-            self.assertEqual(state["schema"], "rso-docchain-node-state-v2")
+            self.assertEqual(state["schema"], "rso-docchain-node-state-v1")
             reloaded = rso_attestation.load_attestation_state(
-                path, schema=rso_attestation.STATE_SCHEMA_V2
+                path, schema=rso_attestation.STATE_SCHEMA
             )
             self.assertEqual(len(reloaded["attestations"]), 1)
-            with self.assertRaises(ValueError):
-                rso_attestation.load_attestation_state(
-                    path, schema=rso_attestation.STATE_SCHEMA_V1
-                )
             any_schema = rso_attestation.load_attestation_state(path, schema=None)
-            self.assertEqual(any_schema["schema"], "rso-docchain-node-state-v2")
+            self.assertEqual(any_schema["schema"], "rso-docchain-node-state-v1")
 
     def test_state_schema_v2_accepted_and_v1_rejected_for_v2_path(self):
         state = rso_attestation.load_attestation_state(
-            Path("/nonexistent/state.json"), schema=rso_attestation.STATE_SCHEMA_V2
+            Path("/nonexistent/state.json"), schema=rso_attestation.STATE_SCHEMA
         )
-        self.assertEqual(state["schema"], "rso-docchain-node-state-v2")
+        self.assertEqual(state["schema"], "rso-docchain-node-state-v1")
         with self.assertRaises(ValueError):
             rso_attestation.load_attestation_state(
                 Path("/nonexistent/state.json"), schema="rso-docchain-node-state-v3"

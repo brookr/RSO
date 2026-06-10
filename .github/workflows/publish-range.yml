@@ -1,11 +1,10 @@
-name: Backfill v2 Bundles
+name: Publish Archive Range
 
-# One-time (re-runnable) backfill: publish v2 sibling bundles for days whose
-# v1 release assets are frozen. Uploads each bundle once to Arweave (funded
-# wallet in repo secrets) and attaches a -v2 GitHub release asset on the
-# existing day tag, then commits the updated storage receipts to the node
-# branch. Idempotent: existing assets and recorded Arweave transactions are
-# skipped, so the workflow can resume after any interruption.
+# Build/publish release bundles for a range of archived days: GitHub release
+# asset plus a single Arweave upload per day when the repo wallet is funded.
+# Idempotent: existing assets and recorded Arweave transactions are skipped,
+# so the workflow can resume after any interruption (e.g. topping up the
+# Arweave wallet and finishing the historical uploads).
 
 on:
   workflow_dispatch:
@@ -27,7 +26,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  backfill:
+  publish:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     env:
@@ -48,8 +47,8 @@ jobs:
                   sys.exit(1)
           PY
           {
-            echo "RSO_BACKFILL_START=${INPUT_START}"
-            echo "RSO_BACKFILL_END=${INPUT_END}"
+            echo "RSO_PUBLISH_START=${INPUT_START}"
+            echo "RSO_PUBLISH_END=${INPUT_END}"
           } >> "$GITHUB_ENV"
 
       - name: Check out node branch
@@ -64,17 +63,16 @@ jobs:
         run: |
           set -euo pipefail
           python3 pipeline/snapshot.py hydrate-catalogs \
-            --start "$RSO_BACKFILL_START" --end "$RSO_BACKFILL_END"
+            --start "$RSO_PUBLISH_START" --end "$RSO_PUBLISH_END"
 
-      - name: Publish v2 bundles (GitHub asset + single Arweave upload per day)
+      - name: Publish bundles (GitHub asset + single Arweave upload per day)
         env:
           GH_TOKEN: ${{ github.token }}
           ARWEAVE_JWK: ${{ secrets.ARWEAVE_JWK }}
         run: |
           set -euo pipefail
           python3 pipeline/snapshot.py publish \
-            --start "$RSO_BACKFILL_START" --end "$RSO_BACKFILL_END" \
-            --v2-backfill
+            --start "$RSO_PUBLISH_START" --end "$RSO_PUBLISH_END"
 
       - name: Commit storage receipts
         run: |
@@ -86,5 +84,5 @@ jobs:
             echo "No storage receipt changes to commit."
             exit 0
           fi
-          git commit -m "Record v2 bundle publish destinations"
+          git commit -m "Record archive publish destinations"
           git push origin "HEAD:$RSO_NODE_BRANCH"

@@ -31,7 +31,7 @@ def build_v2_bundle_bytes(records, *, include_annotations=True, corrupt_core=Fal
     manifest = {
         "date": "2026-04-20",
         "sha256": snapshot.compute_hash(catalog_bytes),
-        "content_schema": snapshot.CONTENT_SCHEMA_V2,
+        "content_schema": snapshot.CONTENT_SCHEMA,
         "content_excluded_fields": list(snapshot.CONTENT_EXCLUDED_FIELDS),
         "content_sha256": snapshot.core_content_sha256(data),
         "object_count": len(data),

@@ -7,8 +7,8 @@ The first profile is Sepolia:
 
 ```text
 network: sepolia
-contract: 0x1133895b7b8C4A0A8aae0b5d40B96C652192F5DA
-profileURI: https://om.pub/rso/doc-chain/v1
+contract: 0x867FcC4f0339009043E9F6e554DD516Bcf1bcaa9
+profileURI: https://om.pub/rso/doc-chain
 docChainId: 0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d
 fromBlock: 11007365
 ```

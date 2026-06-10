@@ -14,8 +14,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from attestation.rso_attestation import (  # noqa: E402
-    DEFAULT_STATE_PATH_V2,
-    STATE_SCHEMA_V2,
+    DEFAULT_STATE_PATH,
+    STATE_SCHEMA,
     content_hash_from_manifest,
     date_range,
     load_manifest,
@@ -29,7 +29,7 @@ from attestation.rso_attestation import (  # noqa: E402
     state_entry_from_signed_artifact,
     write_signed_artifact,
 )
-from indexer.rso_profile import RSO_V1_HEAD_BLOCK_HASH, normalize_node_id  # noqa: E402
+from indexer.rso_profile import normalize_node_id  # noqa: E402
 from vendor.docchain.attestation import (  # noqa: E402
     has_cast_wallet_config,
     normalize_address,
@@ -47,7 +47,7 @@ def main() -> int:
             print("Attestation signing skipped: disposable key, attester, or contract is not configured.")
             return 0
         state_path = Path(args.state)
-        state = load_attestation_state(state_path, schema=STATE_SCHEMA_V2)
+        state = load_attestation_state(state_path, schema=STATE_SCHEMA)
         for snapshot_date in date_range(args.start, args.end):
             parent_hash = parent_hash_for_date(
                 snapshot_date,
@@ -100,7 +100,7 @@ def main() -> int:
             historical_path = signed_attestation_path(snapshot_date, str(entry["artifactId"]))
             write_signed_artifact(historical_path, artifact)
             write_signed_artifact(artifact_path, artifact)
-            state = record_state_entry(state_path, entry, schema=STATE_SCHEMA_V2)
+            state = record_state_entry(state_path, entry, schema=STATE_SCHEMA)
             print(
                 f"Signed {snapshot_date}: docRef={prepared.doc_ref} "
                 f"blockHash={entry['blockHash']} artifact={artifact_path.relative_to(ROOT)}"
@@ -155,8 +155,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--state",
-        default=str(DEFAULT_STATE_PATH_V2),
-        help="Committed node attestation state path (v2 chain).",
+        default=str(DEFAULT_STATE_PATH),
+        help="Committed node attestation state path.",
     )
     parser.add_argument(
         "--uri-mode",
@@ -170,8 +170,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--baseline-parent-hash",
-        default=os.environ.get("RSO_V2_GENESIS_PARENT_HASH", RSO_V1_HEAD_BLOCK_HASH),
-        help="parentHash for the genesis (baseline) day; defaults to the agreed v1 head block.",
+        default=os.environ.get("RSO_GENESIS_PARENT_HASH"),
+        help="Optional parentHash override for the genesis (baseline) day; defaults to the zero hash.",
     )
     parser.add_argument(
         "--ttl",

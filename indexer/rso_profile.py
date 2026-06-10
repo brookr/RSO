@@ -15,30 +15,19 @@ from datetime import datetime, timezone
 from vendor.docchain.model import DocAttested
 from vendor.docchain.store import build_docchain_index
 
-# v1 chain (frozen 2026-06-09, superseded by v2): full-record contentHash over
-# all 39 OMM fields, which Space-Track back-patches in place; head = the
-# 2026-06-07 block both nodes attested. Kept for indexing the historical chain.
-RSO_PROFILE_URI = "https://om.pub/rso/doc-chain/v1"
-RSO_DOC_CHAIN_ID = "0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d"
+# The RSO chain identity. The profile URI is the permanent protocol id --
+# docChainId = keccak256(profile URI) -- and is deliberately unversioned:
+# protocol revisions are described in metadata and docs, never baked into the
+# id. The contentHash covers only the elset-intrinsic core (see
+# pipeline.snapshot.CONTENT_EXCLUDED_FIELDS); the mutable object-directory
+# fields live in per-day annotations with the time each value was observed.
+RSO_PROFILE_URI = "https://om.pub/rso/doc-chain"
+RSO_DOC_CHAIN_ID = "0x6011620b5a3faa23f8078c2af0bb1a87bb85a68f784abdf3dbae67939c399bea"
 RSO_LOCATOR_MEDIA_TYPE = "application/vnd.ompub.rso.publication-locator.v1+json"
 
-# v2 chain: contentHash covers only the elset-intrinsic core (see
-# pipeline.snapshot.CONTENT_EXCLUDED_FIELDS); the mutable object-directory
-# fields live in per-day annotations. docChainId = keccak256(profile URI),
-# same derivation as v1. The v2 genesis (docRef 20260420000000) sets its
-# parentHash to the agreed v1 head block, recording supersession on chain.
-RSO_PROFILE_URI_V2 = "https://om.pub/rso/doc-chain/v2"
-RSO_DOC_CHAIN_ID_V2 = "0x7c5d6ad47ba584ce3f34ec8f94b08d17d4828c1d5ee6fbaecb4dfcb986efbc40"
-# blockHash of v1 docRef 20260607000000, attested with identical hashes by
-# github:ompub/rso (tx 0x253a8a4e...) and github:brookr/rso (tx 0x30ef8667...).
-RSO_V1_HEAD_BLOCK_HASH = "0xf6b2b68ed73a5327c1d5d0725edef9dc3d1a875aee29d0fc75579f49abd92ca4"
-
 SEPOLIA_CHAIN_ID = 11155111
-SEPOLIA_DOCCHAIN_ADDRESS = "0x1133895b7b8C4A0A8aae0b5d40B96C652192F5DA"
-SEPOLIA_DEPLOYMENT_BLOCK = 11007365
-# DocChain contract release 2 (adds attestBatch); the v2 RSO chain attests here.
-SEPOLIA_DOCCHAIN_ADDRESS_V2 = "0x2c66585E7b60A20563a3fd2B7a4D75Ae5baa5437"
-SEPOLIA_DEPLOYMENT_BLOCK_V2 = 11025284
+SEPOLIA_DOCCHAIN_ADDRESS = "0x867FcC4f0339009043E9F6e554DD516Bcf1bcaa9"
+SEPOLIA_DEPLOYMENT_BLOCK = 11026268
 
 ZERO_BYTES32 = "0x" + "0" * 64
 ZERO_ADDRESS = "0x" + "0" * 40

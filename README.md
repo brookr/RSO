@@ -28,6 +28,8 @@ and publish evidence anyone can verify.
 | Operator and sweeper model | [docs/operator.md](docs/operator.md) |
 | Understand the architecture | [docs/architecture.md](docs/architecture.md) |
 | Understand the snapshot rules | [docs/snapshot-spec.md](docs/snapshot-spec.md) |
+| The chain: consensus core + observation log | [docs/chain.md](docs/chain.md) |
+| Join late and attest from genesis in one tx | [docs/late-join.md](docs/late-join.md) |
 | Build attestations | [docs/attestation-design.md](docs/attestation-design.md) |
 | Verify a daily archive | [docs/verification.md](docs/verification.md) |
 | Develop locally | [docs/development.md](docs/development.md) |
@@ -99,6 +101,7 @@ See [docs/setup.md](docs/setup.md) for the exact setup path, and
 On the operator's `node` branch:
 
 - `data/YYYY/MM/DD/manifest.json`
+- `data/YYYY/MM/DD/annotations.json`
 - `data/YYYY/MM/DD/delta.json`
 - `data/YYYY/MM/DD/audit.json`
 - `data/YYYY/MM/DD/visibility_state.json`
@@ -110,9 +113,15 @@ As a release asset:
 
 - `rso-archive-YYYY-MM-DD.tar.gz`
 
-The consensus object is the catalog SHA-256, not the release URL, storage URI,
-or Arweave transaction ID. When an attestation points to a release bundle, it can
-also sign the exact bundle SHA-256 so mirrors can be checked byte-for-byte.
+The consensus object is the **core projection hash** (`content_sha256`): the
+SHA-256 of the canonical catalog with the nine mutable object-directory fields
+excluded, because Space-Track back-patches those in place on published rows.
+The raw catalog (all 39 fields, exactly as returned) stays the archival
+artifact, and `annotations.json` records what the node learned about the
+mutable fields and when. See [docs/chain.md](docs/chain.md) for the
+measurements behind the split. The release URL, storage URI, and Arweave
+transaction ID are never part of consensus; attestations sign the exact bundle
+SHA-256 so mirrors can be checked byte-for-byte.
 
 ## Quick Operator Path
 

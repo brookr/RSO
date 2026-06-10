@@ -244,7 +244,7 @@ struct DocBlock {
 For RSO v1:
 
 ```text
-docChainId = keccak256("https://om.pub/rso/doc-chain/v1")
+docChainId = keccak256("https://om.pub/rso/doc-chain")
 docRef = snapshot boundary encoded as YYYYMMDDHHMMSS in UTC
 parentHash = previous RSO DocBlock blockHash, or bytes32(0) for baseline
 contentHash = SHA-256(canonical catalog JSON bytes)

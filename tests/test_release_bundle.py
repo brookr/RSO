@@ -674,7 +674,7 @@ def add_tar_bytes(tar, arcname, data):
 
 
 
-class V2BackfillBundleTests(ReleaseBundleTests):
+class RebuiltBundleTests(ReleaseBundleTests):
     def archive_v2_day(self, current_date_str="2026-04-18"):
         manifest = self.archive_day(current_date_str)
         records = [gp_record("1"), gp_record("2")]
@@ -692,27 +692,21 @@ class V2BackfillBundleTests(ReleaseBundleTests):
         snapshot.write_json(day_dir / "manifest.json", manifest)
         return manifest
 
-    def test_v2_asset_name(self):
-        self.assertEqual(
-            snapshot.release_asset_name_v2("2026-04-18"),
-            "rso-archive-2026-04-18-v2.tar.gz",
-        )
-
-    def test_v2_backfill_builds_sibling_asset_with_annotations(self):
+    def test_rebuilt_bundle_uses_plain_asset_name_and_includes_annotations(self):
         self.archive_v2_day()
 
-        bundle = snapshot.build_v2_backfill_bundle(
+        bundle = snapshot.build_rebuilt_bundle(
             "2026-04-18", output_dir=self.root / "out", min_count=1
         )
 
-        self.assertEqual(bundle["asset_name"], "rso-archive-2026-04-18-v2.tar.gz")
+        self.assertEqual(bundle["asset_name"], "rso-archive-2026-04-18.tar.gz")
         with tarfile.open(bundle["path"], "r:gz") as tar:
             names = set(tar.getnames())
         self.assertIn("annotations.json", names)
         self.assertIn("catalog.json.gz", names)
         self.assertIn("manifest.json", names)
 
-    def test_v2_backfill_requires_rebuilt_manifest(self):
+    def test_rebuilt_bundle_requires_content_fields(self):
         self.archive_day()
         manifest_path = snapshot.snapshot_dir("2026-04-18") / "manifest.json"
         stored = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -721,31 +715,26 @@ class V2BackfillBundleTests(ReleaseBundleTests):
         manifest_path.write_text(json.dumps(stored, indent=2) + "\n", encoding="utf-8")
 
         with self.assertRaises(snapshot.SnapshotError):
-            snapshot.build_v2_backfill_bundle(
+            snapshot.build_rebuilt_bundle(
                 "2026-04-18", output_dir=self.root / "out", min_count=1
             )
 
-    def test_v2_backfill_preserves_v1_storage_receipt(self):
+    def test_rebuilt_bundle_refuses_adopted_days(self):
         self.archive_v2_day()
-        receipt_path = snapshot.storage_receipt_path("2026-04-18")
         snapshot.write_json(
-            receipt_path,
+            snapshot.storage_receipt_path("2026-04-18"),
             {
                 "date": "2026-04-18",
-                "asset_name": "rso-archive-2026-04-18.tar.gz",
                 "bundle_sha256": "aa" * 32,
+                "verified_from_upstream": "OMPub/RSO",
                 "destinations": {"github_release": {"status": "submitted"}},
             },
         )
 
-        snapshot.build_v2_backfill_bundle(
-            "2026-04-18", output_dir=self.root / "out", min_count=1
-        )
-
-        v1_receipt = receipt_path.with_name("storage-v1.json")
-        self.assertTrue(v1_receipt.exists())
-        preserved = json.loads(v1_receipt.read_text(encoding="utf-8"))
-        self.assertEqual(preserved["asset_name"], "rso-archive-2026-04-18.tar.gz")
+        with self.assertRaises(snapshot.SnapshotError):
+            snapshot.build_rebuilt_bundle(
+                "2026-04-18", output_dir=self.root / "out", min_count=1
+            )
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,11 @@
 # Snapshot Specification
 
+> **Note:** the attested contentHash is the core projection
+> (`content_sha256`) — the canonical catalog minus the nine mutable
+> object-directory fields. The raw-catalog `sha256` described below is
+> unchanged and remains the artifact-integrity hash. See
+> [chain.md](chain.md).
+
 The RSO archive is a deterministic rolling state machine. Each daily snapshot
 is derived from the previous archived catalog plus a bounded Space-Track
 `gp_history` publication window.

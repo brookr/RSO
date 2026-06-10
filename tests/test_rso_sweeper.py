@@ -35,7 +35,7 @@ from sweeper.rso_sweeper import (
     read_limited,
     write_date_reports,
 )
-from indexer.rso_profile import encode_publication_locator_uri
+from indexer.rso_profile import RSO_DOC_CHAIN_ID, encode_publication_locator_uri
 from vendor.docchain.attestation import prepare_attestation, signed_attestation
 from vendor.docchain.indexer import RpcError
 
@@ -857,7 +857,7 @@ def make_artifact(
         contract_address="0x" + "aa" * 20,
         attester=attester,
         on_behalf_of="0x" + "cc" * 20,
-        doc_chain_id="0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d",
+        doc_chain_id=RSO_DOC_CHAIN_ID,
         doc_ref=20260601000000,
         parent_hash="0x" + "11" * 32,
         content_hash=content_hash,

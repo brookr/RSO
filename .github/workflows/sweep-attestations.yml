@@ -136,11 +136,7 @@ jobs:
           if [ -e "$RSO_TDH_SUPPORT_SNAPSHOT" ]; then
             args+=(--tdh-support "$RSO_TDH_SUPPORT_SNAPSHOT")
           fi
-          # Active v2 chain (core-projection contentHash, contract release 2).
-          python3 "${args[@]}" --profile v2
-          # Frozen v1 chain: no new attestations are expected, but keep its
-          # index (and the supersession metadata) refreshed alongside v2.
-          python3 "${args[@]}" --profile v1
+          python3 "${args[@]}"
 
       - name: Publish public sweeper report
         if: env.RSO_SWEEPER_ENABLED == 'true'

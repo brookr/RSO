@@ -1,5 +1,10 @@
 # RSO DocChain Attestation Design
 
+> **Note:** attestations sign `manifest.content_sha256` (docChainId
+> `keccak256("https://om.pub/rso/doc-chain")`; the DocChain contract
+> supports single and batch submission). See [chain.md](chain.md) and
+> [late-join.md](late-join.md).
+
 RSO uses the generic DocChain contract as an append-only witness log. Operator
 nodes sign daily archive claims with disposable no-funds EOAs. A separate
 treasury-funded sweeper submits eligible signed claims onchain.

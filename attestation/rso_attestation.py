@@ -13,8 +13,6 @@ from typing import Mapping
 
 from indexer.rso_profile import (
     RSO_DOC_CHAIN_ID,
-    RSO_DOC_CHAIN_ID_V2,
-    RSO_V1_HEAD_BLOCK_HASH,
     encode_publication_locator_uri,
     normalize_node_id,
 )
@@ -33,12 +31,8 @@ from vendor.docchain.model import ZERO_ADDRESS
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 DEFAULT_STATE_PATH = DATA_DIR / "attestations" / "rso-docchain-state.json"
-# v2 chain attestations track their own state: parentHash continuity is
-# per-chain, and mixing v1/v2 entries for the same dates would corrupt lookups.
-DEFAULT_STATE_PATH_V2 = DATA_DIR / "attestations" / "rso-docchain-state-v2.json"
-STATE_SCHEMA_V1 = "rso-docchain-node-state-v1"
-STATE_SCHEMA_V2 = "rso-docchain-node-state-v2"
-ACCEPTED_STATE_SCHEMAS = frozenset({STATE_SCHEMA_V1, STATE_SCHEMA_V2})
+STATE_SCHEMA = "rso-docchain-node-state-v1"
+ACCEPTED_STATE_SCHEMAS = frozenset({STATE_SCHEMA})
 DEFAULT_BUILD_DIR = ROOT / "build" / "attestations"
 OFFICIAL_BASELINE_DATE = os.environ.get("OFFICIAL_BASELINE_DATE", "2026-04-20")
 ZERO_BYTES32 = "0x" + "00" * 32
@@ -143,7 +137,7 @@ def content_hash_from_manifest(manifest: Mapping[str, object]) -> str:
 def load_attestation_state(
     path: Path = DEFAULT_STATE_PATH,
     *,
-    schema: str | None = STATE_SCHEMA_V1,
+    schema: str | None = STATE_SCHEMA,
 ) -> dict[str, object]:
     """Load a node attestation state file.
 
@@ -154,7 +148,7 @@ def load_attestation_state(
     if schema is not None and schema not in ACCEPTED_STATE_SCHEMAS:
         raise ValueError(f"unsupported attestation state schema {schema!r}")
     if not path.exists():
-        return {"schema": schema or STATE_SCHEMA_V1, "attestations": []}
+        return {"schema": schema or STATE_SCHEMA, "attestations": []}
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError(f"{path} must contain a JSON object")
@@ -243,9 +237,8 @@ def parent_hash_for_date(
 ) -> str:
     """Derive the parentHash for a day from the node's attestation state.
 
-    The baseline (genesis) day takes `baseline_parent_hash` when given -- the
-    v2 chain sets it to the agreed v1 head block, recording supersession on
-    chain -- and the zero hash otherwise (a fresh chain).
+    The baseline (genesis) day takes `baseline_parent_hash` when given and the
+    zero hash otherwise (a fresh chain).
     """
     if snapshot_date == baseline_date:
         if baseline_parent_hash:
@@ -374,7 +367,7 @@ def build_prepared_attestation(
     deadline: int | None = None,
     ttl: int = 7 * 24 * 60 * 60,
     network: str = "",
-    doc_chain_id: str = RSO_DOC_CHAIN_ID_V2,
+    doc_chain_id: str = RSO_DOC_CHAIN_ID,
 ) -> dict[str, object]:
     manifest = load_manifest(snapshot_date)
     return prepare_attestation(
@@ -480,7 +473,7 @@ def record_state_entry(
     path: Path,
     entry: Mapping[str, object],
     *,
-    schema: str = STATE_SCHEMA_V1,
+    schema: str = STATE_SCHEMA,
 ) -> dict[str, object]:
     state = load_attestation_state(path, schema=schema)
     attestations = state["attestations"]
@@ -571,8 +564,8 @@ def prepare_sign_one(
     cast: str | None = None,
     parent_hash: str | None = None,
     uri: str | None = None,
-    doc_chain_id: str = RSO_DOC_CHAIN_ID_V2,
-    baseline_parent_hash: str | None = RSO_V1_HEAD_BLOCK_HASH,
+    doc_chain_id: str = RSO_DOC_CHAIN_ID,
+    baseline_parent_hash: str | None = None,
 ) -> tuple[PreparedRsoAttestation, dict[str, object]]:
     if parent_hash is None:
         parent_hash = parent_hash_for_date(

@@ -31,7 +31,7 @@ if str(ROOT) not in sys.path:
 
 from attestation.rso_attestation import date_range, snapshot_dir, storage_receipt_path  # noqa: E402
 from pipeline.snapshot import (  # noqa: E402
-    CONTENT_SCHEMA_V2,
+    CONTENT_SCHEMA,
     MAX_CATALOG_BYTES,
     canonicalize,
     compute_hash,
@@ -103,7 +103,7 @@ def keep_local_day(args: argparse.Namespace, snapshot_date: str) -> bool:
         manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
     except ValueError:
         return False
-    return manifest.get("content_schema") == CONTENT_SCHEMA_V2
+    return manifest.get("content_schema") == CONTENT_SCHEMA
 
 
 def hydrate_day(args: argparse.Namespace, snapshot_date: str) -> None:
@@ -125,8 +125,8 @@ def hydrate_day(args: argparse.Namespace, snapshot_date: str) -> None:
 
     members = extract_bundle(snapshot_date, bundle_bytes)
     manifest = json.loads(members["manifest.json"])
-    if manifest.get("content_schema") != CONTENT_SCHEMA_V2:
-        raise ValueError(f"{snapshot_date}: upstream manifest is not {CONTENT_SCHEMA_V2}")
+    if manifest.get("content_schema") != CONTENT_SCHEMA:
+        raise ValueError(f"{snapshot_date}: upstream manifest is not {CONTENT_SCHEMA}")
 
     catalog_bytes = gzip_decompress_limited(
         members["catalog.json.gz"], MAX_CATALOG_BYTES, label="catalog.json.gz"

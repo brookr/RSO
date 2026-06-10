@@ -1,4 +1,4 @@
-name: Attest Archive Range (v2)
+name: Attest Archive Range
 
 # Sign v2 DocChain attestations for a range of archived days with the node's
 # repo-secret signer. Used for the v2 re-genesis (every day since genesis) and
@@ -25,7 +25,7 @@ on:
       contract_address:
         description: "DocChain release 2 contract address."
         required: false
-        default: "0x2c66585E7b60A20563a3fd2B7a4D75Ae5baa5437"
+        default: "0x867FcC4f0339009043E9F6e554DD516Bcf1bcaa9"
         type: string
       keep_from:
         description: "Ownership boundary, YYYY-MM-DD: keep own days on/after this date when hydrating."
@@ -118,24 +118,24 @@ jobs:
             git push origin "HEAD:$RSO_NODE_BRANCH"
           fi
 
-      - name: Rebuild v2 fields for own archive days
+      - name: Rebuild content fields for own archive days
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          python3 pipeline/snapshot.py rebuild-v2 \
+          python3 pipeline/snapshot.py rebuild-content \
             --start "$RSO_RANGE_START" --end "$RSO_RANGE_END"
 
-      - name: Publish own v2 bundles for non-adopted days
+      - name: Publish own bundles for non-adopted days
         env:
           GH_TOKEN: ${{ github.token }}
           ARWEAVE_JWK: ${{ secrets.ARWEAVE_JWK }}
         run: |
           set -euo pipefail
           python3 - <<'DATES'
-          # publish --v2-backfill day-by-day, skipping adopted days (the
-          # publish guard raises for them) and days already carrying a v2
-          # receipt; failures on individual days stop the run loudly.
+          # publish day-by-day, skipping adopted days (the publish guard
+          # raises for them) and days already carrying a current receipt;
+          # failures on individual days stop the run loudly.
           import json, subprocess, sys
           from datetime import datetime, timedelta
           import os
@@ -153,12 +153,12 @@ jobs:
               if receipt.get("verified_from_upstream"):
                   print(f"  {date}: adopted from upstream; shared locations stand")
                   continue
-              if str(receipt.get("asset_name", "")).endswith("-v2.tar.gz"):
-                  print(f"  {date}: v2 receipt already recorded")
+              if receipt.get("bundle_sha256") and receipt.get("destinations"):
+                  print(f"  {date}: publish receipt already recorded")
                   continue
               subprocess.run(
                   [sys.executable, "pipeline/snapshot.py", "publish",
-                   "--date", date, "--v2-backfill"],
+                   "--date", date, "--rebuild"],
                   check=True,
               )
           DATES
@@ -181,7 +181,7 @@ jobs:
         with:
           version: v1.7.0
 
-      - name: Sign v2 attestations for the range
+      - name: Sign attestations for the range
         env:
           DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY }}
           DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON: ${{ secrets.DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON }}
@@ -210,5 +210,5 @@ jobs:
             echo "No attestation state changes to commit."
             exit 0
           fi
-          git commit -m "Record signed v2 DocChain attestations"
+          git commit -m "Record signed DocChain attestations"
           git push origin "HEAD:$RSO_NODE_BRANCH"

@@ -46,8 +46,8 @@ class ManifestTests(unittest.TestCase):
                 self.assertEqual(manifest["provenance"], "test_provenance")
                 self.assertEqual(manifest["format"], "OMM/JSON")
                 self.assertEqual(manifest["source"], "space-track.org")
-                self.assertEqual(manifest["pipeline_version"], "0.4.0")
-                self.assertEqual(manifest["content_schema"], "rso-core-v2")
+                self.assertEqual(manifest["pipeline_version"], "1.0.0")
+                self.assertEqual(manifest["content_schema"], "rso-core-v1")
                 self.assertEqual(
                     manifest["content_excluded_fields"],
                     list(snapshot.CONTENT_EXCLUDED_FIELDS),

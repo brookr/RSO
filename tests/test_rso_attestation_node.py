@@ -248,9 +248,7 @@ class RsoAttestationNodeTest(unittest.TestCase):
                             node_id="github:owner/repo",
                         )
 
-            # v2 chains record supersession: the baseline (genesis) day links
-            # to the agreed v1 head block instead of the zero hash.
-            self.assertEqual(prepared.parent_hash, node.RSO_V1_HEAD_BLOCK_HASH)
+            self.assertEqual(prepared.parent_hash, node.ZERO_BYTES32)
             self.assertEqual(prepared.block_hash, "0x" + "22" * 32)
             self.assertEqual(prepared.content_hash, "0x" + "11" * 32)
             publication = describe_publication_uri(prepared.uri)
