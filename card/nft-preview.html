@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RSO card — NFT embed preview</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 28px; background: #0a0d10; color: #e8ede9;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    h1 { font-size: 15px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+    p.note { max-width: 76ch; font-size: 12px; line-height: 1.6; color: #9aa6a0; }
+    p.note code { color: #cdd7d1; }
+    .grid { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 24px; align-items: flex-start; }
+    figure { margin: 0; }
+    figcaption { margin-bottom: 8px; font-size: 11px; color: #9aa6a0; max-width: 560px; line-height: 1.5; }
+    figcaption b { color: #e8ede9; }
+    iframe { border: 1px solid #2a3439; border-radius: 10px; background: #020506; display: block; }
+    .ok { color: #7fe7bd; }
+  </style>
+</head>
+<body>
+  <h1>NFT embed preview — how marketplaces will frame the card</h1>
+  <p class="note">
+    Serve this directory with <code>python3 serve.py</code> (CORS headers, like an Arweave
+    gateway) and open <code>http://localhost:8755/nft-preview.html</code>. What to check in each
+    frame: the field boots and animates &middot; HUD shows real counts and
+    <span class="ok">Live record &middot; verified</span> on the latest day &middot; scroll
+    scrubs time without scrolling this page &middot; the fullscreen button appears only where
+    fullscreen is delegated &middot; in the strict frames, settings still work but
+    &ldquo;remember on this device&rdquo; can&rsquo;t persist (opaque origin has no storage) —
+    it must fail silently, never break the piece.
+  </p>
+
+  <div class="grid">
+    <figure>
+      <figcaption>
+        <b>1 · Marketplace strict</b> — <code>sandbox="allow-scripts"</code>, no same-origin, no
+        delegated permissions. The harshest common case (OpenSea-style). Opaque origin: no
+        localStorage, every fetch is cross-origin, fullscreen button should be <b>hidden</b>.
+      </figcaption>
+      <iframe src="index.html" width="560" height="560" sandbox="allow-scripts" title="strict sandbox"></iframe>
+    </figure>
+
+    <figure>
+      <figcaption>
+        <b>2 · Generous host</b> — adds <code>allow-same-origin</code> and delegates
+        <code>fullscreen; accelerometer; gyroscope</code> (6529-style dedicated viewer).
+        Settings persist, tilt-to-look possible, fullscreen button should be <b>visible</b>.
+      </figcaption>
+      <iframe src="index.html" width="560" height="560"
+        sandbox="allow-scripts allow-same-origin"
+        allow="fullscreen; accelerometer; gyroscope"
+        title="generous sandbox"></iframe>
+    </figure>
+
+    <figure>
+      <figcaption>
+        <b>3 · Grid tile</b> — strict sandbox at thumbnail size. The HUD should drop to a
+        whisper (brand mark, date, timebar) and read as pure visual.
+      </figcaption>
+      <iframe src="index.html" width="330" height="330" sandbox="allow-scripts" title="grid tile"></iframe>
+    </figure>
+  </div>
+
+  <script>
+    // The card posts {rso:"ready"} to its parent when it boots; match e.source to the
+    // frame (works across opaque origins) and stamp the caption.
+    const frames = [...document.querySelectorAll("iframe")];
+    frames.forEach((f) => {
+      const tag = document.createElement("div");
+      tag.style.cssText = "margin-top:7px;font-size:11px;color:#e06c75";
+      tag.textContent = "○ no boot signal yet";
+      f.insertAdjacentElement("afterend", tag);
+      f.__tag = tag;
+    });
+    addEventListener("message", (e) => {
+      if (!e.data || e.data.rso !== "ready") return;
+      const f = frames.find((fr) => fr.contentWindow === e.source);
+      if (f) { f.__tag.style.color = "#7fe7bd"; f.__tag.textContent = `● booted — latest day ${e.data.latest}`; }
+    });
+  </script>
+</body>
+</html>

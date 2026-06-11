@@ -30,6 +30,12 @@
     .warpwash { z-index: 1; opacity: 0; transition: opacity 200ms ease;
       background: radial-gradient(circle at 50% 50%, rgba(154,169,255,0) 26%, rgba(154,169,255,0.05) 55%, rgba(120,150,255,0.18) 100%); }
     body.warping .warpwash { opacity: 1; }
+    /* overdrive — a LONG jump: deeper wash, harder tunnel-vision, the date burns */
+    body.overdrive .warpwash { opacity: 1;
+      background: radial-gradient(circle at 50% 50%, rgba(154,169,255,0) 16%, rgba(154,169,255,0.11) 46%, rgba(120,150,255,0.36) 100%); }
+    body.overdrive .vignette { box-shadow: inset 0 0 42vmin rgba(0,0,0,0.93), inset 0 0 12vmin rgba(154,169,255,0.22); }
+    .jump-date { transition: letter-spacing 320ms ease, text-shadow 320ms ease; }
+    body.overdrive .jump-date { letter-spacing: 0.15em; text-shadow: 0 0 28px rgba(154,169,255,0.9), 0 2px 30px #020506; }
 
     .hud { z-index: 3; }
     .corner { position: absolute; width: 40px; height: 40px; border-color: rgba(164,174,255,0.4); border-style: solid; }
@@ -92,10 +98,16 @@
     .pager i { width: 4px; height: 4px; border-radius: 50%; background: rgba(164,174,255,0.22); transition: background 0.2s, box-shadow 0.2s; }
     .pager i.on { background: var(--accent); box-shadow: 0 0 6px rgba(154,169,255,0.7); }
 
-    .witness { position: absolute; right: calc(var(--safe-right) + 18px); bottom: calc(var(--safe-bottom) + 18px); width: min(290px, 36vw); padding-top: 7px; border-top: 1px solid var(--line); text-align: right; }
+    .witness { position: absolute; right: calc(var(--safe-right) + 18px); bottom: calc(var(--safe-bottom) + 18px); width: min(290px, 36vw); padding-top: 7px; border-top: 1px solid var(--line); text-align: right;
+      text-shadow: 0 1px 10px rgba(2,5,6,0.9), 0 0 22px rgba(2,5,6,0.8); }  /* legible over the bright limb */
     .witness-state { margin-top: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; transition: color 220ms ease; }
     .witness-state.attested { color: var(--seal); }
     .witness-hash { margin-top: 5px; color: var(--dim); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 8px; word-break: break-all; }
+    /* permanence: how many independent forever-copies of this day exist */
+    .witness-perm { margin-top: 5px; color: var(--dim); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; letter-spacing: 0.06em; }
+    .witness-perm:empty { display: none; }
+    .witness-perm.one { color: var(--muted); }
+    .witness-perm.strong { color: var(--seal); text-shadow: 0 0 10px rgba(154,255,214,0.35); }
 
     .timebar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(164,174,255,0.10); }
     .timebar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, rgba(154,169,255,0.5), var(--seal)); box-shadow: 0 0 10px rgba(154,255,214,0.6); }
@@ -111,6 +123,11 @@
     .insp-label { color: var(--accent); font-size: 8px; }
     .insp-name { margin-top: 5px; font-size: 14px; line-height: 1.1; }
     .insp-meta { margin-top: 6px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .insp-obs { margin-top: 5px; color: var(--seal, #8cffd0); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; letter-spacing: 0.05em; }
+    .insp-obs:empty { display: none; }
+    /* clickable line inside a rotating prism (e.g. the contract address) */
+    .prism-link { pointer-events: auto; color: var(--muted); text-decoration: none; border-bottom: 1px dotted rgba(154,169,255,0.45); transition: color 150ms, border-color 150ms; }
+    .prism-link:hover { color: var(--ink); border-color: var(--accent); }
 
     .jump { position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; opacity: 0; transition: opacity 160ms ease; }
     .jump.active { opacity: 1; }
@@ -131,8 +148,12 @@
     .lg-title { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.12em; font-size: 8px; color: var(--accent); margin-bottom: 3px; }
     .lg-row { display: flex; align-items: center; justify-content: flex-end; gap: 7px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; color: var(--muted); white-space: nowrap; }
     .lg-row i { width: 7px; height: 7px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
+    .lg-row i.sh-pill { border-radius: 999px; transform: rotate(-30deg) scaleX(1.9) scaleY(0.6); }
+    .lg-row i.sh-shard { border-radius: 1px; transform: rotate(22deg) skewX(-14deg) scale(0.92); }
+    .lg-row i.sh-ring { background: transparent !important; border: 1.5px solid currentColor; }
     .lg-grad { width: 116px; height: 7px; border-radius: 3px; background: linear-gradient(90deg, rgb(107,77,217), rgb(64,204,235), rgb(255,209,102)); }
     .lg-years { display: flex; justify-content: space-between; width: 116px; font-family: ui-monospace, monospace; font-size: 8px; color: var(--dim); margin-top: 2px; }
+    .lg-note { font-family: ui-monospace, monospace; font-size: 8px; color: var(--dim); margin-top: 3px; text-align: right; }
     /* mode toast (centre, brief) */
     .mode-toast { position: fixed; left: 50%; top: 22%; transform: translate(-50%, 6px); z-index: 6; pointer-events: none;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.28em; font-size: 12px; color: var(--ink);
@@ -161,8 +182,39 @@
     body.zen .hud { opacity: 0; pointer-events: none; transition: opacity 400ms ease; }
 
     @keyframes blink { 50% { opacity: 0.35; } }
-    @media (max-width: 760px) { .brand-sub, .witness { display: none; } .record-date { top: calc(var(--safe-top) + 60px); width: 82vw; } }
+    @media (max-width: 760px) { .brand-sub { display: none; } .record-date { top: calc(var(--safe-top) + 60px); width: 82vw; } }
+    /* the agreement line is the soul of the piece — keep it down to phone width,
+       where it would collide with the readout column */
+    @media (max-width: 520px) { .witness { display: none; } }
     @media (prefers-reduced-motion: reduce) { .scanlines { display: none; } }
+
+    /* ── responsive HUD: the field always fills the viewport; the chrome adapts ── */
+    /* compact — small windows, landing-page embeds, large NFT frames */
+    @media (max-width: 640px), (max-height: 540px) {
+      .corner { width: 24px; height: 24px; }
+      .record-date { width: min(76vw, 480px); }
+      .date { font-size: clamp(19px, 6vw, 34px); }
+      .brand-sub, .hint { display: none; }
+      /* keep the column width — the prism faces are a fixed-height 3D box (82px);
+         narrowing the column wraps their text taller than the box and they collide */
+      .readout { gap: 14px; }
+      .readout-value { font-size: clamp(13px, 2vh, 17px); }
+      .lens-legend { gap: 5px; }
+      .lg-row { font-size: 8px; }
+      .witness { max-width: 38vw; }
+    }
+    /* tiny — NFT grid tiles: the piece reads as pure visual; chrome to a whisper.
+       The fullscreen button stays — it's the escape hatch to the full experience. */
+    @media (max-width: 420px), (max-height: 380px) {
+      .readout, .witness, .lens-legend, .status-label, .date-index,
+      #download-btn, #settings-btn { display: none; }
+      .corner { width: 14px; height: 14px; }
+      .date { font-size: clamp(14px, 7.5vw, 22px); margin-top: 4px; }
+      .brand-name { font-size: 9px; }
+      .brand-mark { width: 7px; height: 7px; margin-top: 2px; }
+      .inspector { width: min(88vw, 300px); bottom: calc(var(--safe-bottom) + 40px); }
+      .mode-toast { font-size: 9px; }
+    }
   </style>
 </head>
 <body>
@@ -187,6 +239,9 @@
 
     <div class="status">
       <span class="status-light loading" id="status-light"></span><span class="status-label" id="status-label">Entering orbit</span>
+      <button class="icon-btn" id="fullscreen-btn" title="Fullscreen" aria-label="Toggle fullscreen">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
+      </button>
       <button class="icon-btn" id="download-btn" title="Download this frame (PNG)" aria-label="Download frame">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
       </button>
@@ -230,7 +285,7 @@
             <div class="pager"><i></i><i></i><i></i><i class="on"></i></div>
             <div class="readout-label">Updated this doc-day</div>
             <div class="readout-value" id="d-upd">—</div>
-            <div class="readout-note"><b id="d-new">—</b> launched · <b id="d-dec">—</b> re-entered</div>
+            <div class="readout-note"><b id="d-new">—</b> launched · <b id="d-dec">—</b> re-entered<span id="d-obs"></span></div>
           </div>
         </div>
       </div>
@@ -241,7 +296,7 @@
             <div class="pager"><i class="on"></i><i></i><i></i><i></i></div>
             <div class="readout-label">Catalog fingerprint</div>
             <div class="readout-value" id="fingerprint">—</div>
-            <div class="readout-note">SHA-256</div>
+            <div class="readout-note" id="fp-sha-note">SHA-256</div>
           </div>
           <div class="face">
             <div class="pager"><i></i><i class="on"></i><i></i><i></i></div>
@@ -251,15 +306,16 @@
           </div>
           <div class="face">
             <div class="pager"><i></i><i></i><i class="on"></i><i></i></div>
-            <div class="readout-label">Archive bundle</div>
-            <div class="readout-value sm" id="fp-size">—</div>
-            <div class="readout-note" id="fp-fmt">—</div>
+            <div class="readout-label">Attested core</div>
+            <div class="readout-value sm" id="fp-core">—</div>
+            <div class="readout-note" id="fp-core-note">consensus hash</div>
           </div>
           <div class="face">
             <div class="pager"><i></i><i></i><i></i><i class="on"></i></div>
             <div class="readout-label">On-chain block</div>
             <div class="readout-value sm" id="fp-block">—</div>
             <div class="readout-note" id="fp-blocknote">—</div>
+            <div class="readout-note"><a id="fp-contract" class="prism-link" target="_blank" rel="noopener" title="Open the DocChain contract">—</a></div>
           </div>
         </div>
       </div>
@@ -269,12 +325,14 @@
       <div class="readout-label">Public witness</div>
       <div class="witness-state" id="witness-state">Awaiting index</div>
       <div class="witness-hash" id="witness-hash">&nbsp;</div>
+      <div class="witness-perm" id="witness-perm"></div>
     </section>
 
     <section class="inspector" id="inspector">
       <div class="insp-label" id="insp-label">Tracked object</div>
       <div class="insp-name" id="insp-name">—</div>
       <div class="insp-meta" id="insp-meta">—</div>
+      <div class="insp-obs" id="insp-obs"></div>
     </section>
 
     <div class="timebar"><div class="timebar-fill" id="timebar-fill"></div></div>
@@ -290,7 +348,7 @@
     <div class="settings-panel">
       <div class="settings-head"><span>Witness settings</span><button class="settings-close" id="settings-close" aria-label="Close">×</button></div>
       <div class="set-row">
-        <div class="set-label">Ethereum attestation rank <b id="set-eth-val">≥ 1 TDH</b></div>
+        <div class="set-label">Ethereum attestation rank <b id="set-eth-val">any witness</b></div>
         <input type="range" id="set-eth" min="0" max="6" step="1" value="0">
         <div class="set-note">minimum on-chain TDH backing to count a day as attested</div>
       </div>
@@ -304,7 +362,12 @@
   </div>
 
   <script type="module">
-    import * as THREE from "./three.module.js";
+    // Resolve the vendored module against the directory we're mounted at, even when the
+    // page is served at a slashless path (om.pub/rso/live, Arweave gateway paths, …) where
+    // a bare relative import would resolve against the parent directory.
+    const MOUNT = new URL(location.href);
+    if (!/\/$|\.html?$/.test(MOUNT.pathname)) MOUNT.pathname += "/";
+    const THREE = await import(new URL("./three.module.js", MOUNT).href);
 
     // ════════════════════════════════════════════════════════════════════
     // CONFIG — live sources + tunable feel
@@ -326,16 +389,20 @@
       1: { r0: 432, r1: 478, speed: 1.0,  name: "MEO" }, // straddles the camera radius → crosses your plane, grazes you
       2: { r0: 500, r1: 720, speed: 0.42, name: "GEO" }  // R ≫ → high overhead, slow, sparse
     };
+    // At rest, every object completes exactly one pass per hour: spot something in the
+    // stream and it returns 60 minutes later, like clockwork. (Band speeds above only
+    // flavour the WARP rush, where the river becomes a torrent.)
+    const LAP_SECONDS = 3600;
     const PROP = { bands: { LEO: 0.905, MEO: 0.066, GEO: 0.029 } };
     const COLORS = {                                  // distinct hues that survive the brightness clip
-      payload: [0.34, 0.48, 1.0],   // deeper blue — stays blue (not white) when bright/near
-      rocket:  [1.0, 0.62, 0.24],   // amber / orange
-      debris:  [0.96, 0.44, 0.62],  // rose-magenta (now clearly ≠ payload)
-      unknown: [0.50, 0.74, 0.66],  // teal
-      tba:     [0.45, 0.52, 0.52],
+      payload: [0.30, 0.52, 1.0],   // blue — stays blue (not white) when bright/near
+      rocket:  [1.0, 0.58, 0.16],   // hot orange
+      debris:  [1.0, 0.36, 0.68],   // magenta-pink (clearly ≠ payload AND ≠ rocket)
+      unknown: [0.38, 0.92, 0.60],  // green (was teal — too close to payload when bright)
+      tba:     [0.55, 0.58, 0.62],
       ghost:   [0.40, 0.44, 0.52],  // dim grey — already decayed / re-entered (no longer up there)
       newObj:  [0.55, 1.0, 0.86],   // cyan — launched this day
-      decayed: [1.0, 0.40, 0.22],   // re-entry red — decay reported this day
+      decayed: [1.0, 0.30, 0.10],   // re-entry fire — decay reported this day
       seal:    [0.6, 1.0, 0.84]
     };
     // scene geometry: camera orbits the Earth; objects sweep curved arcs around EC.
@@ -365,22 +432,24 @@
     const typeCountsByDate = new Map(); // date -> {payload,rocket,debris,unknown,tba}  (on-orbit)
     const orbitByDate = new Map();      // date -> {onOrbit, reentered, total}
     const deltaByDate = new Map();      // date -> {updated,new,decayed,carried}
+    const annoByDate = new Map();       // date -> {decayNotices, edits, renames, byId:Map(norad -> note)}
+    const integrityByDate = new Map();  // date -> true: downloaded catalog bytes hash to the ledger sha256
     const attestByDate = new Map();   // date -> {blockHash, contentHash, tdh, attesters}
     // first4…last4, the way eth hashes/addresses are usually shown (0x-aware)
     const shortHex = (h) => { if (!h) return "—"; const x = h.startsWith("0x") ? h.slice(2) : h; return (h.startsWith("0x") ? "0x" : "") + x.slice(0, 4) + "…" + x.slice(-4); };
-    const mb = (b) => b ? (b / 1048576).toFixed(1) + " MB" : "—";
     const titleize = (s) => s ? String(s).replace(/_/g, " ") : "—";
 
     const state = {
       cursor: TOTAL, target: TOTAL, shownDay: -1,
-      time: 0, warp: 0, warpBlend: 0, vel: 0, spin: 0,
+      time: 0, warp: 0, warpBlend: 0, vel: 0, spin: 0, over: 0,
       flickVel: 0, timeDir: 1, lastWheel: 0,
       attested: false, pulseY: 0, pulseStr: 0,
       maxSpeed: reduced ? 6 : 24, accel: 30,
       yaw: 0, pitch: 0, yawT: 0, pitchT: 0, wasTraveling: false,
       pointer: null, loadToken: 0,
       lens: 0, keys: new Set(), tilt: null,   // tilt = {base:{b,g}} once enabled
-      ethRank: 1, opSource: 0,                // witness settings
+      ethRank: 0, opSource: 0,                // witness settings (rank 0 = any sweeper-accepted witness)
+      chainMeta: null,                        // {contractAddress, chainId} from the attestation index
       objects: [], catalogDate: null
     };
     const LOOK_YAW = 0.5, LOOK_PITCH = 0.28;   // a few degrees of freedom — the gentle range we like
@@ -397,7 +466,8 @@
 
     // ── field: CPU positions → points (dots) + line segments (real motion-blur) ──
     const O = [];                                  // object render records
-    const pPos = new Float32Array(FIELD * 3), pCol = new Float32Array(FIELD * 3), pAlpha = new Float32Array(FIELD), pSize = new Float32Array(FIELD), pFocus = new Float32Array(FIELD);
+    const pPos = new Float32Array(FIELD * 3), pCol = new Float32Array(FIELD * 3), pAlpha = new Float32Array(FIELD), pSize = new Float32Array(FIELD), pFocus = new Float32Array(FIELD), pShape = new Float32Array(FIELD);
+    const pSeed = new Float32Array(FIELD * 3), pPrev = new Float32Array(FIELD * 3);
     const lPos = new Float32Array(FIELD * 2 * 3), lCol = new Float32Array(FIELD * 2 * 3);
 
     const pointGeo = new THREE.BufferGeometry();
@@ -406,11 +476,16 @@
     pointGeo.setAttribute("aAlpha", new THREE.BufferAttribute(pAlpha, 1));
     pointGeo.setAttribute("aSize", new THREE.BufferAttribute(pSize, 1));
     pointGeo.setAttribute("aFocus", new THREE.BufferAttribute(pFocus, 1));
+    pointGeo.setAttribute("aShape", new THREE.BufferAttribute(pShape, 1));
+    pointGeo.setAttribute("aSeed", new THREE.BufferAttribute(pSeed, 3));   // s1, s2, tumble rate
+    pointGeo.setAttribute("aPrev", new THREE.BufferAttribute(pPrev, 3));   // last frame's position → motion direction
     const pointMat = new THREE.ShaderMaterial({
       transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
-      uniforms: { uPixel: { value: renderer.getPixelRatio() } },
+      uniforms: { uPixel: { value: renderer.getPixelRatio() }, uTime: { value: 0 }, uAspect: { value: innerWidth / innerHeight } },
       vertexShader: `
-        attribute float aAlpha, aSize, aFocus; uniform float uPixel; varying vec3 vColor; varying float vAlpha; varying float vFocus;
+        attribute float aAlpha, aSize, aFocus, aShape; attribute vec3 aSeed, aPrev;
+        uniform float uPixel, uTime, uAspect;
+        varying vec3 vColor; varying float vAlpha; varying float vFocus; varying float vShape; varying float vAng; varying float vPx; varying vec2 vSeed;
         void main(){
           vec4 mv = modelViewMatrix * vec4(position,1.0);
           vec4 clip = projectionMatrix * mv;
@@ -423,17 +498,117 @@
           float nearness = 1.0 - smoothstep(26.0, 250.0, dist);          // 0 far (pinpoint) … 1 right on top of you
           float swell    = nearness * central * 4.2;
           float base     = aSize * (40.0/dist + 0.55) * uPixel;
-          gl_PointSize = clamp(base * (1.0 + swell), 1.0, 19.0);
-          vColor = color; vAlpha = aAlpha; vFocus = aFocus;
+          // every silhouette carves pixels away from the quad — give them all more canvas
+          float sb = 1.30;
+          gl_PointSize = clamp(base * (1.0 + swell) * sb, 1.0, 24.0);   // ceiling high enough that LARGE still out-looms
+          // orientation: nose-first along the REAL screen-space motion when moving;
+          // at rest, a seeded attitude that tumbles at the object's own rate.
+          // Guard the near-plane: as w→0 the projected delta blows up to inf/NaN and a
+          // NaN distance field paints the whole sprite quad.
+          vec4 clipP = projectionMatrix * modelViewMatrix * vec4(aPrev, 1.0);
+          float wOK = step(0.05, clip.w) * step(0.05, clipP.w);
+          vec2 dscr = (ndc - clipP.xy / max(0.05, clipP.w)) * vec2(uAspect, 1.0);
+          float sp = length(dscr) * wOK;
+          float restAng = aSeed.x * 6.2832 + uTime * aSeed.z;
+          vec2 dir = mix(vec2(cos(restAng), sin(restAng)), dscr / max(sp, 1e-6), smoothstep(0.0006, 0.0035, sp) * wOK);
+          vAng = atan(dir.y, dir.x + 1e-6);
+          vPx = gl_PointSize / uPixel;
+          vColor = color; vAlpha = aAlpha; vFocus = aFocus; vShape = aShape; vSeed = aSeed.xy;
         }`,
-      // near objects render as a crisp, bright, defined disc (looming); far ones stay soft pinpoints
+      // near objects render crisp, bright and DEFINED (looming); far ones stay soft pinpoints.
+      // Each class is a parametric FAMILY — bus + solar wings, stage + nozzle, fractured
+      // shard, gauged ring — and every object draws its own proportions from its NORAD-seeded
+      // identity, so no two resolve alike. Tiny dots stay dots (distance LOD).
       fragmentShader: `
-        varying vec3 vColor; varying float vAlpha; varying float vFocus;
-        void main(){ vec2 q = gl_PointCoord - 0.5; float d = length(q); if(d>0.5) discard;
-          float edge = mix(0.03, 0.40, vFocus);              // focus 0 → soft gradient; focus 1 → filled crisp disc
+        varying vec3 vColor; varying float vAlpha; varying float vFocus; varying float vShape; varying float vAng; varying float vPx; varying vec2 vSeed;
+        float sdBox(vec2 p, vec2 b){ vec2 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0); }
+        float f1(float s, float k){ return fract(s * k + 0.137); }   // decorrelated parameter channels
+        void main(){
+          vec2 q0 = gl_PointCoord - 0.5;
+          float ca = cos(vAng), sa = sin(vAng);
+          vec2 q = mat2(ca, sa, -sa, ca) * q0;                 // +x = nose / direction of travel
+          float s1 = vSeed.x, s2 = vSeed.y;
+          float lod = smoothstep(7.5, 13.0, vPx);              // form resolves only as it looms
+          float d;
+          if (vShape < 0.5) {                                  // payload (generic) — bus + 1..6 fanned panels
+            float a = mix(0.10, 0.15, f1(s1, 3.7));            // disc bus: satellites gleam round at distance
+            d = length(q) - a;
+            float cnt = floor(1.0 + 5.99 * f1(s1, 17.9));      // 1..6 solar panels
+            float ax  = f1(s2, 15.3) * 3.1416;                 // first panel axis
+            float fan = mix(0.55, 1.05, f1(s1, 19.7));         // fan step between pairs
+            float wc = mix(0.17, 0.26, f1(s1, 7.3));
+            float wl = min(mix(0.08, 0.15, f1(s2, 9.7)), 0.45 - wc);
+            float ww = mix(0.05, 0.085, f1(s2, 12.9));
+            for (int k = 0; k < 3; k++) {
+              float fk = float(k);
+              if (cnt > 2.0 * fk) {
+                float aa = ax + fk * fan;
+                vec2 dirk = vec2(cos(aa), sin(aa));
+                vec2 qq = vec2(dot(q, dirk), dot(q, vec2(-dirk.y, dirk.x)));
+                d = min(d, sdBox(vec2(qq.x - wc, qq.y), vec2(wl, ww)));
+                if (cnt > 2.0 * fk + 1.0) d = min(d, sdBox(vec2(-qq.x - wc, qq.y), vec2(wl, ww)));
+              }
+            }
+          } else if (vShape < 1.5) {                           // rocket body — flat-ended barrel + nozzle bell
+            float L = mix(0.20, 0.30, f1(s1, 4.1));
+            float w = mix(0.10, 0.145, f1(s2, 3.3));
+            d = sdBox(q, vec2(L, w)) - 0.02;                   // a tank, not a torpedo
+            float nz = mix(0.05, 0.085, f1(s1, 6.7));
+            d = min(d, length(q - vec2(-L - nz * 0.55, 0.0)) - nz);
+            d = max(d, -sdBox(q - vec2(L * mix(0.0, 0.45, f1(s2, 8.9)), 0.0), vec2(0.013, w + 0.03))); // stage seam
+          } else if (vShape < 2.5) {                           // debris — every shard fractured its own way
+            d = length(q) - mix(0.26, 0.36, f1(s1, 2.9));
+            float a1 = f1(s1, 5.3) * 6.2832, a2 = a1 + 1.7 + f1(s2, 7.1) * 2.2, a3 = a2 + 1.6 + f1(s1, 9.3) * 2.1;
+            d = max(d, dot(q, vec2(cos(a1), sin(a1))) - mix(0.04, 0.20, f1(s2, 4.7)));
+            d = max(d, dot(q, vec2(cos(a2), sin(a2))) - mix(0.05, 0.22, f1(s1, 6.1)));
+            d = max(d, dot(q, vec2(cos(a3), sin(a3))) - mix(0.06, 0.24, f1(s2, 8.3)));
+          } else if (vShape < 3.5) {                           // unknown — ring, seeded gauge, some horseshoed
+            float rr = mix(0.19, 0.30, f1(s1, 3.1));
+            d = abs(length(q) - rr) - mix(0.035, 0.075, f1(s2, 4.3));
+            if (f1(s1, 8.7) > 0.55) {
+              float ga = f1(s2, 6.9) * 6.2832, gw = mix(0.35, 0.95, f1(s1, 5.7));
+              float dg = abs(mod(atan(q.y, q.x) - ga + 3.14159, 6.28318) - 3.14159);
+              d = max(d, gw - dg);                             // carve the gap
+            }
+          } else if (vShape < 4.5) {                           // STARLINK — flat slab + one broad sail
+            d = sdBox(q, vec2(0.16, 0.045)) - 0.012;
+            vec2 qs = q - vec2(0.0, mix(0.20, 0.26, f1(s1, 5.1)));
+            d = min(d, sdBox(qs, vec2(mix(0.10, 0.13, f1(s2, 7.7)), mix(0.13, 0.18, f1(s1, 9.1)))));
+          } else if (vShape < 5.5) {                           // GEO comsat — long symmetric wings + dish
+            float a = mix(0.09, 0.12, f1(s1, 3.7));
+            d = sdBox(q, vec2(a, a)) - 0.02;
+            float wl = 0.42 - a;
+            d = min(d, sdBox(vec2(abs(q.x) - (a + wl * 0.5 + 0.02), q.y), vec2(wl * 0.5, mix(0.04, 0.055, f1(s2, 5.5)))));
+            d = min(d, length(q - vec2(0.0, a + 0.08)) - mix(0.05, 0.07, f1(s2, 11.1)));
+          } else if (vShape < 6.5) {                           // cubesat — tiny slab, sometimes stub panels
+            d = sdBox(q, vec2(mix(0.05, 0.09, f1(s1, 3.3)), mix(0.045, 0.075, f1(s2, 4.4)))) - 0.012;
+            if (f1(s1, 6.6) > 0.45)
+              d = min(d, sdBox(vec2(abs(q.x) - mix(0.13, 0.17, f1(s2, 8.8)), q.y), vec2(0.07, 0.032)));
+          } else if (vShape < 7.5) {                           // navsat — bus + two wings + nav dish
+            float a = mix(0.10, 0.13, f1(s1, 3.9));
+            d = sdBox(q, vec2(a * 1.1, a)) - 0.02;
+            d = min(d, sdBox(vec2(abs(q.x) - (a + 0.17), q.y), vec2(0.12, mix(0.05, 0.07, f1(s2, 5.9)))));
+            d = min(d, length(q - vec2(0.0, a + 0.07)) - 0.05);
+          } else if (vShape < 8.5) {                           // ONEWEB — box-wing: small bus, two long narrow arrays
+            d = sdBox(q, vec2(0.07, 0.085)) - 0.015;
+            d = min(d, sdBox(vec2(abs(q.x) - 0.26, q.y), vec2(0.17, mix(0.03, 0.042, f1(s2, 6.1)))));
+          } else {                                             // IRIDIUM — two wings + the big canted antenna
+            d = sdBox(q, vec2(0.10, 0.08)) - 0.015;
+            d = min(d, sdBox(vec2(abs(q.x) - 0.22, q.y), vec2(0.10, 0.05)));
+            vec2 qa = mat2(0.94, -0.34, 0.34, 0.94) * (q - vec2(0.0, -0.17));
+            d = min(d, sdBox(qa, vec2(0.085, 0.115)));
+          }
+          d = mix(length(q0), d, lod);                         // tiny = plain dot; near = its own machine
+          if (d > 0.55 || d != d) discard;                     // d!=d traps any NaN before it paints the quad
+          float edge = mix(0.03, 0.40, vFocus);                // focus 0 → soft glow; focus 1 → filled crisp form
           float core = smoothstep(0.5, edge, d);
           float halo = smoothstep(0.5, 0.12, d) * (0.42 - vFocus*0.3);
-          vec3 c = vColor * (0.55 + core*0.82 + vFocus*0.33); // keep brightness off the white-clip so hue survives
+          vec3 c = vColor * (0.55 + core*0.62 + vFocus*0.25);  // keep brightness off the white-clip so hue survives
+          // one-light shading from the SDF gradient — only once the sprite is large enough
+          // that 2x2-quad derivatives read smooth (smaller, they quantize into blocks)
+          vec2 g = vec2(dFdx(d), dFdy(d));
+          c *= 1.0 + 0.26 * smoothstep(12.0, 16.0, vPx) * vFocus * clamp(dot(normalize(g + vec2(1e-5)), vec2(-0.55, 0.83)), -1.0, 1.0);
+          c = mix(c, vec3(1.0), core * vFocus * 0.18);         // only the crisp near core warms toward white
           gl_FragColor = vec4(c, (core + halo) * vAlpha); }`
     });
     const points = new THREE.Points(pointGeo, pointMat); points.frustumCulled = false; scene.add(points);
@@ -452,18 +627,21 @@
     function worldPos(o, t, out) {
       const beta = BETA0 + t * BETA_SPAN;
       const cb = Math.cos(beta), sb = Math.sin(beta);
-      const yArc = o.R * cb;                       // height along the orbital arc
+      // eccentric orbits breathe: the radius swells and dips along the arc, so HEO
+      // objects visibly dive through the river and climb back out
+      const Rr = o.eccV ? o.R + o.eccV * 26 * Math.sin(beta + o.ep) : o.R;
+      const yArc = Rr * cb;                        // height along the orbital arc
       // cross-track tilt (o.cg/o.sg) fans the arcs around the flight axis so they DON'T
       // converge at the apex — objects rise over the limb across the whole view and pass under.
       let x = -yArc * o.sg;
       let y = EC.y + yArc * o.cg;
-      let z = EC.z + o.R * sb;
+      let z = EC.z + Rr * sb;
       const wb = state.warpBlend;                 // 0 = orbital arcs, 1 = radial wormhole
       if (wb > 0.001) {
-        const prox = t;
-        const fanT = 0.55 + prox * prox * 3.4;
+        const prox = t, ov = state.over;
+        const fanT = (0.55 + prox * prox * 3.4) * (1 - ov * 0.34);   // overdrive pinches the throat
         const tx = Math.cos(o.ta) * o.tr * fanT, ty = Math.sin(o.ta) * o.tr * fanT;
-        const tz = NEARZ - (1 - t) * CORRIDOR;
+        const tz = NEARZ - (1 - t) * CORRIDOR * (1 + ov * 0.9);      // …and stretches the corridor
         x = x * (1 - wb) + tx * wb;
         y = y * (1 - wb) + (CAM.y + ty) * wb;
         z = z * (1 - wb) + tz * wb;
@@ -475,6 +653,19 @@
       return out;
     }
 
+    // Name-keyed payload archetypes: the famous constellations get their real silhouettes,
+    // so a watcher learns to spot a Starlink slab or a GEO comsat's long wings in the stream.
+    function payloadShape(meta, band) {
+      if (!meta) return 0;
+      const n = (meta.name || "").toUpperCase();
+      if (n.startsWith("STARLINK")) return 4;                       // flat slab + one broad sail
+      if (n.startsWith("ONEWEB")) return 8;                         // box-wing: small bus, two long narrow arrays
+      if (n.includes("IRIDIUM")) return 9;                          // two wings + the big canted antenna panel
+      if (/^(NAVSTAR|GPS |GLONASS|GALILEO|BEIDOU|QZS|IRNSS|NVS)/.test(n)) return 7;  // navsat: bus + wings + dish
+      if (/^(FLOCK|LEMUR|SPACEBEE|DOVE )/.test(n) || meta.rcs === "SMALL") return 6; // cubesat-tiny
+      if (band === 2 || /(INTELSAT|EUTELSAT|ECHOSTAR|DIRECTV|TDRS|INMARSAT|ASTRA |ANIK|YAMAL|EXPRESS-|TURKSAT|ARABSAT|NIMIQ|SES-|AMC-|SKYNET|GALAXY )/ .test(n)) return 5; // GEO comsat
+      return 0;                                                     // generic: seeded 1–6 panels
+    }
     function assignField(objects) {
       state.objects = objects;
       for (let i = 0; i < FIELD; i++) {
@@ -482,39 +673,71 @@
         const band = src ? src.band : (hashUnit(`b${i}`) < PROP.bands.LEO ? 0 : hashUnit(`b${i}`) < PROP.bands.LEO + PROP.bands.MEO ? 1 : 2);
         const B = BAND[band];
         const klass = src ? src.klass : pickClass(i);
+        // identity seeds: keyed to the NORAD id, so every object renders as ITSELF —
+        // same silhouette on every device, every day, forever
+        const nid = src ? (parseInt(src.id, 10) || i) : i;
+        const s1 = rand2(nid, 71), s2 = rand2(nid, 83);
         let baseSize = klass === 0 ? 2.0 : klass === 1 ? 1.9 : klass === 2 ? 1.25 : 1.6;
         baseSize *= band === 2 ? 1.7 : band === 1 ? 1.4 : 0.95;   // GEO & MEO read larger
-        baseSize *= 0.8 + hashUnit(`z${i}`) * 0.6;
+        // radar cross-section is the size family — the most data-true thing we can show.
+        // The tiers are spaced 2.5× apart and the jitter is too small to cross them, so
+        // LARGE / MEDIUM / SMALL read at a glance in the stream.
+        const rcs = src ? src.rcs : "";
+        baseSize *= (rcs === "LARGE" ? 1.55 : rcs === "MEDIUM" ? 1.0 : rcs === "SMALL" ? 0.62 : 0.9)
+          * (0.92 + rand2(nid, 89) * 0.16);
         const o = O[i] || (O[i] = {});
         o.band = band;
-        o.R = B.r0 + (B.r1 - B.r0) * rand2(i, 11);            // orbit radius within the shell
-        const g = (rand2(i, 23) - 0.5) * (band === 0 ? 1.5 : 2.1); // cross-track tilt → spread across the view
+        o.R = B.r0 + (B.r1 - B.r0) * rand2(nid, 11);          // orbit radius within the shell
+        // cross-track plane from the REAL inclination when we have it: sun-sync, Starlink
+        // shells and retrograde birds weave at their own angles through the river
+        let g;
+        if (src && src.inc) {
+          g = ((src.inc - 65) / 65) * (band === 0 ? 1.1 : 1.5) + (rand2(nid, 23) - 0.5) * 0.45;
+          g = Math.max(-2.0, Math.min(2.0, g));
+        } else {
+          g = (rand2(nid, 23) - 0.5) * (band === 0 ? 1.5 : 2.1);
+        }
         o.cg = Math.cos(g); o.sg = Math.sin(g);
-        o.spd = B.speed * (0.82 + rand2(i, 31) * 0.36);
+        // eccentricity breathes the orbit radius — HEO objects visibly dive and climb
+        o.eccV = src ? Math.min(0.5, src.ecc * 1.8) : 0;
+        o.ep = rand2(nid, 103) * 6.2832;
+        o.wj = B.speed * (0.82 + rand2(nid, 31) * 0.36);   // per-object character for the WARP rush only
         o.phase = rand2(i, 47); o.pt = o.phase % 1;
         o.ta = rand2(i, 53) * 6.2832; o.tr = 7 + Math.pow(rand2(i, 59), 0.7) * 44; // wormhole angle/radius
         o.klass = klass; o.status = src ? src.status : "carried"; o.meta = src; o.baseSize = baseSize;
         o.reentered = !!(src && src.reentered);
+        o.anno = src ? src.anno || null : null;
+        o.shape = klass === 0 ? payloadShape(src, band) : klass === 1 ? 1 : klass === 2 ? 2 : 3;
+        pShape[i] = o.shape;
+        // silhouette seeds + tumble: debris spins hard, unknowns drift, hardware holds attitude
+        const tum = (klass === 2 ? 0.5 + 1.6 * rand2(nid, 97) : klass >= 3 ? 0.25 + 0.7 * rand2(nid, 97) : 0.05 + 0.08 * rand2(nid, 97))
+          * (rand2(nid, 109) < 0.5 ? -1 : 1);
+        pSeed[i * 3] = s1; pSeed[i * 3 + 1] = s2; pSeed[i * 3 + 2] = tum;
         o.country = src ? (src.country || "—") : "—";
         o.launchYear = src && src.launch ? parseInt(src.launch.slice(0, 4)) || 0 : 0;
         o.hasPrev = false;
       }
+      pointGeo.attributes.aShape.needsUpdate = true;
+      pointGeo.attributes.aSeed.needsUpdate = true;
       recolor();
     }
     function pickClass(i) { const r = hashUnit(`c${i}`); return r < 0.363 ? 0 : r < 0.46 ? 1 : r < 0.968 ? 2 : r < 0.998 ? 3 : 4; }
 
     // ── colour lenses ───────────────────────────────────────────────────
-    const LENSES = ["Object type", "Operator", "Launch age", "Status", "Zen"];
+    const LENSES = ["Object type", "Operator", "Launch age", "Status", "Observations", "Zen"];
+    const ZEN = LENSES.indexOf("Zen");
+    // Observations lens: what the archive LEARNED this doc-day (the observation plane)
+    const OBS_DECAY = [1.0, 0.42, 0.22], OBS_NAME = [0.55, 1.0, 0.86], OBS_EDIT = [1.0, 0.78, 0.30], OBS_DIM = [0.30, 0.34, 0.42];
     const TYPE_COLS = [COLORS.payload, COLORS.rocket, COLORS.debris, COLORS.unknown, COLORS.tba];
     const OPERATORS = [
-      { code: "US",  name: "United States",  col: [0.36, 0.55, 1.0] },
-      { code: "CIS", name: "Russia / CIS",   col: [1.0, 0.40, 0.36] },
-      { code: "PRC", name: "China",          col: [1.0, 0.80, 0.28] },
-      { code: "ESA", name: "Europe / ESA",   col: [0.36, 0.95, 0.82] },
-      { code: "JPN", name: "Japan",          col: [1.0, 0.55, 0.85] },
-      { code: "IND", name: "India",          col: [0.55, 0.90, 0.45] },
-      { code: "FR",  name: "France",         col: [0.62, 0.72, 1.0] },
-      { code: "UK",  name: "United Kingdom", col: [0.80, 0.60, 1.0] }
+      { code: "US",  name: "United States",  col: [0.30, 0.55, 1.0] },   // blue
+      { code: "CIS", name: "Russia / CIS",   col: [1.0, 0.34, 0.28] },   // red
+      { code: "PRC", name: "China",          col: [1.0, 0.82, 0.20] },   // gold
+      { code: "ESA", name: "Europe / ESA",   col: [0.30, 0.95, 0.85] },  // teal
+      { code: "JPN", name: "Japan",          col: [1.0, 0.45, 0.80] },   // pink
+      { code: "IND", name: "India",          col: [0.45, 0.95, 0.35] },  // green
+      { code: "FR",  name: "France",         col: [0.55, 0.82, 1.0] },   // sky (clearly lighter than US blue)
+      { code: "UK",  name: "United Kingdom", col: [0.78, 0.45, 1.0] }    // violet
     ];
     const OP_MAP = Object.fromEntries(OPERATORS.map((o) => [o.code, o.col]));
     const OTHER_COL = [0.52, 0.54, 0.58], STATUS_ONORBIT = [0.55, 0.70, 1.0], STATUS_REENT = [0.95, 0.42, 0.40];
@@ -540,6 +763,11 @@
           else if (o.status === "decayed") { col = COLORS.decayed; size = Math.max(size, 2.9); aMul = 1.4; }
           else if (re) { col = STATUS_REENT; aMul = 0.5; }   // came down — shown red (not hidden)
           else { col = STATUS_ONORBIT; aMul = 1; }            // still up there
+        } else if (lens === 4) {          // observations — what the archive learned this doc-day
+          if (o.anno) {
+            col = o.anno.kind === "decay" ? OBS_DECAY : o.anno.kind === "name" ? OBS_NAME : OBS_EDIT;
+            size = Math.max(size, 3.8); aMul = 2.1;
+          } else { col = OBS_DIM; aMul = 0.16; }              // the unremarked-on field recedes
         } else {                          // object type (default + zen)
           col = TYPE_COLS[o.klass]; aMul = o.klass === 2 ? 0.74 : 1.0;
           if (o.status === "new") { col = COLORS.newObj; size = Math.max(size, 3.2); aMul = 1.4; }
@@ -552,18 +780,25 @@
     }
 
     function updateField(dt) {
-      const warpC = Math.min(1, state.warp);
-      const flow = 20.8 + state.warp * 760 * state.timeDir;   // ambient drift at 80%; backward time reverses the stream
+      const warpC = Math.min(1, state.warp), over = state.over;
+      // at rest every object laps in exactly LAP_SECONDS; during warp the river becomes
+      // the old banded torrent (backward time reverses the stream)
+      const restRate = 1 / LAP_SECONDS;
+      const warpFlow = state.warp * 760 * (1 + over * 0.8) * state.timeDir * 0.0016;
       const twBase = state.time * 1.4;
       const showLines = state.warp > 0.02; lines.visible = showLines;   // streaks only during travel
       const cpx = camera.position.x, cpy = camera.position.y, cpz = camera.position.z;
       const fwd = (state.timeDir + 1) * 0.5;                 // 0 = receding (back), 1 = approaching (forward)
       for (let i = 0; i < FIELD; i++) {
         const o = O[i]; if (!o) continue;
-        o.phase += o.spd * flow * 0.0016 * dt;
+        o.phase += (restRate + warpFlow * o.wj) * dt;
         const t = o.phase - Math.floor(o.phase);
         worldPos(o, t, _v);
         const i3 = i * 3;
+        // last frame's position rides along as an attribute → the shader derives each
+        // object's true direction of travel for nose-first orientation
+        if (o.hasPrev) { pPrev[i3] = o.px; pPrev[i3 + 1] = o.py; pPrev[i3 + 2] = o.pz; }
+        else { pPrev[i3] = _v.x; pPrev[i3 + 1] = _v.y; pPrev[i3 + 2] = _v.z; }
         pPos[i3] = _v.x; pPos[i3 + 1] = _v.y; pPos[i3 + 2] = _v.z;
         const ddx = _v.x - cpx, ddy = _v.y - cpy, ddz = _v.z - cpz;
         const dist = Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
@@ -581,19 +816,23 @@
             pCol[i3] += (0.6 - pCol[i3]) * bb; pCol[i3 + 1] += (1.0 - pCol[i3 + 1]) * bb; pCol[i3 + 2] += (0.84 - pCol[i3 + 2]) * bb;
             pAlpha[i] = Math.min(1, pAlpha[i] + bb * 0.5); }
         }
-        // motion-blur line: previous world pos → current (real displacement = streak length)
+        // motion-blur line: previous world pos → current (real displacement = streak length).
+        // Overdrive extrapolates the tail backwards along the displacement → light-lines.
         if (showLines) {
           const v0 = i * 6;
           if (o.hasPrev && Math.abs(t - o.pt) < 0.5) {
-            lPos[v0] = o.px; lPos[v0 + 1] = o.py; lPos[v0 + 2] = o.pz;
+            const ex = over * 1.9;
+            lPos[v0] = o.px + (o.px - _v.x) * ex; lPos[v0 + 1] = o.py + (o.py - _v.y) * ex; lPos[v0 + 2] = o.pz + (o.pz - _v.z) * ex;
             lPos[v0 + 3] = _v.x; lPos[v0 + 4] = _v.y; lPos[v0 + 5] = _v.z;
           } else { // wrapped or first frame → no streak
             lPos[v0] = _v.x; lPos[v0 + 1] = _v.y; lPos[v0 + 2] = _v.z;
             lPos[v0 + 3] = _v.x; lPos[v0 + 4] = _v.y; lPos[v0 + 5] = _v.z;
           }
-          const lb = warpC * fadeFar;
-          // forward in time → blue-white (approach / blue-shift); backward → amber (recede / red-shift)
-          const cr = 1.0 - 0.32 * fwd, cg = 0.7 + 0.1 * fwd, cb = 0.42 + 0.58 * fwd;
+          const lb = warpC * fadeFar * (1 + over * 0.45);
+          // forward in time → blue-white (approach / blue-shift); backward → amber (recede / red-shift);
+          // overdrive pushes the shift harder toward the pure doppler colour
+          const dop = 1 + over * 0.35;
+          const cr = 1.0 - 0.32 * fwd * dop, cg = 0.7 + 0.1 * fwd, cb = 0.42 + 0.58 * fwd * dop;
           lCol[v0] = lCol[v0 + 1] = lCol[v0 + 2] = 0;             // tail dark
           lCol[v0 + 3] = cr * lb; lCol[v0 + 4] = cg * lb; lCol[v0 + 5] = cb * lb; // head bright
         }
@@ -604,6 +843,7 @@
       pointGeo.attributes.aAlpha.needsUpdate = true;
       pointGeo.attributes.aSize.needsUpdate = true;
       pointGeo.attributes.aFocus.needsUpdate = true;
+      pointGeo.attributes.aPrev.needsUpdate = true;
       if (showLines) { lineGeo.attributes.position.needsUpdate = true; lineGeo.attributes.color.needsUpdate = true; }
     }
     function smooth(a, b, x) { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
@@ -647,13 +887,15 @@
       atmo.onBeforeRender = () => atmo.material.uniforms.uCam.value.copy(camera.position);
       scene.add(atmo);
     }
+    let starMat = null;
     function addStars() {
       const n = mobile ? 1400 : 2800; const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
       for (let i = 0; i < n; i++) { const r = 500 + hashUnit(`st${i}`) * 700, th = hashUnit(`sa${i}`) * 6.283, ph = (hashUnit(`sp${i}`) - 0.3) * 2.4;
         pos[i*3]=Math.cos(th)*Math.cos(ph)*r; pos[i*3+1]=Math.sin(ph)*r*0.7+120; pos[i*3+2]=Math.sin(th)*Math.cos(ph)*r-200;
         const s = 0.4 + hashUnit(`sc${i}`) * 0.6; col[i*3]=s*0.72; col[i*3+1]=s*0.85; col[i*3+2]=s; }
       const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
-      scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 1.0, vertexColors: true, transparent: true, opacity: 0.5, sizeAttenuation: true, depthWrite: false })));
+      starMat = new THREE.PointsMaterial({ size: 1.0, vertexColors: true, transparent: true, opacity: 0.5, sizeAttenuation: true, depthWrite: false });
+      scene.add(new THREE.Points(g, starMat));
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -697,24 +939,78 @@
       return null;
     }
     const catalogCache = new Map();
+    // Don't trust the mirror — check it. The ledger's sha256 is the hash of the canonical
+    // catalog bytes, which is exactly what we hold after gunzip: one digest proves the
+    // download IS the attested record. (WebCrypto needs a secure context; absent that, or a
+    // ledgerless day, we simply make no claim.)
+    async function verifyCatalogBytes(date, bytes) {
+      const led = ledgerByDate.get(date);
+      if (!led || !led.sha || !crypto.subtle) return;
+      try {
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+        const ok = hex === led.sha;
+        integrityByDate.set(date, ok);
+        if (!ok) console.warn("catalog hash mismatch", date, hex, "≠", led.sha);
+        if (state.shownDay >= 0 && isoFor(state.shownDay) === date) {
+          applyHud(recordMeta(date));
+          if (state.catalogDate === date) setStatus("ready", ok ? "Live record · verified" : "Live record");
+        }
+      } catch (e) { /* digest unavailable — no claim */ }
+    }
+    // Distil a day's annotations.json (the observation plane: what the archive LEARNED about
+    // already-published objects this doc-day) into HUD counts + a per-object note for the
+    // inspector and the Observations lens.
+    function digestAnnotations(anno) {
+      if (!anno) return null;
+      const byId = new Map();
+      const note = (id, kind, text) => { const k = String(id); if (!byId.has(k)) byId.set(k, { kind, text }); };
+      let renames = 0;
+      for (const c of anno.catalog_changes || []) {
+        const isName = c.field === "OBJECT_NAME" || c.field === "OBJECT_ID";
+        if (isName) renames++;
+        note(c.norad_cat_id, isName ? "name" : "edit",
+          `${c.field}: ${c.previous ?? "—"} → ${c.current ?? "—"}${c.first_observation ? " · first observation" : ""}`);
+      }
+      for (const d of anno.decay_messages || []) {
+        const ep = String(d.DECAY_EPOCH || "").slice(0, 10);
+        note(d.NORAD_CAT_ID ?? d.OBJECT_NUMBER, "decay", `decay reported${ep ? " · epoch " + ep : ""}`);
+      }
+      return { decayNotices: (anno.decay_messages || []).length, edits: (anno.catalog_changes || []).length,
+        renames, observedAt: anno.observed_at_utc || null, byId };
+    }
     async function loadCatalog(date) {
       if (catalogCache.has(date)) return catalogCache.get(date);
       const path = date.replaceAll("-", "/");
       const base = `https://raw.githubusercontent.com/${CONFIG.repo}/${CONFIG.branch}/data/${path}`;
-      const [storage, delta] = await Promise.all([fetchJson(`${base}/storage.json`, true), fetchJson(`${base}/delta.json`, true)]);
+      const [storage, delta, anno] = await Promise.all([
+        fetchJson(`${base}/storage.json`, true), fetchJson(`${base}/delta.json`, true), fetchJson(`${base}/annotations.json`, true)]);
+      const annoSum = digestAnnotations(anno);
+      if (annoSum) annoByDate.set(date, annoSum);
       const dest = storage?.destinations || {};
-      // Prefer Arweave (CORS-friendly, permanent). Only fall back to the GitHub release if there
-      // is NO arweave mirror at all — GitHub release downloads CORS-fail in the browser and would
-      // spam the console with errors, so we don't attempt them when arweave exists.
-      const urls = [];
-      if (dest.arweave?.transaction_url) urls.push(dest.arweave.transaction_url);
-      else if (dest.github_release?.asset_url) urls.push(dest.github_release.asset_url);
-      let ab = null;
-      for (const u of urls) { try { const r = await fetch(u, { cache: "force-cache" }); if (r.ok) { ab = await r.arrayBuffer(); break; } } catch (e) { /* try next mirror */ } }
+      // Bundle mirrors, in trust/permanence order. The GitHub RELEASE asset is never tried:
+      // its redirect target sends no CORS headers, so a browser can never read it. The raw
+      // node-branch catalog.json.gz IS CORS-friendly and serves as the live mirror until the
+      // day lands on Arweave.
+      let ab = null, isTar = false;
+      if (dest.arweave?.transaction_url) {
+        try { const r = await fetch(dest.arweave.transaction_url, { cache: "force-cache" }); if (r.ok) { ab = await r.arrayBuffer(); isTar = true; } } catch (e) { /* fall through */ }
+      }
+      // any witness's signed publication locations (from the attestation index) are fair
+      // mirrors — the bytes prove themselves against the ledger hash, not the address
+      for (const u of (attestByDate.get(date) || {}).ar || []) {
+        if (ab) break;
+        try { const r = await fetch(u, { cache: "force-cache" }); if (r.ok) { ab = await r.arrayBuffer(); isTar = true; } } catch (e) { /* try next */ }
+      }
+      if (!ab) {
+        try { const r = await fetch(`${base}/catalog.json.gz`, { cache: "force-cache" }); if (r.ok) ab = await r.arrayBuffer(); } catch (e) { /* fall through */ }
+      }
       if (!ab) throw new Error("no bundle mirror reachable");
-      const tar = await gunzip(ab);
-      const cgz = untar(tar, "catalog.json.gz"); if (!cgz) throw new Error("catalog missing");
-      const cat = JSON.parse(new TextDecoder().decode(await gunzip(cgz)));
+      const cgz = isTar ? untar(await gunzip(ab), "catalog.json.gz") : ab;
+      if (!cgz) throw new Error("catalog missing");
+      const catBytes = await gunzip(cgz);
+      verifyCatalogBytes(date, catBytes);              // fire-and-forget: HUD updates when it lands
+      const cat = JSON.parse(new TextDecoder().decode(catBytes));
       const list = Array.isArray(cat) ? cat : cat?.data || [];
       const newIds = new Set((delta?.new_norad_cat_ids || []).map(String));
       const objs = list.map((row) => {
@@ -724,7 +1020,11 @@
         const status = newIds.has(id) ? "new" : decay === date ? "decayed" : "carried";
         return { id, name: row.OBJECT_NAME || `NORAD ${id}`, type: row.OBJECT_TYPE || "UNKNOWN",
           band: bandFromMM(row.MEAN_MOTION), klass: klassFromType(row.OBJECT_TYPE), status, reentered,
-          country: row.COUNTRY_CODE || "—", launch: String(row.LAUNCH_DATE || "").slice(0, 10), decay };
+          country: row.COUNTRY_CODE || "—", launch: String(row.LAUNCH_DATE || "").slice(0, 10), decay,
+          // orbital elements that shape each object's identity in the field
+          inc: Number(row.INCLINATION) || 0, ecc: Number(row.ECCENTRICITY) || 0,
+          rcs: row.RCS_SIZE || "", bstar: Math.abs(Number(row.BSTAR)) || 0,
+          anno: annoSum ? annoSum.byId.get(id) || null : null };
       });
       // breakdowns of WHAT'S STILL UP THERE (on-orbit); decayed objects are recorded but counted apart
       const bc = { leo: 0, meo: 0, geo: 0 };
@@ -751,13 +1051,19 @@
       return sampled;
     }
     function sampleByBand(objs, limit, date) {
+      // The field shows what's UP THERE. Long-gone re-entered objects don't fly past the
+      // camera — they exist in the record (counts, inspector via observations) but not in
+      // the sky. Keep only today's decay events and freshly-observed objects from that set.
+      objs = objs.filter((o) => !o.reentered || o.status === "decayed" || o.anno);
       if (objs.length <= limit) return objs;
       const groups = [[], [], []]; objs.forEach((o) => groups[o.band].push(o));
       const quotas = groups.map((g) => Math.floor(limit * g.length / objs.length));
       let s = quotas.reduce((a, b) => a + b, 0); let bi = 0; while (s < limit) { quotas[bi % 3]++; s++; bi++; }
       return groups.flatMap((g, b) => {
-        const rare = g.filter((o) => o.status === "new" || o.status === "decayed");
-        const rest = g.filter((o) => o.status === "carried").sort((a, x) => hashUnit(`${a.id}:${date}`) - hashUnit(`${x.id}:${date}`));
+        // launches, decay events and annotated objects (fresh observations) are guaranteed a slot
+        const rare = g.filter((o) => o.status === "new" || o.status === "decayed" || o.anno);
+        const rest = g.filter((o) => !(o.status === "new" || o.status === "decayed" || o.anno))
+          .sort((a, x) => hashUnit(`${a.id}:${date}`) - hashUnit(`${x.id}:${date}`));
         return rare.concat(rest).slice(0, quotas[b]);
       });
     }
@@ -775,7 +1081,8 @@
       const delta = deltaByDate.get(date) || (raw && (raw.delta || raw.delta_summary)) || null;
       const orbit = orbitByDate.get(date) || (raw && raw.on_orbit_count != null
         ? { onOrbit: raw.on_orbit_count, reentered: raw.reentered_count ?? raw.decayed_count ?? 0, total: count } : null);
-      return { date, count, sha, bands, types, delta, orbit, raw, verified: !!led, attest: attestByDate.get(date) || null };
+      return { date, count, sha, bands, types, delta, orbit, raw, verified: !!led,
+        integrity: integrityByDate.get(date), attest: attestByDate.get(date) || null };
     }
     function applyHud(rec) {
       const attest = rec.attest && (rec.attest.tdh || 0) >= state.ethRank ? rec.attest : null; // honour the ETH-rank threshold
@@ -801,20 +1108,32 @@
       $("d-upd").textContent = d ? fmtNum(d.updated) : "—";
       $("d-new").textContent = d ? fmtNum(d.new) : "—";
       $("d-dec").textContent = d ? fmtNum(d.decayed) : "—";
+      const an = annoByDate.get(rec.date);
+      $("d-obs").textContent = an && an.decayNotices ? ` · ${fmtNum(an.decayNotices)} decay notices` : "";
       // ── fingerprint prism ──
       $("fingerprint").textContent = shortHex(rec.sha);
+      $("fp-sha-note").textContent = rec.integrity === true ? "SHA-256 · verified on this device"
+        : rec.integrity === false ? "SHA-256 · DOES NOT MATCH DOWNLOAD" : "SHA-256";
       const r = rec.raw;
       $("fp-prov").textContent = r ? titleize(r.provenance || r.query_strategy) : "—";
       $("fp-src").textContent = r ? (r.source || "space-track.org") : "—";
-      $("fp-size").textContent = r ? mb(r.compressed_bytes) : "—";
-      $("fp-fmt").textContent = r ? `${r.format || "OMM/JSON"} · gzip` : "—";
-      if (attest) { $("fp-block").textContent = shortHex(attest.blockHash); $("fp-blocknote").textContent = `Ethereum · TDH ${attest.tdh}`; }
+      // the consensus hash: the catalog projected through the day's content schema — this,
+      // not the raw-capture fingerprint, is what the nodes agree on and put on chain
+      const core = r && (r.content_sha256 || null);
+      $("fp-core").textContent = core ? shortHex(core) : "—";
+      $("fp-core-note").textContent = core ? `${r.content_schema || "core"} · consensus hash` : "awaiting record";
+      if (attest) { $("fp-block").textContent = shortHex(attest.blockHash); $("fp-blocknote").textContent = attest.tdh > 0 ? `Ethereum · TDH ${attest.tdh}` : "Ethereum"; }
       else { $("fp-block").textContent = "—"; $("fp-blocknote").textContent = "awaiting attestation"; }
+      const cm = state.chainMeta, ca = $("fp-contract");
+      if (cm && cm.contractAddress) {
+        ca.textContent = `${shortHex(cm.contractAddress)} ↗`;
+        ca.href = `${cm.chainId === 1 ? "https://etherscan.io" : "https://sepolia.etherscan.io"}/address/${cm.contractAddress}`;
+      } else { ca.textContent = "—"; ca.removeAttribute("href"); }
       // ── attestation (one place: the witness panel + the eyebrow flag) ──
       const es = $("record-state");
       if (attest) {
         es.textContent = "Publicly attested"; es.classList.add("attested");
-        $("witness-state").textContent = `Agreement · TDH ${attest.tdh} · ${attest.attesters} node${attest.attesters === 1 ? "" : "s"}`;
+        $("witness-state").textContent = `Agreement · ${attest.attesters} node${attest.attesters === 1 ? "" : "s"}${attest.tdh > 0 ? ` · TDH ${attest.tdh}` : ""}`;
         $("witness-state").classList.add("attested");
         $("witness-hash").textContent = `block ${shortHex(attest.blockHash)}`;
       } else {
@@ -822,6 +1141,12 @@
         $("witness-state").textContent = rec.verified ? "Snapshot verified · not yet attested" : "Not yet attested";
         $("witness-state").classList.remove("attested"); $("witness-hash").innerHTML = "&nbsp;";
       }
+      // permanence — independent forever-copies this day's witnesses have published
+      const arN = attest ? (attest.ar || []).length : 0;
+      const perm = $("witness-perm");
+      perm.textContent = arN >= 2 ? `⛁ ${arN} independent permanent copies · Arweave`
+        : arN === 1 ? "⛁ 1 permanent copy · Arweave" : "";
+      perm.className = `witness-perm${arN >= 2 ? " strong" : arN === 1 ? " one" : ""}`;
       $("timebar-fill").style.width = `${(TOTAL ? Math.round(state.cursor) / TOTAL : 1) * 100}%`;
     }
 
@@ -834,11 +1159,21 @@
         const objs = await loadCatalog(date);
         if (token !== state.loadToken) return;
         state.catalogDate = date; assignField(objs);
-        setStatus("ready", "Live record"); applyHud(recordMeta(date));
+        setStatus("ready", integrityByDate.get(date) ? "Live record · verified" : "Live record");
+        applyHud(recordMeta(date)); populateLegend();
       } catch (e) {
         if (token !== state.loadToken) return;
-        console.info("archive bundle not reachable; showing representative field", date);
+        console.info("archive bundle not reachable; field stays representative", date);
+        // Another day's catalog stays a fine stand-in for the FIELD (mostly the same
+        // objects), but its day-specific decorations — launches, decay flashes, fresh
+        // observations — would lie about THIS day. Strip them; keep the bodies.
+        if (state.catalogDate && state.catalogDate !== date) {
+          state.objects = state.objects.map((o) => ({ ...o, status: "carried", anno: null }));
+          state.catalogDate = null;                  // a later stop on this day retries the download
+          assignField(state.objects);
+        }
         setStatus("ready", "Live record");
+        applyHud(recordMeta(date)); populateLegend(); // annotations may have loaded even without the bundle
       }
     }
 
@@ -851,18 +1186,24 @@
     // ── view modes / colour lenses: swipe left/right + spacebar ──
     let modeAt = 0;
     function cycleMode(dir) { const now = performance.now(); if (now - modeAt < 320) return; modeAt = now; state.lens = (state.lens + dir + LENSES.length) % LENSES.length; applyMode(); }
-    function applyMode() { document.body.classList.toggle("zen", state.lens === 4); recolor(); populateLegend(); flashMode(LENSES[state.lens]); }
+    function applyMode() { document.body.classList.toggle("zen", state.lens === ZEN); recolor(); populateLegend(); flashMode(LENSES[state.lens]); }
     function flashMode(name) { const t = $("mode-toast"); t.textContent = name; t.classList.add("show"); clearTimeout(flashMode.t); flashMode.t = setTimeout(() => t.classList.remove("show"), 1100); }
     const rgbStr = (c) => `rgb(${Math.round(c[0]*255)},${Math.round(c[1]*255)},${Math.round(c[2]*255)})`;
     function populateLegend() {
       const el = $("lens-legend"), lens = state.lens;
-      if (lens === 4) { el.innerHTML = ""; return; }
-      const sw = (c, label) => `<div class="lg-row"><i style="background:${rgbStr(c)};color:${rgbStr(c)}"></i>${label}</div>`;
+      if (lens === ZEN) { el.innerHTML = ""; return; }
+      const sw = (c, label, shape) => `<div class="lg-row"><i class="${shape || ""}" style="background:${rgbStr(c)};color:${rgbStr(c)}"></i>${label}</div>`;
       let rows = "";
-      if (lens === 0) rows = sw(TYPE_COLS[0], "Payload") + sw(TYPE_COLS[1], "Rocket body") + sw(TYPE_COLS[2], "Debris") + sw(TYPE_COLS[3], "Unknown");
+      if (lens === 0) rows = sw(TYPE_COLS[0], "Payload") + sw(TYPE_COLS[1], "Rocket body", "sh-pill") + sw(TYPE_COLS[2], "Debris", "sh-shard") + sw(TYPE_COLS[3], "Unknown", "sh-ring");
       else if (lens === 1) rows = OPERATORS.map((o) => sw(o.col, o.name)).join("") + sw(OTHER_COL, "Other");
       else if (lens === 2) rows = `<div class="lg-grad"></div><div class="lg-years"><span>1958</span><span>2026</span></div>`;
       else if (lens === 3) rows = sw(STATUS_ONORBIT, "On orbit") + sw(STATUS_REENT, "Re-entered") + sw(COLORS.newObj, "Launched") + sw(COLORS.decayed, "Decayed today");
+      else if (lens === 4) {
+        const a = annoByDate.get(isoFor(state.shownDay));
+        rows = sw(OBS_DECAY, "Decay reported") + sw(OBS_NAME, "Named / designated") + sw(OBS_EDIT, "Record amended")
+          + (a ? `<div class="lg-note">${fmtNum(a.decayNotices)} decay notices · ${fmtNum(a.edits)} edits</div>`
+               : `<div class="lg-note">stop on a day to load</div>`);
+      }
       el.innerHTML = `<div class="lg-title">${LENSES[lens]}</div>${rows}`;
     }
 
@@ -929,6 +1270,10 @@
     }
     (function setupTilt() {
       const D = window.DeviceOrientationEvent;
+      // sandboxed NFT iframes rarely delegate motion sensors — probe the permissions
+      // policy first so blocked hosts get silence, not console violations
+      const policy = document.permissionsPolicy || document.featurePolicy;
+      if (policy && policy.allowsFeature && !policy.allowsFeature("accelerometer")) return;
       if (D && typeof D.requestPermission === "function") {       // iOS — needs a tap
         const chip = $("tilt-chip"); chip.style.display = "block";
         chip.addEventListener("click", () => D.requestPermission().then((s) => { if (s === "granted") { enableTilt(); chip.classList.add("gone"); } }).catch(() => {}));
@@ -943,6 +1288,18 @@
       a.href = renderer.domElement.toDataURL("image/png"); a.click();
     });
     const settings = $("settings");
+    // Fullscreen — hidden where the embedder doesn't delegate it (sandboxed NFT iframes
+    // without allow="fullscreen"), so the button never promises what the host forbids.
+    const fsBtn = $("fullscreen-btn");
+    if (!document.fullscreenEnabled) fsBtn.style.display = "none";
+    fsBtn.addEventListener("click", () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen().catch(() => {});
+    });
+    document.addEventListener("fullscreenchange", () => {
+      fsBtn.title = document.fullscreenElement ? "Exit fullscreen" : "Fullscreen";
+    });
+
     $("settings-btn").addEventListener("click", () => settings.classList.add("open"));
     $("settings-close").addEventListener("click", () => settings.classList.remove("open"));
     settings.addEventListener("click", (e) => { if (e.target === settings) settings.classList.remove("open"); });
@@ -957,15 +1314,21 @@
       const src = OP_SOURCES[state.opSource]; attestByDate.clear();
       try {
         const idx = await fetchJson(`https://raw.githubusercontent.com/${src.repo}/${src.branch}/indexer/generated/sepolia/rso-docchain-index.json`);
+        if (idx.contractAddress) state.chainMeta = { contractAddress: idx.contractAddress, chainId: idx.chainId || 11155111 };
         for (const [ref, rec] of Object.entries(idx.docRefs || {})) {
           const groups = rec.agreementGroups || [];
           const strongest = groups.slice().sort((a, b) => (b.combinedSupportTdh || 0) - (a.combinedSupportTdh || 0))[0];
-          if (strongest) attestByDate.set(rec.date, { blockHash: (rec.blockHashes || [strongest.blockHash])[0], tdh: strongest.combinedSupportTdh || 0, attesters: (strongest.attesters || []).length });
+          if (strongest) {
+            // permanence: each node signs its publication locations into its attestation —
+            // distinct Arweave locators = independent pay-once-store-forever copies
+            const ar = [...new Set((strongest.locations || []).map(String).filter((u) => /^ar:\/\/|arweave\.(net|dev)\//i.test(u)))];
+            attestByDate.set(rec.date, { blockHash: (rec.blockHashes || [strongest.blockHash])[0], tdh: strongest.combinedSupportTdh || 0, attesters: (strongest.attesters || []).length, ar });
+          }
         }
       } catch (e) { console.info("index source unreachable:", src.id); }
       if (state.shownDay >= 0) applyHud(recordMeta(isoFor(state.shownDay)));
     }
-    function applyEthRank() { $("set-eth-val").textContent = `≥ ${state.ethRank} TDH`; if (state.shownDay >= 0) applyHud(recordMeta(isoFor(state.shownDay))); }
+    function applyEthRank() { $("set-eth-val").textContent = state.ethRank ? `≥ ${state.ethRank} TDH` : "any witness"; if (state.shownDay >= 0) applyHud(recordMeta(isoFor(state.shownDay))); }
     function applyOpSource() { $("set-op-val").textContent = OP_SOURCES[state.opSource].id; }
     $("set-eth").addEventListener("input", (e) => { state.ethRank = +e.target.value; applyEthRank(); persistSettings(); });
     $("set-op").addEventListener("input", (e) => { state.opSource = +e.target.value; applyOpSource(); fetchIndex(); persistSettings(); });
@@ -976,9 +1339,127 @@
     function loadSettings() {
       try {
         const s = JSON.parse(localStorage.getItem("rso-settings") || "null");
-        if (s) { state.ethRank = s.ethRank ?? 1; state.opSource = s.opSource ?? 0; state.lens = s.lens ?? 0;
+        if (s) { state.ethRank = s.ethRank ?? 0; state.opSource = s.opSource ?? 0; state.lens = s.lens ?? 0;
           $("set-eth").value = state.ethRank; $("set-op").value = state.opSource; }
       } catch (e) {}
+    }
+
+    // ── inspector vignette: the tapped object's generative 3D self, rendered in a
+    //    scissored corner of the SAME context (no second canvas — grids punish those).
+    //    Same NORAD seeds as the field silhouettes → the shape in the box IS the dot
+    //    you tapped, grown to full form. ──
+    const vig = { active: false, scene: null, camera: null, group: null };
+    function vigColor(klass) { const c = TYPE_COLS[klass] || TYPE_COLS[3]; return new THREE.Color(c[0], c[1], c[2]); }
+    function vigMat(klass, dim) {
+      const col = vigColor(klass);
+      return new THREE.MeshPhongMaterial({ color: col, flatShading: true, shininess: 24,
+        emissive: col.clone().multiplyScalar(dim ? 0.05 : 0.14) });
+    }
+    function buildVigShape(o) {
+      const nid = o.meta ? (parseInt(o.meta.id, 10) || 1) : 1;
+      const R = (salt) => rand2(nid, salt);
+      const g = new THREE.Group();
+      const add = (geom, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => {
+        const m = new THREE.Mesh(geom, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); g.add(m); return m;
+      };
+      if (o.klass === 0) {                                   // payload: archetype-keyed, like the field
+        const shape = o.shape || 0;
+        if (shape === 4) {                                   // STARLINK — flat chassis + one broad sail
+          add(new THREE.BoxGeometry(0.80, 0.05, 0.40), vigMat(0));
+          add(new THREE.BoxGeometry(0.55, 0.02, 0.9 + R(9) * 0.2), vigMat(0, true), 0, 0.32, -0.22, -0.55, 0, 0);
+        } else if (shape === 5) {                            // GEO comsat — long symmetric wings + dish
+          add(new THREE.BoxGeometry(0.36, 0.32, 0.30), vigMat(0));
+          const wing = new THREE.BoxGeometry(0.95 + R(7) * 0.2, 0.015, 0.26);
+          add(wing, vigMat(0, true),  0.68, 0, 0);
+          add(wing, vigMat(0, true), -0.68, 0, 0);
+          const dish = add(new THREE.CylinderGeometry(0.03, 0.20 + R(15) * 0.05, 0.13, 12), vigMat(0), 0, 0.05, 0.26, Math.PI / 2, 0, 0);
+          dish.scale.y = 0.8;
+        } else if (shape === 6) {                            // cubesat — tiny box, stub panels
+          add(new THREE.BoxGeometry(0.22, 0.22 + R(83) * 0.2, 0.22), vigMat(0));
+          if (R(11) > 0.45) {
+            const stub = new THREE.BoxGeometry(0.34, 0.012, 0.2);
+            add(stub, vigMat(0, true),  0.30, 0, 0);
+            add(stub, vigMat(0, true), -0.30, 0, 0);
+          }
+        } else if (shape === 7) {                            // navsat — bus + wings + nav dish
+          add(new THREE.BoxGeometry(0.40, 0.34, 0.32), vigMat(0));
+          const wing = new THREE.BoxGeometry(0.62, 0.015, 0.30);
+          add(wing, vigMat(0, true),  0.55, 0, 0);
+          add(wing, vigMat(0, true), -0.55, 0, 0);
+          add(new THREE.CylinderGeometry(0.02, 0.13, 0.10, 10), vigMat(0), 0, 0.04, 0.24, Math.PI / 2, 0, 0);
+        } else if (shape === 8) {                            // ONEWEB — box-wing
+          add(new THREE.BoxGeometry(0.30, 0.36, 0.30), vigMat(0));
+          const arr = new THREE.BoxGeometry(0.85, 0.015, 0.20);
+          add(arr, vigMat(0, true),  0.60, 0, 0);
+          add(arr, vigMat(0, true), -0.60, 0, 0);
+        } else if (shape === 9) {                            // IRIDIUM — wings + the big canted antenna
+          add(new THREE.BoxGeometry(0.34, 0.40, 0.30), vigMat(0));
+          const wing = new THREE.BoxGeometry(0.55, 0.015, 0.28);
+          add(wing, vigMat(0, true),  0.50, 0, 0);
+          add(wing, vigMat(0, true), -0.50, 0, 0);
+          add(new THREE.BoxGeometry(0.34, 0.015, 0.62), vigMat(0, true), 0, -0.28, 0.18, -0.65, 0, 0);
+        } else {                                             // generic — bus + 1..6 panels, fanned
+          const bw = 0.32 + R(71) * 0.18, bh = 0.30 + R(83) * 0.2;
+          add(new THREE.BoxGeometry(bw, bh, 0.30 + R(89) * 0.16), vigMat(0));
+          const cnt = 1 + Math.floor(R(17) * 5.999);
+          const span = 0.42 + R(7) * 0.3, chord = 0.22 + R(9) * 0.16;
+          const ax = R(15) * Math.PI, fan = 0.55 + R(19) * 0.5, dy = bh / 2 + span / 2 + 0.05;
+          for (let p = 0; p < cnt; p++) {
+            const roll = ax + (p >> 1) * fan + (p & 1 ? Math.PI : 0);
+            add(new THREE.BoxGeometry(0.018, span, chord), vigMat(0, true),
+              (R(21) - 0.5) * bw * 0.4, Math.cos(roll) * dy, Math.sin(roll) * dy, roll, 0, 0);
+          }
+          if (R(11) > 0.62) add(new THREE.CylinderGeometry(0.02, 0.12, 0.09, 10), vigMat(0), 0, 0, bh * 0.62, Math.PI / 2, 0, 0);
+        }
+      } else if (o.klass === 1) {                            // rocket body: a barrel, not a torpedo
+        const len = 0.68 + R(41) * 0.4, r = 0.17 + R(33) * 0.07;
+        add(new THREE.CylinderGeometry(r, r, len, 14), vigMat(1), 0, 0, 0, 0, 0, Math.PI / 2);
+        const dome = add(new THREE.SphereGeometry(r * 0.99, 12, 8), vigMat(1), len / 2, 0, 0);
+        dome.scale.x = 0.22;                                 // shallow flat-ish dome cap
+        add(new THREE.CylinderGeometry(r * 0.5, r * 1.22, 0.18 + R(67) * 0.08, 12), vigMat(1, true),
+          -(len / 2 + 0.08), 0, 0, 0, 0, Math.PI / 2);
+        const band = add(new THREE.TorusGeometry(r * 1.02, 0.013, 6, 20), vigMat(1, true), (R(53) - 0.5) * len * 0.6, 0, 0);
+        band.rotation.y = Math.PI / 2;
+      } else if (o.klass === 2) {                            // debris: a faceted shard all its own
+        const geo = new THREE.IcosahedronGeometry(0.46, 0);
+        const pos = geo.getAttribute("position");
+        for (let v = 0; v < pos.count; v++) {
+          const k = 0.62 + rand2(nid, 200 + (v % 12)) * 0.85;   // displace by shared-vertex hash → stays watertight
+          pos.setXYZ(v, pos.getX(v) * k, pos.getY(v) * k, pos.getZ(v) * k);
+        }
+        geo.computeVertexNormals();
+        add(geo, vigMat(2));
+      } else {                                               // unknown: gauged ring (some horseshoed)
+        const rr = 0.34 + R(31) * 0.12, tube = 0.05 + R(43) * 0.05;
+        const arc = R(87) > 0.55 ? Math.PI * (1.25 + R(57) * 0.55) : Math.PI * 2;
+        add(new THREE.TorusGeometry(rr, tube, 6, 18, arc), vigMat(3));
+        if (R(19) > 0.6) add(new THREE.BoxGeometry(0.16, 0.16, 0.16), vigMat(3, true));
+      }
+      return g;
+    }
+    function vigShow(o) {
+      if (!vig.scene) {
+        vig.scene = new THREE.Scene();
+        vig.camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+        vig.camera.position.set(0, 0.25, 3.1); vig.camera.lookAt(0, 0, 0);
+        const sun = new THREE.DirectionalLight(0xffffff, 2.4); sun.position.set(2.2, 3.0, 4.0);
+        vig.scene.add(sun, new THREE.AmbientLight(0x8896c8, 0.55));
+      }
+      vigHide();
+      vig.group = buildVigShape(o);
+      vig.group.rotation.set(0.42, rand2(parseInt(o.meta?.id || 1, 10) || 1, 119) * 6.28, 0);
+      // radar cross-section sets the model's presence in the frame too:
+      // a LARGE fills it, a SMALL sits dainty in the same box
+      const rcs = o.meta ? o.meta.rcs : "";
+      vig.group.scale.setScalar(rcs === "LARGE" ? 1.28 : rcs === "MEDIUM" ? 1.0 : rcs === "SMALL" ? 0.66 : 0.9);
+      vig.scene.add(vig.group);
+      vig.active = true;
+    }
+    function vigHide() {
+      if (!vig.group) { vig.active = false; return; }
+      vig.scene.remove(vig.group);
+      vig.group.traverse((m) => { if (m.isMesh) { m.geometry.dispose(); m.material.dispose(); } });
+      vig.group = null; vig.active = false;
     }
 
     // ── click to inspect: nearest projected object to the tap ──
@@ -993,16 +1474,19 @@
         const d = (sx - cx) * (sx - cx) + (sy - cy) * (sy - cy);
         if (d < bestD) { bestD = d; best = i; }
       }
-      if (best < 0) { $("inspector").classList.remove("visible"); return; }
+      if (best < 0) { $("inspector").classList.remove("visible"); vigHide(); return; }
       const o = O[best], m = o.meta;
       const bandName = BAND[o.band].name;
       $("insp-label").textContent = o.status === "new" ? "Launched this day" : o.status === "decayed" ? "Decay reported" : "Tracked object";
       $("insp-name").textContent = m ? m.name : "Archive object";
       $("insp-meta").textContent = m
         ? `NORAD ${m.id} · ${bandName} · ${m.type}${m.country && m.country !== "—" ? " · " + m.country : ""}${m.launch ? " · ↑" + m.launch : ""}`
+          + `${m.inc ? ` · i ${m.inc.toFixed(1)}°` : ""}${m.ecc > 0.1 ? ` · e ${m.ecc.toFixed(2)}` : ""}${m.rcs ? ` · rcs ${m.rcs.toLowerCase()}` : ""}`
         : `${bandName} · ${["payload", "rocket body", "debris", "unknown", "tba"][pickClass(best)]}`;
+      // the observation plane: what the archive learned about THIS object this doc-day
+      $("insp-obs").textContent = o.anno ? `◉ observed · ${o.anno.text}` : "";
       $("inspector").classList.add("visible");
-      clearTimeout(inspectAt.timer); inspectAt.timer = setTimeout(() => $("inspector").classList.remove("visible"), 5200);
+      vigShow(o);   // stays up until another object — or blank space — is tapped
     }
 
     // ── loop ──
@@ -1032,14 +1516,22 @@
       const warpT = window.__HOLD_WARP__ != null ? window.__HOLD_WARP__ : Math.min(reduced ? 0.2 : 1.4, speed / 11);
       state.warp += (warpT - state.warp) * Math.min(1, dt * (warpT > state.warp ? 5 : 2.4)); // ease OUT slowly → soft, un-abrupt stop
       state.warpBlend = smooth(0.28, 0.92, Math.min(1, state.warp));
+      // OVERDRIVE — only a genuinely long jump earns it: sustained top speed with distance
+      // still to cover. The tunnel pinches, streaks stretch, the stars fall away. It eases
+      // off as the destination approaches, so arrival stays soft.
+      const overT = window.__HOLD_OVER__ != null ? window.__HOLD_OVER__
+        : (reduced ? 0 : smooth(13, 23, speed) * smooth(2.5, 14, adist + speed * 0.4));
+      state.over += (overT - state.over) * Math.min(1, dt * 3.2);
+      document.body.classList.toggle("overdrive", state.over > 0.45);
       // a subtle directional roll tied DIRECTLY to warp → it returns to zero AS the warp
       // decelerates, so there's no accumulated twist to unwind at the end of a jump
-      const spinTarget = state.warp * 0.11 * (state.timeDir >= 0 ? 1 : -1);
+      const spinTarget = state.warp * 0.11 * (1 + state.over * 1.6) * (state.timeDir >= 0 ? 1 : -1);
       state.spin += (spinTarget - state.spin) * Math.min(1, dt * 3);
       // witness pulse: a cyan wavefront rises through the field on attested days
       if (state.attested && state.warp < 0.2) { const pp = (state.time % 6.5) / 6.5; state.pulseY = -95 + pp * 200; state.pulseStr = Math.pow(1 - pp, 1.4); }
       else state.pulseStr = 0;
 
+      pointMat.uniforms.uTime.value = state.time;
       updateField(dt);
 
       // keyboard look (arrows + WASD steer a few degrees)
@@ -1055,7 +1547,8 @@
       // camera: gentle look + directional dolly (forward time pushes in, backward pulls out)
       state.yaw += (state.yawT - state.yaw) * Math.min(1, dt * 4);
       state.pitch += (state.pitchT - state.pitch) * Math.min(1, dt * 4);
-      camera.position.set(CAM.x + Math.sin(state.time * 0.13) * 0.4, CAM.y + Math.cos(state.time * 0.11) * 0.3, CAM.z - state.warp * 8 * state.timeDir);
+      camera.position.set(CAM.x + Math.sin(state.time * 0.13) * 0.4, CAM.y + Math.cos(state.time * 0.11) * 0.3, CAM.z - state.warp * (8 + state.over * 11) * state.timeDir);
+      if (starMat) starMat.opacity = Math.max(0.06, 0.5 - state.warp * 0.18 - state.over * 0.24);  // leave the fixed stars behind
       camera.rotation.set(-0.02 + state.pitch + Math.sin(state.time * 0.09) * 0.004, state.yaw, Math.sin(state.time * 0.06) * 0.003 + state.spin * 0.045);
 
       document.body.classList.toggle("warping", state.warp > 0.1);
@@ -1064,17 +1557,35 @@
 
       const shown = Math.round(state.cursor);
       if (shown !== state.shownDay) { state.shownDay = shown; showDay(isoFor(shown)); }
-      if (!state.wasTraveling && traveling) setStatus("loading", "Scanning the chain…");  // moving through days — no download yet
+      if (!state.wasTraveling && traveling) {                                             // moving through days — no download yet
+        setStatus("loading", "Scanning the chain…");
+        $("inspector").classList.remove("visible"); vigHide();                            // the inspected object is leaving with its day
+      }
       if (state.wasTraveling && !traveling) {                                             // arrived on a day → only now fetch it
         const d = isoFor(shown);
-        if (state.catalogDate === d) setStatus("ready", "Live record");                    // already have this day
+        if (state.catalogDate === d) setStatus("ready", integrityByDate.get(d) ? "Live record · verified" : "Live record"); // already have this day
         else loadDayCatalog(d);                                                            // download just this one
       }
       state.wasTraveling = traveling;
 
       renderer.render(scene, camera);
+
+      // the tapped object's generative self, slowly turning above the inspector —
+      // one extra scissored draw only while the panel is open
+      if (vig.active && vig.group) {
+        vig.group.rotation.y += dt * (reduced ? 0.22 : 0.7);
+        const r = $("inspector").getBoundingClientRect();
+        const sz = 92, vx = r.left + r.width / 2 - sz / 2, vy = innerHeight - r.top + 6;
+        renderer.autoClear = false;
+        renderer.setScissorTest(true);
+        renderer.setViewport(vx, vy, sz, sz); renderer.setScissor(vx, vy, sz, sz);
+        renderer.render(vig.scene, vig.camera);
+        renderer.setScissorTest(false);
+        renderer.setViewport(0, 0, innerWidth, innerHeight);
+        renderer.autoClear = true;
+      }
     }
-    function resize() { renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); pointMat.uniforms.uPixel.value = renderer.getPixelRatio(); }
+    function resize() { renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.fov = innerWidth <= 760 ? 80 : 72; camera.updateProjectionMatrix(); pointMat.uniforms.uPixel.value = renderer.getPixelRatio(); pointMat.uniforms.uAspect.value = innerWidth / innerHeight; }
     addEventListener("resize", resize);
 
     // ── tap-to-rotate 4-sided data prism: each tap is a real 90° quarter-turn forward.
@@ -1082,13 +1593,21 @@
     function setupPrism(prismId) {
       const prism = $(prismId), inner = prism.querySelector(".prism-inner");
       let turns = 0;
-      prism.addEventListener("click", () => { turns += 1; inner.style.transform = `rotateX(${-turns * 90}deg)`; });
+      prism.addEventListener("click", (e) => {
+        if (e.target.closest("a")) return;            // links inside a face open; they don't rotate it
+        turns += 1; inner.style.transform = `rotateX(${-turns * 90}deg)`;
+      });
     }
     setupPrism("prism-obj"); setupPrism("prism-fp");
 
-    loadSettings(); applyEthRank(); applyOpSource(); document.body.classList.toggle("zen", state.lens === 4); populateLegend();
-    addEarth(); addStars(); assignField([]); renderer.setAnimationLoop(animate); boot();
-    window.__RSO_CARD__ = { state, setTarget, recordMeta, isoFor, get TOTAL() { return TOTAL; }, camera, O };
+    loadSettings(); applyEthRank(); applyOpSource(); document.body.classList.toggle("zen", state.lens === ZEN); populateLegend();
+    addEarth(); addStars(); assignField([]); renderer.setAnimationLoop(animate);
+    // after boot, let an embedding host (gallery, marketplace, test harness) know the piece
+    // is alive and on live data — fire-and-forget, never assumes a listener
+    boot().then(() => {
+      try { if (parent !== window) parent.postMessage({ rso: "ready", latest: CONFIG.latest }, "*"); } catch (e) {}
+    });
+    window.__RSO_CARD__ = { state, setTarget, recordMeta, isoFor, get TOTAL() { return TOTAL; }, camera, O, pointMat };
   </script>
 </body>
 </html>
