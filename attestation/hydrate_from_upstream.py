@@ -52,6 +52,7 @@ BUNDLE_MEMBERS = {
     "annotations.json",
     "audit.json",
     "catalog.json.gz",
+    "conjunctions.json",
     "delta.json",
     "manifest.json",
     "release-manifest.json",
@@ -145,6 +146,28 @@ def hydrate_day(args: argparse.Namespace, snapshot_date: str) -> None:
             f"{snapshot_date}: re-derived core {derived_core} does not match "
             f"manifest content_sha256 {manifest['content_sha256']}"
         )
+    # observation artifacts must agree with the bundled manifest both ways
+    for member_name, manifest_key in (
+        ("annotations.json", "annotations_sha256"),
+        ("conjunctions.json", "conjunctions_sha256"),
+    ):
+        expected = manifest.get(manifest_key)
+        payload = members.get(member_name)
+        if isinstance(expected, str) and expected:
+            if payload is None:
+                raise ValueError(
+                    f"{snapshot_date}: manifest records {manifest_key} "
+                    f"but bundle has no {member_name}"
+                )
+            if hashlib.sha256(payload).hexdigest() != expected:
+                raise ValueError(
+                    f"{snapshot_date}: {member_name} does not match the bundled "
+                    f"manifest fingerprint"
+                )
+        elif payload is not None:
+            raise ValueError(
+                f"{snapshot_date}: bundle has {member_name} but manifest has no {manifest_key}"
+            )
 
     day_dir = snapshot_dir(snapshot_date)
     day_dir.mkdir(parents=True, exist_ok=True)

@@ -95,6 +95,78 @@ class RsoIndexerTest(unittest.TestCase):
         self.assertEqual(index["events"][0]["onBehalfOf"], ZERO_ADDRESS)
         self.assertEqual(index["events"][0]["publication"], {"nodeId": "", "bundleSha256": "", "locations": []})
 
+    def test_build_static_index_stamps_attestation_timing(self):
+        from datetime import datetime, timezone
+
+        day_start = int(datetime(2026, 5, 19, tzinfo=timezone.utc).timestamp())
+        same_day = make_event(doc_ref=20260519000000, block_number=100)
+        late = make_event(
+            doc_ref=20260519000000,
+            block_number=200,
+            attester="0x" + "b" * 40,
+            transaction_hash="0x" + "9" * 64,
+        )
+
+        index = build_static_index(
+            network="sepolia",
+            chain_id=11155111,
+            contract_address="0xace3a26fe2f993e351a0ef74fb727cfe1029884b",
+            from_block=1,
+            to_block=200,
+            latest_chain_block=240,
+            confirmations=12,
+            chunk_size=2000,
+            events=[same_day, late],
+            indexed_at="2026-06-22T00:00:00Z",
+            block_timestamps={100: day_start + 2 * 3600, 200: day_start + 31 * 86400},
+        )
+
+        doc_ref = index["docRefs"]["20260519000000"]
+        by_block = {event["ethereumBlock"]: event for event in doc_ref["events"]}
+        self.assertEqual(by_block[100]["attestedAtUtc"], "2026-05-19T02:00:00Z")
+        self.assertEqual(by_block[100]["attestationLagDays"], 0)
+        self.assertEqual(by_block[200]["attestationLagDays"], 31)
+        self.assertEqual(doc_ref["firstAttestedAtUtc"], "2026-05-19T02:00:00Z")
+        self.assertEqual(doc_ref["minAttestationLagDays"], 0)
+        self.assertEqual(index["events"][0]["attestationLagDays"], 0)
+
+    def test_build_static_index_without_timestamps_adds_no_timing(self):
+        event = make_event(doc_ref=20260519000000, block_number=100)
+        index = build_static_index(
+            network="sepolia",
+            chain_id=11155111,
+            contract_address="0xace3a26fe2f993e351a0ef74fb727cfe1029884b",
+            from_block=1,
+            to_block=200,
+            latest_chain_block=240,
+            confirmations=12,
+            chunk_size=2000,
+            events=[event],
+            indexed_at="2026-06-22T00:00:00Z",
+        )
+        doc_ref = index["docRefs"]["20260519000000"]
+        self.assertNotIn("attestedAtUtc", doc_ref["events"][0])
+        self.assertNotIn("firstAttestedAtUtc", doc_ref)
+
+    def test_fetch_block_timestamps_caches_and_reuses(self):
+        calls = []
+
+        class FakeRpc:
+            def call(self, method, params):
+                calls.append((method, params))
+                number = int(params[0], 16)
+                return {"timestamp": hex(number * 12)}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_path = Path(tmp) / "block-timestamps.json"
+            first = cli.fetch_block_timestamps(FakeRpc(), [100, 200, 100], cache_path)
+            self.assertEqual(first, {100: 1200, 200: 2400})
+            self.assertEqual(len(calls), 2)
+
+            second = cli.fetch_block_timestamps(FakeRpc(), [100, 200, 300], cache_path)
+            self.assertEqual(second[300], 3600)
+            self.assertEqual(len(calls), 3)  # only the new block was fetched
+
     def test_build_static_index_exposes_identity_claims(self):
         event = make_event(
             doc_ref=20260519000000,
@@ -765,6 +837,10 @@ class RsoIndexerTest(unittest.TestCase):
 
             def block_number(self):
                 return 10861440
+
+            def call(self, method, params):
+                assert method == "eth_getBlockByNumber"
+                return {"timestamp": hex(1750000000)}
 
         def fake_write_json(path, payload):
             captured_index["path"] = path

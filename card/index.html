@@ -115,11 +115,14 @@
     .hint { position: absolute; left: 50%; bottom: calc(var(--safe-bottom) + 26px); transform: translateX(-50%); color: rgba(219,240,234,0.6); font-size: 8px; text-align: center; transition: opacity 700ms ease; }
     .hint.gone { opacity: 0; }
 
-    /* object inspector */
-    .inspector { position: absolute; left: 50%; bottom: calc(var(--safe-bottom) + 96px); width: min(360px, 80vw); transform: translateX(-50%) translateY(8px);
-      padding: 11px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; backdrop-filter: blur(7px);
-      text-align: center; opacity: 0; pointer-events: none; transition: opacity 200ms ease, transform 200ms ease; z-index: 3; }
-    .inspector.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* object inspector — sits under the date; the model stage is a transparent window
+       at the LEFT of the box (the GL vignette renders behind it, on a cleared dark rect) */
+    .inspector { position: absolute; left: 50%; top: calc(var(--safe-top) + 118px); width: min(430px, 92vw); transform: translateX(-50%) translateY(-8px);
+      display: flex; gap: 10px; align-items: stretch;
+      opacity: 0; pointer-events: none; transition: opacity 200ms ease, transform 200ms ease; z-index: 3; }
+    .inspector.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }   /* hover/tap tooltips need a live panel */
+    .insp-stage { flex: 0 0 92px; min-height: 92px; border: 1px solid var(--line); border-radius: 4px; }
+    .insp-body { flex: 1; min-width: 0; padding: 11px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; backdrop-filter: blur(7px); text-align: left; }
     .insp-label { color: var(--accent); font-size: 8px; }
     .insp-name { margin-top: 5px; font-size: 14px; line-height: 1.1; }
     .insp-meta { margin-top: 6px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -182,7 +185,8 @@
     body.zen .hud { opacity: 0; pointer-events: none; transition: opacity 400ms ease; }
 
     @keyframes blink { 50% { opacity: 0.35; } }
-    @media (max-width: 760px) { .brand-sub { display: none; } .record-date { top: calc(var(--safe-top) + 60px); width: 82vw; } }
+    @media (max-width: 760px) { .brand-sub { display: none; } .record-date { top: calc(var(--safe-top) + 60px); width: 82vw; }
+      .inspector { top: calc(var(--safe-top) + 182px); } }
     /* the agreement line is the soul of the piece — keep it down to phone width,
        where it would collide with the readout column */
     @media (max-width: 520px) { .witness { display: none; } }
@@ -212,7 +216,8 @@
       .date { font-size: clamp(14px, 7.5vw, 22px); margin-top: 4px; }
       .brand-name { font-size: 9px; }
       .brand-mark { width: 7px; height: 7px; margin-top: 2px; }
-      .inspector { width: min(88vw, 300px); bottom: calc(var(--safe-bottom) + 40px); }
+      .inspector { width: 94vw; }
+      .insp-stage { flex-basis: 76px; min-height: 76px; }
       .mode-toast { font-size: 9px; }
     }
   </style>
@@ -329,10 +334,13 @@
     </section>
 
     <section class="inspector" id="inspector">
-      <div class="insp-label" id="insp-label">Tracked object</div>
-      <div class="insp-name" id="insp-name">—</div>
-      <div class="insp-meta" id="insp-meta">—</div>
-      <div class="insp-obs" id="insp-obs"></div>
+      <div class="insp-stage" id="insp-stage"></div>
+      <div class="insp-body">
+        <div class="insp-label" id="insp-label">Tracked object</div>
+        <div class="insp-name" id="insp-name">—</div>
+        <div class="insp-meta" id="insp-meta">—</div>
+        <div class="insp-obs" id="insp-obs"></div>
+      </div>
     </section>
 
     <div class="timebar"><div class="timebar-fill" id="timebar-fill"></div></div>
@@ -379,7 +387,12 @@
     };
     const mobile = matchMedia("(max-width: 760px)").matches;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const FIELD = mobile ? 5000 : 11000;
+    // Buffers are allocated once at the ceiling; FIELD_N is how many we actually fly.
+    // Desktop flies EVERY on-orbit object (~34k of 36k headroom) — nothing is sampled
+    // away; phones fly a dense sample. Before the catalog arrives, a placeholder field.
+    const MAXF = mobile ? 9000 : 36000;
+    const FIELD = mobile ? 5000 : 11000;   // placeholder-field size (pre-catalog)
+    let FIELD_N = FIELD;
 
     // Objects ride circular orbital arcs around the Earth centre, keyed by altitude shell
     // (radius from EC). The camera orbits just above LEO, so LEO flows UNDER you, MEO grazes
@@ -389,10 +402,11 @@
       1: { r0: 432, r1: 478, speed: 1.0,  name: "MEO" }, // straddles the camera radius → crosses your plane, grazes you
       2: { r0: 500, r1: 720, speed: 0.42, name: "GEO" }  // R ≫ → high overhead, slow, sparse
     };
-    // At rest, every object completes exactly one pass per hour: spot something in the
-    // stream and it returns 60 minutes later, like clockwork. (Band speeds above only
-    // flavour the WARP rush, where the river becomes a torrent.)
-    const LAP_SECONDS = 3600;
+    // Each band returns on its own clean clock — LEO pours over the horizon every
+    // 5 minutes, MEO every 12, GEO every 36. Fast enough to FEEL the stream, exact
+    // enough that anything you spot comes back on schedule (and the band ratios echo
+    // the real ones). Band speeds above only flavour the WARP rush.
+    const LAP_BY_BAND = [300, 720, 2160];
     const PROP = { bands: { LEO: 0.905, MEO: 0.066, GEO: 0.029 } };
     const COLORS = {                                  // distinct hues that survive the brightness clip
       payload: [0.30, 0.52, 1.0],   // blue — stays blue (not white) when bright/near
@@ -446,7 +460,7 @@
       attested: false, pulseY: 0, pulseStr: 0,
       maxSpeed: reduced ? 6 : 24, accel: 30,
       yaw: 0, pitch: 0, yawT: 0, pitchT: 0, wasTraveling: false,
-      pointer: null, loadToken: 0,
+      pointer: null, loadToken: 0, selIdx: -1,
       lens: 0, keys: new Set(), tilt: null,   // tilt = {base:{b,g}} once enabled
       ethRank: 0, opSource: 0,                // witness settings (rank 0 = any sweeper-accepted witness)
       chainMeta: null,                        // {contractAddress, chainId} from the attestation index
@@ -466,9 +480,9 @@
 
     // ── field: CPU positions → points (dots) + line segments (real motion-blur) ──
     const O = [];                                  // object render records
-    const pPos = new Float32Array(FIELD * 3), pCol = new Float32Array(FIELD * 3), pAlpha = new Float32Array(FIELD), pSize = new Float32Array(FIELD), pFocus = new Float32Array(FIELD), pShape = new Float32Array(FIELD);
-    const pSeed = new Float32Array(FIELD * 3), pPrev = new Float32Array(FIELD * 3);
-    const lPos = new Float32Array(FIELD * 2 * 3), lCol = new Float32Array(FIELD * 2 * 3);
+    const pPos = new Float32Array(MAXF * 3), pCol = new Float32Array(MAXF * 3), pAlpha = new Float32Array(MAXF), pSize = new Float32Array(MAXF), pFocus = new Float32Array(MAXF), pShape = new Float32Array(MAXF);
+    const pSeed = new Float32Array(MAXF * 3), pPrev = new Float32Array(MAXF * 3);
+    const lPos = new Float32Array(MAXF * 2 * 3), lCol = new Float32Array(MAXF * 2 * 3);
 
     const pointGeo = new THREE.BufferGeometry();
     pointGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
@@ -528,9 +542,11 @@
           float ca = cos(vAng), sa = sin(vAng);
           vec2 q = mat2(ca, sa, -sa, ca) * q0;                 // +x = nose / direction of travel
           float s1 = vSeed.x, s2 = vSeed.y;
-          float lod = smoothstep(7.5, 13.0, vPx);              // form resolves only as it looms
+          float lod = smoothstep(3.0, 6.0, vPx);               // anything beyond a few pixels IS its shape; only true specks stay dots
           float d;
-          if (vShape < 0.5) {                                  // payload (generic) — bus + 1..6 fanned panels
+          if (vShape < -0.5) {                                 // forced dot — the soft round aura behind a flying solid
+            d = length(q0);
+          } else if (vShape < 0.5) {                           // payload (generic) — bus + 1..6 fanned panels
             float a = mix(0.10, 0.15, f1(s1, 3.7));            // disc bus: satellites gleam round at distance
             d = length(q) - a;
             float cnt = floor(1.0 + 5.99 * f1(s1, 17.9));      // 1..6 solar panels
@@ -556,6 +572,9 @@
             float nz = mix(0.05, 0.085, f1(s1, 6.7));
             d = min(d, length(q - vec2(-L - nz * 0.55, 0.0)) - nz);
             d = max(d, -sdBox(q - vec2(L * mix(0.0, 0.45, f1(s2, 8.9)), 0.0), vec2(0.013, w + 0.03))); // stage seam
+            float nf = floor(2.0 + 4.99 * f1(s1, 21.3));       // 2..6 base fins (the vignette shows the full ring)
+            d = min(d, sdBox(vec2(q.x + L - 0.02, abs(q.y) - (w + 0.045)), vec2(0.05, 0.05)));  // profile pair
+            if (nf > 4.5) d = min(d, sdBox(q - vec2(-L + 0.06, 0.0), vec2(0.028, w + 0.08)));   // crowded-ring hint
           } else if (vShape < 2.5) {                           // debris — every shard fractured its own way
             d = length(q) - mix(0.26, 0.36, f1(s1, 2.9));
             float a1 = f1(s1, 5.3) * 6.2832, a2 = a1 + 1.7 + f1(s2, 7.1) * 2.2, a3 = a2 + 1.6 + f1(s1, 9.3) * 2.1;
@@ -570,10 +589,13 @@
               float dg = abs(mod(atan(q.y, q.x) - ga + 3.14159, 6.28318) - 3.14159);
               d = max(d, gw - dg);                             // carve the gap
             }
-          } else if (vShape < 4.5) {                           // STARLINK — flat slab + one broad sail
-            d = sdBox(q, vec2(0.16, 0.045)) - 0.012;
-            vec2 qs = q - vec2(0.0, mix(0.20, 0.26, f1(s1, 5.1)));
-            d = min(d, sdBox(qs, vec2(mix(0.10, 0.13, f1(s2, 7.7)), mix(0.13, 0.18, f1(s1, 9.1)))));
+          } else if (vShape < 4.5) {                           // STARLINK v1 — flat bus, one LONG array off one end (open book, not a roof dish)
+            d = sdBox(q - vec2(0.0, -0.30), vec2(0.115, 0.045)) - 0.01;
+            float at = (f1(s2, 11.7) - 0.5) * 0.55;            // seeded array articulation — each tracks its own sun
+            float ca2 = cos(at), sa2 = sin(at);
+            vec2 qa = mat2(ca2, sa2, -sa2, ca2) * (q - vec2(0.0, 0.065));
+            float aw = mix(0.075, 0.095, f1(s2, 7.7));         // array narrower than the bus, much longer
+            d = min(d, sdBox(qa, vec2(aw, mix(0.30, 0.36, f1(s1, 9.1)))));
           } else if (vShape < 5.5) {                           // GEO comsat — long symmetric wings + dish
             float a = mix(0.09, 0.12, f1(s1, 3.7));
             d = sdBox(q, vec2(a, a)) - 0.02;
@@ -592,11 +614,17 @@
           } else if (vShape < 8.5) {                           // ONEWEB — box-wing: small bus, two long narrow arrays
             d = sdBox(q, vec2(0.07, 0.085)) - 0.015;
             d = min(d, sdBox(vec2(abs(q.x) - 0.26, q.y), vec2(0.17, mix(0.03, 0.042, f1(s2, 6.1)))));
-          } else {                                             // IRIDIUM — two wings + the big canted antenna
+          } else if (vShape < 9.5) {                           // IRIDIUM — two wings + the big canted antenna
             d = sdBox(q, vec2(0.10, 0.08)) - 0.015;
             d = min(d, sdBox(vec2(abs(q.x) - 0.22, q.y), vec2(0.10, 0.05)));
             vec2 qa = mat2(0.94, -0.34, 0.34, 0.94) * (q - vec2(0.0, -0.17));
             d = min(d, sdBox(qa, vec2(0.085, 0.115)));
+          } else {                                             // STARLINK v2 mini — bus amidships, TWO long arrays
+            d = sdBox(q, vec2(0.13, 0.05)) - 0.012;
+            float at = (f1(s2, 11.7) - 0.5) * 0.45;            // seeded articulation, same sun-tracking story
+            float ca2 = cos(at), sa2 = sin(at);
+            vec2 qq = mat2(ca2, sa2, -sa2, ca2) * q;
+            d = min(d, sdBox(vec2(qq.x, abs(qq.y) - 0.26), vec2(mix(0.06, 0.08, f1(s2, 7.7)), 0.17)));
           }
           d = mix(length(q0), d, lod);                         // tiny = plain dot; near = its own machine
           if (d > 0.55 || d != d) discard;                     // d!=d traps any NaN before it paints the quad
@@ -618,6 +646,124 @@
     lineGeo.setAttribute("color", new THREE.BufferAttribute(lCol, 3));
     const lineMat = new THREE.LineBasicMaterial({ transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true });
     const lines = new THREE.LineSegments(lineGeo, lineMat); lines.frustumCulled = false; scene.add(lines);
+
+    // ── selection halo: a soft seal-green ring that rides the chosen object — and is
+    //    still riding it when it comes all the way around again ──
+    const haloMat = new THREE.MeshBasicMaterial({ color: 0x9affd6, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const halo = new THREE.Mesh(new THREE.RingGeometry(0.74, 1.0, 40), haloMat);
+    halo.visible = false; scene.add(halo);
+
+    // ── tier 2: the nearest objects fly as REAL generated solids — opaque, occluding,
+    //    lit — while their sprites dim to a glow aura behind them ──
+    // EVERY object within the solid shell flies as a real lit body, all of them baked
+    // into ONE BatchedMesh — a single draw call whether 50 solids or 700. The shell is
+    // sized so its expected population fits the slot count (measured ~904 within 100u):
+    // full coverage, clean distance boundary, never pool luck.
+    const MESH_POOL = mobile ? 260 : 720, MESH_DIST = mobile ? 60 : 88;
+    const RES_V = 700, RES_I = 2100;            // uniform per-slot reservations → freed slots refit anything
+    // one sun for the whole scene: low over the limb, upper-left — solids take raking
+    // light and the atmosphere wears a dawn-bright arc on the same side
+    const SUN = new THREE.Vector3(-0.55, 0.42, -0.72).normalize();
+    scene.add(new THREE.AmbientLight(0x46525e, 0.6));
+    const fieldSun = new THREE.DirectionalLight(0xffffff, 1.9); fieldSun.position.copy(SUN).multiplyScalar(10); scene.add(fieldSun);
+    const batch = new THREE.BatchedMesh(MESH_POOL, MESH_POOL * RES_V, MESH_POOL * RES_I,
+      new THREE.MeshPhongMaterial({ vertexColors: true, flatShading: true, shininess: 26 }));
+    scene.add(batch);
+    const pool = Array.from({ length: MESH_POOL }, () => ({ idx: -1, bid: -1, iid: -1 }));
+    // r180 never reuses freed buffer RANGES (only optimize() compacts), so churn via
+    // add/delete exhausts the buffer at exactly MESH_POOL adds. Instead: reserve every
+    // slot ONCE against a placeholder, then rewrite contents in place with setGeometryAt.
+    {
+      const ph = new THREE.BufferGeometry();
+      ph.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0, 0, 0, 0], 3));
+      ph.setAttribute("normal", new THREE.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
+      ph.setAttribute("color", new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0, 0, 0, 0], 3));
+      ph.setIndex([0, 1, 2]);
+      for (const s of pool) s.bid = batch.addGeometry(ph, RES_V, RES_I);
+    }
+    const _vel = new THREE.Vector3(), _qroll = new THREE.Quaternion(), _quat = new THREE.Quaternion(), _AX = new THREE.Vector3(1, 0, 0);
+    const _bm = new THREE.Matrix4(), _bp = new THREE.Vector3(), _bs = new THREE.Vector3(), _nm = new THREE.Matrix3(), _bv = new THREE.Vector3();
+    // bake a generative Group into one vertex-coloured geometry the batch can swallow
+    function bakeSolid(o) {
+      const g = buildVigShape(o);
+      const pos = [], nor = [], col = [], idx = [];
+      let base = 0;
+      g.traverse((m) => {
+        if (!m.isMesh) return;
+        m.updateMatrix();
+        _nm.getNormalMatrix(m.matrix);
+        const p = m.geometry.getAttribute("position"), n = m.geometry.getAttribute("normal");
+        const c = m.material.color;
+        for (let i = 0; i < p.count; i++) {
+          _bv.set(p.getX(i), p.getY(i), p.getZ(i)).applyMatrix4(m.matrix);
+          pos.push(_bv.x, _bv.y, _bv.z);
+          _bv.set(n.getX(i), n.getY(i), n.getZ(i)).applyMatrix3(_nm).normalize();
+          nor.push(_bv.x, _bv.y, _bv.z);
+          col.push(c.r, c.g, c.b);
+        }
+        const ix = m.geometry.index;
+        if (ix) for (let i = 0; i < ix.count; i++) idx.push(base + ix.getX(i));
+        else for (let i = 0; i < p.count; i++) idx.push(base + i);
+        base += p.count;
+        m.geometry.dispose(); m.material.dispose();
+      });
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+      geo.setIndex(idx);
+      return geo;
+    }
+    function updateMeshPool(cands) {
+      batch.visible = state.warpBlend <= 0.25;
+      if (!batch.visible) return;
+      cands.sort((a, b) => a.d - b.d);
+      const want = cands.slice(0, MESH_POOL).map((c) => c.i);
+      const wantSet = new Set(want);
+      const claimed = new Set();
+      for (const s of pool) {
+        if (s.idx >= 0 && !wantSet.has(s.idx)) {
+          if (s.iid >= 0) batch.deleteInstance(s.iid);
+          pShape[s.idx] = O[s.idx] ? O[s.idx].shape : 0;          // hand the sprite its silhouette back
+          s.idx = -1; s.iid = -1;                                 // the geometry SLOT is permanent — only contents change
+        }
+        if (s.idx >= 0) claimed.add(s.idx);
+      }
+      let builds = 0;
+      for (const wi of want) {
+        if (claimed.has(wi)) continue;
+        const free = pool.find((s) => s.idx < 0);
+        if (!free || builds >= 6) continue;                       // spread construction across frames
+        builds++;
+        const geo = bakeSolid(O[wi]);
+        if (geo.getAttribute("position").count > RES_V) continue; // never overflow a slot
+        batch.setGeometryAt(free.bid, geo);                       // rewrite the reserved range in place
+        free.iid = batch.addInstance(free.bid);
+        free.idx = wi;
+      }
+      for (const s of pool) {
+        if (s.idx < 0 || s.iid < 0) continue;
+        const i3 = s.idx * 3, o = O[s.idx];
+        _bp.set(pPos[i3], pPos[i3 + 1], pPos[i3 + 2]);
+        _bs.setScalar(0.42 * o.baseSize);
+        // nose along the real direction of travel; debris and unknowns tumble about it,
+        // Starlinks roll slowly — identical hardware, its own attitude
+        _vel.set(pPos[i3] - pPrev[i3], pPos[i3 + 1] - pPrev[i3 + 1], pPos[i3 + 2] - pPrev[i3 + 2]);
+        if (_vel.lengthSq() > 1e-10) {
+          _vel.normalize();
+          _quat.setFromUnitVectors(_AX, _vel);
+          if (o.klass >= 2 || o.shape === 4 || o.shape === 10) { _qroll.setFromAxisAngle(_vel, state.time * pSeed[s.idx * 3 + 2]); _quat.premultiply(_qroll); }
+        }
+        _bm.compose(_bp, _quat, _bs);
+        batch.setMatrixAt(s.iid, _bm);
+        // the sprite behind a solid becomes a small SOFT ROUND glow — shape, focus and
+        // size all stripped, so no ghostly silhouette box haunts the model
+        pAlpha[s.idx] *= 0.25;
+        pSize[s.idx] = Math.min(pSize[s.idx], 1.5);
+        pFocus[s.idx] = 0;
+        pShape[s.idx] = -1;
+      }
+    }
 
     // Object world position as a function of its along-orbit phase t∈[0,1).
     // It rides a circular arc of radius o.R about the Earth centre EC, in a plane at azimuth
@@ -658,7 +804,7 @@
     function payloadShape(meta, band) {
       if (!meta) return 0;
       const n = (meta.name || "").toUpperCase();
-      if (n.startsWith("STARLINK")) return 4;                       // flat slab + one broad sail
+      if (n.startsWith("STARLINK")) return (parseInt(meta.id, 10) || 0) >= 55000 ? 10 : 4;  // gen bucket: v2 mini flies two arrays
       if (n.startsWith("ONEWEB")) return 8;                         // box-wing: small bus, two long narrow arrays
       if (n.includes("IRIDIUM")) return 9;                          // two wings + the big canted antenna panel
       if (/^(NAVSTAR|GPS |GLONASS|GALILEO|BEIDOU|QZS|IRNSS|NVS)/.test(n)) return 7;  // navsat: bus + wings + dish
@@ -668,7 +814,13 @@
     }
     function assignField(objects) {
       state.objects = objects;
-      for (let i = 0; i < FIELD; i++) {
+      FIELD_N = objects.length ? Math.min(objects.length, MAXF) : FIELD;
+      pointGeo.setDrawRange(0, FIELD_N);
+      lineGeo.setDrawRange(0, FIELD_N * 2);
+      // a new day means new bodies in the slots — flush the solid batch so no stale
+      // shape flies another object's track while the pool rebuilds
+      for (const s of pool) { if (s.iid >= 0) batch.deleteInstance(s.iid); s.idx = -1; s.iid = -1; }
+      for (let i = 0; i < FIELD_N; i++) {
         const src = objects.length ? objects[i % objects.length] : null;
         const band = src ? src.band : (hashUnit(`b${i}`) < PROP.bands.LEO ? 0 : hashUnit(`b${i}`) < PROP.bands.LEO + PROP.bands.MEO ? 1 : 2);
         const B = BAND[band];
@@ -688,12 +840,16 @@
         const o = O[i] || (O[i] = {});
         o.band = band;
         o.R = B.r0 + (B.r1 - B.r0) * rand2(nid, 11);          // orbit radius within the shell
-        // cross-track plane from the REAL inclination when we have it: sun-sync, Starlink
-        // shells and retrograde birds weave at their own angles through the river
+        // cross-track plane from the REAL elements: the ascending node (RAAN) spreads a
+        // shell's planes across the whole fan — exactly its job in orbit, and it keeps a
+        // 10k-sat constellation from parading down one corridor — while inclination tilts
+        // the family; a whisper of jitter breaks exact coincidence
         let g;
-        if (src && src.inc) {
-          g = ((src.inc - 65) / 65) * (band === 0 ? 1.1 : 1.5) + (rand2(nid, 23) - 0.5) * 0.45;
-          g = Math.max(-2.0, Math.min(2.0, g));
+        if (src && (src.raan || src.inc)) {
+          g = ((src.raan || 0) / 360 - 0.5) * (band === 0 ? 2.3 : 2.7)
+            + ((src.inc - 65) / 65) * 0.35
+            + (rand2(nid, 23) - 0.5) * 0.18;
+          g = Math.max(-2.1, Math.min(2.1, g));
         } else {
           g = (rand2(nid, 23) - 0.5) * (band === 0 ? 1.5 : 2.1);
         }
@@ -702,6 +858,7 @@
         o.eccV = src ? Math.min(0.5, src.ecc * 1.8) : 0;
         o.ep = rand2(nid, 103) * 6.2832;
         o.wj = B.speed * (0.82 + rand2(nid, 31) * 0.36);   // per-object character for the WARP rush only
+        o.lapRate = 1 / LAP_BY_BAND[band];                 // at rest: this band's exact return clock
         o.phase = rand2(i, 47); o.pt = o.phase % 1;
         o.ta = rand2(i, 53) * 6.2832; o.tr = 7 + Math.pow(rand2(i, 59), 0.7) * 44; // wormhole angle/radius
         o.klass = klass; o.status = src ? src.status : "carried"; o.meta = src; o.baseSize = baseSize;
@@ -709,8 +866,12 @@
         o.anno = src ? src.anno || null : null;
         o.shape = klass === 0 ? payloadShape(src, band) : klass === 1 ? 1 : klass === 2 ? 2 : 3;
         pShape[i] = o.shape;
-        // silhouette seeds + tumble: debris spins hard, unknowns drift, hardware holds attitude
-        const tum = (klass === 2 ? 0.5 + 1.6 * rand2(nid, 97) : klass >= 3 ? 0.25 + 0.7 * rand2(nid, 97) : 0.05 + 0.08 * rand2(nid, 97))
+        // silhouette seeds + tumble: debris spins hard, unknowns drift, hardware holds
+        // attitude — except Starlinks, whose identical airframes read distinct by spin
+        const tum = (klass === 2 ? 0.5 + 1.6 * rand2(nid, 97)
+          : klass >= 3 ? 0.25 + 0.7 * rand2(nid, 97)
+          : (o.shape === 4 || o.shape === 10) ? 0.12 + 0.3 * rand2(nid, 97)
+          : 0.05 + 0.08 * rand2(nid, 97))
           * (rand2(nid, 109) < 0.5 ? -1 : 1);
         pSeed[i * 3] = s1; pSeed[i * 3 + 1] = s2; pSeed[i * 3 + 2] = tum;
         o.country = src ? (src.country || "—") : "—";
@@ -750,7 +911,7 @@
     }
     function recolor() {
       const lens = state.lens;
-      for (let i = 0; i < FIELD; i++) {
+      for (let i = 0; i < FIELD_N; i++) {
         const o = O[i]; if (!o) continue;
         const re = o.reentered;
         let col, size = o.baseSize, aMul;
@@ -781,17 +942,17 @@
 
     function updateField(dt) {
       const warpC = Math.min(1, state.warp), over = state.over;
-      // at rest every object laps in exactly LAP_SECONDS; during warp the river becomes
+      // at rest each band laps on its exact clock; during warp the river becomes
       // the old banded torrent (backward time reverses the stream)
-      const restRate = 1 / LAP_SECONDS;
       const warpFlow = state.warp * 760 * (1 + over * 0.8) * state.timeDir * 0.0016;
       const twBase = state.time * 1.4;
       const showLines = state.warp > 0.02; lines.visible = showLines;   // streaks only during travel
       const cpx = camera.position.x, cpy = camera.position.y, cpz = camera.position.z;
       const fwd = (state.timeDir + 1) * 0.5;                 // 0 = receding (back), 1 = approaching (forward)
-      for (let i = 0; i < FIELD; i++) {
+      const meshCand = [];                                   // nearest objects earn real 3D bodies
+      for (let i = 0; i < FIELD_N; i++) {
         const o = O[i]; if (!o) continue;
-        o.phase += (restRate + warpFlow * o.wj) * dt;
+        o.phase += (o.lapRate + warpFlow * o.wj) * dt;
         const t = o.phase - Math.floor(o.phase);
         worldPos(o, t, _v);
         const i3 = i * 3;
@@ -804,7 +965,8 @@
         const dist = Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
         const fadeBehind = 1 - smooth(6, 46, ddz);          // fade once it slips behind the camera
         const fadeFar = 1 - smooth(560, 780, dist);          // fade into the deep distance
-        const focus = 1 - smooth(32, 170, dist);             // near → crisp point, far → soft glow
+        const focus = 1 - smooth(48, 260, dist);             // crisp much deeper — mid-field shapes read as shapes, not soft cubes
+        if (dist < MESH_DIST && o.meta && fadeBehind > 0.25) meshCand.push({ i, d: dist });
         const tw = 0.72 + 0.28 * Math.sin(twBase + o.size * 11.0 + i);
         pAlpha[i] = Math.max(0, fadeBehind * fadeFar * tw * o.aMul * (1 - 0.5 * warpC));
         pSize[i] = o.size * (1 + warpC * 0.4);
@@ -838,6 +1000,8 @@
         }
         o.px = _v.x; o.py = _v.y; o.pz = _v.z; o.pt = t; o.hasPrev = true;
       }
+      updateMeshPool(meshCand);                              // before upload: solids claim slots, sprites dim
+      pointGeo.attributes.aShape.needsUpdate = true;         // pool membership rewrites shapes (solid slots → dot)
       pointGeo.attributes.position.needsUpdate = true;
       pointGeo.attributes.color.needsUpdate = true;
       pointGeo.attributes.aAlpha.needsUpdate = true;
@@ -868,10 +1032,10 @@
       const atmo = new THREE.Mesh(new THREE.SphereGeometry(1000, 48, 32),
         new THREE.ShaderMaterial({
           transparent: true, depthWrite: false, depthTest: true, side: THREE.BackSide, blending: THREE.AdditiveBlending,
-          uniforms: { uCam: { value: new THREE.Vector3() }, uEC: { value: new THREE.Vector3(EC.x, EC.y, EC.z) }, uER: { value: ER }, uTop: { value: ER + ATM_H } },
+          uniforms: { uCam: { value: new THREE.Vector3() }, uEC: { value: new THREE.Vector3(EC.x, EC.y, EC.z) }, uER: { value: ER }, uTop: { value: ER + ATM_H }, uSun: { value: SUN } },
           vertexShader: `varying vec3 vW; void main(){ vW = (modelMatrix*vec4(position,1.0)).xyz; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0);} `,
           fragmentShader: `
-            uniform vec3 uCam, uEC; uniform float uER, uTop; varying vec3 vW;
+            uniform vec3 uCam, uEC; uniform float uER, uTop; uniform vec3 uSun; varying vec3 vW;
             void main(){
               vec3 rd = normalize(vW - uCam);
               vec3 oc = uEC - uCam;
@@ -880,7 +1044,11 @@
               float g = smoothstep(uTop, uER, b) * step(0.0, tca);  // 1 grazing the surface → 0 by the top of atmosphere
               g = pow(g, 1.4);
               vec3 col = mix(vec3(0.28,0.48,0.95), vec3(0.64,0.82,1.0), g);
-              gl_FragColor = vec4(col, g * 0.9);
+              // the same sun that lights the solids: a quiet dawn-bright arc on the
+              // sunward limb, dimming around to the night side
+              vec3 graze = normalize(uCam + rd * max(tca, 0.0) - uEC);
+              float dawn = 0.72 + 0.50 * smoothstep(-0.2, 0.8, dot(graze, uSun));
+              gl_FragColor = vec4(col * dawn, g * 0.9 * (0.82 + 0.18 * dawn));
             }`
         }));
       atmo.frustumCulled = false;
@@ -1023,6 +1191,7 @@
           country: row.COUNTRY_CODE || "—", launch: String(row.LAUNCH_DATE || "").slice(0, 10), decay,
           // orbital elements that shape each object's identity in the field
           inc: Number(row.INCLINATION) || 0, ecc: Number(row.ECCENTRICITY) || 0,
+          raan: Number(row.RA_OF_ASC_NODE) || 0,
           rcs: row.RCS_SIZE || "", bstar: Math.abs(Number(row.BSTAR)) || 0,
           anno: annoSum ? annoSum.byId.get(id) || null : null };
       });
@@ -1046,7 +1215,7 @@
         updated: delta?.deduped_update_count ?? delta?.updated_object_count ?? 0,
         new: delta?.new_object_count ?? launched, decayed: decToday, carried: delta?.carried_forward_count ?? 0
       });
-      const sampled = sampleByBand(objs, FIELD, date);
+      const sampled = sampleByBand(objs, MAXF, date);
       catalogCache.set(date, sampled);
       return sampled;
     }
@@ -1237,7 +1406,7 @@
     addEventListener("blur", () => state.keys.clear());
 
     // ── pointer: drag = look (a few degrees); touch vertical = time, horizontal = lens; tap = inspect ──
-    canvas.addEventListener("pointerdown", (e) => { state.pointer = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t: performance.now(), type: e.pointerType, accX: 0, accY: 0 }; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener("pointerdown", (e) => { state.pointer = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t: performance.now(), type: e.pointerType, accX: 0, accY: 0 }; try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* pointer already gone — capture is best-effort */ } });
     canvas.addEventListener("pointermove", (e) => {
       const p = state.pointer; if (!p) return;
       const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
@@ -1364,9 +1533,15 @@
       };
       if (o.klass === 0) {                                   // payload: archetype-keyed, like the field
         const shape = o.shape || 0;
-        if (shape === 4) {                                   // STARLINK — flat chassis + one broad sail
-          add(new THREE.BoxGeometry(0.80, 0.05, 0.40), vigMat(0));
-          add(new THREE.BoxGeometry(0.55, 0.02, 0.9 + R(9) * 0.2), vigMat(0, true), 0, 0.32, -0.22, -0.55, 0, 0);
+        if (shape === 4) {                                   // STARLINK v1 — flat bus + one LONG array, seeded sun-tracking fold
+          add(new THREE.BoxGeometry(0.40, 0.045, 0.30), vigMat(0), -0.42, 0, 0);
+          add(new THREE.BoxGeometry(0.85 + R(9) * 0.12, 0.016, 0.36), vigMat(0, true), 0.24, 0.035, 0, 0, 0, 0.06 + R(27) * 0.5);
+        } else if (shape === 10) {                           // STARLINK v2 mini — bus amidships, TWO arrays
+          add(new THREE.BoxGeometry(0.46, 0.05, 0.34), vigMat(0));
+          const fold = 0.05 + R(27) * 0.45;
+          const arr = new THREE.BoxGeometry(0.74, 0.016, 0.36);
+          add(arr, vigMat(0, true),  0.58, 0.03, 0, 0, 0,  fold);
+          add(arr, vigMat(0, true), -0.58, 0.03, 0, 0, 0, -fold);
         } else if (shape === 5) {                            // GEO comsat — long symmetric wings + dish
           add(new THREE.BoxGeometry(0.36, 0.32, 0.30), vigMat(0));
           const wing = new THREE.BoxGeometry(0.95 + R(7) * 0.2, 0.015, 0.26);
@@ -1420,6 +1595,12 @@
           -(len / 2 + 0.08), 0, 0, 0, 0, Math.PI / 2);
         const band = add(new THREE.TorusGeometry(r * 1.02, 0.013, 6, 20), vigMat(1, true), (R(53) - 0.5) * len * 0.6, 0, 0);
         band.rotation.y = Math.PI / 2;
+        const fins = 2 + Math.floor(R(63) * 4.99);           // 2..6 fins ringing the base
+        for (let i = 0; i < fins; i++) {
+          const th = (i * Math.PI * 2) / fins + R(69) * 0.6;
+          add(new THREE.BoxGeometry(0.17, 0.11, 0.012), vigMat(1, true),
+            -(len / 2 - 0.07), Math.cos(th) * (r + 0.05), Math.sin(th) * (r + 0.05), th, 0, 0);
+        }
       } else if (o.klass === 2) {                            // debris: a faceted shard all its own
         const geo = new THREE.IcosahedronGeometry(0.46, 0);
         const pos = geo.getAttribute("position");
@@ -1465,23 +1646,45 @@
     // ── click to inspect: nearest projected object to the tap ──
     const _proj = new THREE.Vector3();
     function inspectAt(cx, cy) {
-      let best = -1, bestD = 28 * 28;
-      for (let i = 0; i < FIELD; i++) {
-        const o = O[i]; if (!o || pAlpha[i] < 0.08) continue;
+      // a tap means "that one, the one I can SEE": within the radius, the nearer and
+      // visually bigger object beats a distant speck that happens to sit pixel-perfect
+      let best = -1, bestScore = Infinity;
+      const R2 = 34 * 34;
+      const solid = new Set(pool.map((s) => s.idx));   // solids stay tappable though their sprite is dimmed
+      for (let i = 0; i < FIELD_N; i++) {
+        const o = O[i]; if (!o || (pAlpha[i] < 0.08 && !solid.has(i))) continue;
         _proj.set(pPos[i * 3], pPos[i * 3 + 1], pPos[i * 3 + 2]).project(camera);
         if (_proj.z > 1) continue;
         const sx = (_proj.x * 0.5 + 0.5) * innerWidth, sy = (-_proj.y * 0.5 + 0.5) * innerHeight;
-        const d = (sx - cx) * (sx - cx) + (sy - cy) * (sy - cy);
-        if (d < bestD) { bestD = d; best = i; }
+        const d2 = (sx - cx) * (sx - cx) + (sy - cy) * (sy - cy);
+        if (d2 > R2) continue;
+        const dx = pPos[i * 3] - camera.position.x, dy = pPos[i * 3 + 1] - camera.position.y, dz = pPos[i * 3 + 2] - camera.position.z;
+        // camera distance is the primary key — a dense field always has SOME far speck
+        // a pixel from the tap, and that is never the one you meant
+        const score = Math.sqrt(dx * dx + dy * dy + dz * dz) * (0.6 + 0.4 * d2 / R2);
+        if (score < bestScore) { bestScore = score; best = i; }
       }
-      if (best < 0) { $("inspector").classList.remove("visible"); vigHide(); return; }
+      if (best < 0) { state.selIdx = -1; $("inspector").classList.remove("visible"); vigHide(); return; }
+      state.selIdx = best;
       const o = O[best], m = o.meta;
       const bandName = BAND[o.band].name;
       $("insp-label").textContent = o.status === "new" ? "Launched this day" : o.status === "decayed" ? "Decay reported" : "Tracked object";
       $("insp-name").textContent = m ? m.name : "Archive object";
-      $("insp-meta").textContent = m
-        ? `NORAD ${m.id} · ${bandName} · ${m.type}${m.country && m.country !== "—" ? " · " + m.country : ""}${m.launch ? " · ↑" + m.launch : ""}`
-          + `${m.inc ? ` · i ${m.inc.toFixed(1)}°` : ""}${m.ecc > 0.1 ? ` · e ${m.ecc.toFixed(2)}` : ""}${m.rcs ? ` · rcs ${m.rcs.toLowerCase()}` : ""}`
+      // bare values, each explained by its hover/tap tooltip — no inline labels
+      const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
+      const tip = (txt, why) => `<span title="${why}">${esc(txt)}</span>`;
+      const BAND_FULL = ["low Earth orbit", "medium Earth orbit", "geosynchronous Earth orbit"];
+      $("insp-meta").innerHTML = m
+        ? [
+            tip(`NORAD ${m.id}`, "NORAD catalog number"),
+            tip(bandName, `altitude regime: ${BAND_FULL[o.band]}`),
+            tip(m.type, "object type"),
+            m.country && m.country !== "—" ? tip(m.country, "country / operator code") : null,
+            m.launch ? tip(m.launch, "launch date") : null,
+            m.inc ? tip(`${m.inc.toFixed(1)}°`, "orbital inclination") : null,
+            m.ecc > 0.1 ? tip(m.ecc.toFixed(2), "orbital eccentricity") : null,
+            m.rcs ? tip(m.rcs.toLowerCase(), "radar cross-section class") : null,
+          ].filter(Boolean).join(" · ")
         : `${bandName} · ${["payload", "rocket body", "debris", "unknown", "tba"][pickClass(best)]}`;
       // the observation plane: what the archive learned about THIS object this doc-day
       $("insp-obs").textContent = o.anno ? `◉ observed · ${o.anno.text}` : "";
@@ -1534,6 +1737,17 @@
       pointMat.uniforms.uTime.value = state.time;
       updateField(dt);
 
+      // the halo rides the selected object — across the view, around the planet, and back
+      if (state.selIdx >= 0 && state.warpBlend < 0.3) {
+        const si = state.selIdx * 3;
+        halo.position.set(pPos[si], pPos[si + 1], pPos[si + 2]);
+        halo.lookAt(camera.position);
+        const hd = halo.position.distanceTo(camera.position);
+        halo.scale.setScalar(Math.max(0.8, hd * 0.022 * (1 + 0.12 * Math.sin(state.time * 4))));
+        haloMat.opacity = Math.min(0.85, 0.25 + pAlpha[state.selIdx] * 3);   // dims with the object behind the limb
+        halo.visible = true;
+      } else halo.visible = false;
+
       // keyboard look (arrows + WASD steer a few degrees)
       const ks = state.keys;
       if (ks.size) {
@@ -1559,6 +1773,7 @@
       if (shown !== state.shownDay) { state.shownDay = shown; showDay(isoFor(shown)); }
       if (!state.wasTraveling && traveling) {                                             // moving through days — no download yet
         setStatus("loading", "Scanning the chain…");
+        state.selIdx = -1;                                                                // hyperspace clears the selection
         $("inspector").classList.remove("visible"); vigHide();                            // the inspected object is leaving with its day
       }
       if (state.wasTraveling && !traveling) {                                             // arrived on a day → only now fetch it
@@ -1574,11 +1789,14 @@
       // one extra scissored draw only while the panel is open
       if (vig.active && vig.group) {
         vig.group.rotation.y += dt * (reduced ? 0.22 : 0.7);
-        const r = $("inspector").getBoundingClientRect();
-        const sz = 92, vx = r.left + r.width / 2 - sz / 2, vy = innerHeight - r.top + 6;
+        // the model renders behind the inspector's transparent stage window, on a
+        // GL-cleared dark rect — never washed out by whatever the field shows there
+        const r = $("insp-stage").getBoundingClientRect();
+        const vx = r.left + 1, vy = innerHeight - r.bottom + 1, sz = Math.max(8, r.width - 2);
         renderer.autoClear = false;
         renderer.setScissorTest(true);
         renderer.setViewport(vx, vy, sz, sz); renderer.setScissor(vx, vy, sz, sz);
+        renderer.clear(true, true);
         renderer.render(vig.scene, vig.camera);
         renderer.setScissorTest(false);
         renderer.setViewport(0, 0, innerWidth, innerHeight);
@@ -1607,7 +1825,7 @@
     boot().then(() => {
       try { if (parent !== window) parent.postMessage({ rso: "ready", latest: CONFIG.latest }, "*"); } catch (e) {}
     });
-    window.__RSO_CARD__ = { state, setTarget, recordMeta, isoFor, get TOTAL() { return TOTAL; }, camera, O, pointMat };
+    window.__RSO_CARD__ = { state, setTarget, recordMeta, isoFor, get TOTAL() { return TOTAL; }, camera, O, pointMat, scene, pool };
   </script>
 </body>
 </html>

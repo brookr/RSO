@@ -72,6 +72,21 @@ mutable fields, with the time of recording:
 - `decay_messages`: the `decay` class for the window (windowed on
   `MSG_EPOCH`). Reentries reach the archive the next day even though decayed
   objects publish no elsets.
+- `tip_messages`: the `tip` class for the window (windowed on `MSG_EPOCH`) --
+  Tracking and Impact Prediction messages: predicted reentry time, window,
+  and ground track for objects in terminal decay, revised as the prediction
+  tightens. The forecast channel for the reentries `decay_messages` later
+  confirms, so one reentry leaves a full arc: prediction, event, directory
+  stamp -- each with its own observation time.
+
+Each day also publishes `conjunctions.json` as a sibling artifact: every
+public conjunction data message (`cdm_public`) created in the window, with a
+small summary block. It lives outside annotations because conjunctions are
+pair-events, not object-directory facts, and because the upstream feed is a
+rolling window -- messages age out after closest approach, so the daily
+capture is the only public archive of what was warned, when. Fingerprinted by
+`manifest.conjunctions_sha256`, bundled, chain-committed via the locator,
+never consensus.
 
 Annotations are per-node and eventually consistent -- two honest nodes may
 hold different observations for the same day. They are signed into each node's

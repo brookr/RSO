@@ -25,6 +25,7 @@ https://raw.githubusercontent.com/{node}/RSO/node/latest.json
   "content_schema": "rso-core-v1",
   "content_sha256": "…",              // the consensus hash, attested on-chain
   "annotations_sha256": "…",
+  "conjunctions_sha256": "…",         // present once the day captures CDMs
   "object_count": 67917,
   "generated_at_utc": "…"
 }
@@ -35,6 +36,15 @@ Download from `asset_url` (or `ar://{arweave_tx}`), then verify:
 `content_sha256` from the catalog inside (see
 [the chain profile](profile.md), §6) and compare it with the on-chain
 attestation. You are then serving witnessed data, not just mirrored bytes.
+
+When you consume the observation artifacts (`annotations.json`,
+`conjunctions.json`) forensically — "what did the network know, when?" —
+weigh each node's claims by its **commitment time**, not by the
+`observed_at_utc` inside the files: the attestation index annotates every
+event with `attestedAtUtc` and `attestationLagDays` from its block
+timestamp, which is the unforgeable part. A day witnessed at lag 0 proves
+the knowledge existed that day; a re-attestation of history proves only
+that the bytes existed when it landed.
 
 ## Any past day
 

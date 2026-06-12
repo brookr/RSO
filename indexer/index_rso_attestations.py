@@ -74,6 +74,11 @@ def main() -> int:
             progress=progress_callback(args),
         )
         events = filter_rso_events(load_event_cache(cache_path))
+        block_timestamps = fetch_block_timestamps(
+            rpc,
+            (event.block_number for event in events),
+            Path(f"indexer/cache/{args.network}/block-timestamps.json"),
+        )
 
         index = build_static_index(
             network=args.network,
@@ -89,6 +94,7 @@ def main() -> int:
             operator_backing_by_date=operator_backing_by_date,
             verified_claims=verified_claims,
             direct_witnesses_by_date=direct_witnesses_by_date,
+            block_timestamps=block_timestamps,
         )
         write_json_file(Path(out_path), index)
         if not args.quiet:
@@ -102,6 +108,31 @@ def main() -> int:
     except (OSError, RpcError, ValueError) as exc:
         print(f"index_rso_attestations.py: {exc}", file=sys.stderr)
         return 2
+
+
+def fetch_block_timestamps(rpc, block_numbers, cache_path: Path) -> dict[int, int]:
+    """Resolve block numbers to timestamps, with a persistent cache.
+
+    Block timestamps are immutable once finalized, so the cache only ever
+    grows; a sweep run pays one eth_getBlockByNumber per previously unseen
+    block (attestations cluster in few blocks -- daily runs add ~2).
+    """
+    cached: dict[str, int] = {}
+    if cache_path.exists():
+        loaded = json.loads(cache_path.read_text(encoding="utf-8"))
+        if not isinstance(loaded, dict):
+            raise ValueError(f"{cache_path}: block timestamp cache must be a JSON object")
+        cached = {str(key): int(value) for key, value in loaded.items()}
+    wanted = sorted({int(number) for number in block_numbers})
+    missing = [number for number in wanted if str(number) not in cached]
+    for number in missing:
+        block = rpc.call("eth_getBlockByNumber", [hex(number), False])
+        if not isinstance(block, dict) or not isinstance(block.get("timestamp"), str):
+            raise ValueError(f"eth_getBlockByNumber({number}) returned no timestamp")
+        cached[str(number)] = int(block["timestamp"], 16)
+    if missing:
+        write_json_file(cache_path, cached)
+    return {int(key): value for key, value in cached.items()}
 
 
 def parse_args() -> argparse.Namespace:

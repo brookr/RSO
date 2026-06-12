@@ -104,6 +104,7 @@ On the operator's `node` branch:
 
 - `data/YYYY/MM/DD/manifest.json`
 - `data/YYYY/MM/DD/annotations.json`
+- `data/YYYY/MM/DD/conjunctions.json`
 - `data/YYYY/MM/DD/delta.json`
 - `data/YYYY/MM/DD/audit.json`
 - `data/YYYY/MM/DD/visibility_state.json`
@@ -119,8 +120,11 @@ The consensus object is the **core projection hash** (`content_sha256`): the
 SHA-256 of the canonical catalog with the nine mutable object-directory fields
 excluded, because Space-Track back-patches those in place on published rows.
 The raw catalog (all 39 fields, exactly as returned) stays the archival
-artifact, and `annotations.json` records what the node learned about the
-mutable fields and when. See [docs/chain.md](docs/chain.md) for the
+artifact; `annotations.json` records what the node learned about the
+mutable fields and when (directory edits, decay messages, reentry
+predictions), and `conjunctions.json` preserves the day's public
+close-approach warnings — a feed that cannot be re-queried later. See
+[docs/chain.md](docs/chain.md) for the
 measurements behind the split. The release URL, storage URI, and Arweave
 transaction ID are never part of consensus; attestations sign the exact bundle
 SHA-256 so mirrors can be checked byte-for-byte.

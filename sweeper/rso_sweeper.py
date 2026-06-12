@@ -887,6 +887,7 @@ def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, con
         "annotations.json",
         "audit.json",
         "catalog.json.gz",
+        "conjunctions.json",
         "delta.json",
         "manifest.json",
         "release-manifest.json",
@@ -895,6 +896,7 @@ def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, con
     seen: dict[str, object] = {}
     catalog_gz = None
     annotations_sha = None
+    conjunctions_sha = None
     with tarfile.open(fileobj=io.BytesIO(bundle_bytes), mode="r|gz") as tar:
         for member in tar:
             name = member.name
@@ -915,6 +917,10 @@ def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, con
             elif name == "annotations.json":
                 annotations_bytes = read_limited(extracted, config.max_json_bytes, label=name)
                 annotations_sha = hashlib.sha256(annotations_bytes).hexdigest()
+                seen[name] = True
+            elif name == "conjunctions.json":
+                conjunctions_bytes = read_limited(extracted, config.max_json_bytes, label=name)
+                conjunctions_sha = hashlib.sha256(conjunctions_bytes).hexdigest()
                 seen[name] = True
             else:
                 read_limited(extracted, config.max_json_bytes, label=name)
@@ -955,6 +961,14 @@ def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, con
                 raise SweeperError("manifest records annotations_sha256 but bundle has no annotations.json")
             if annotations_sha != expected_annotations_sha:
                 raise SweeperError("annotations.json does not match the manifest fingerprint")
+        expected_conjunctions_sha = manifest.get("conjunctions_sha256")
+        if isinstance(expected_conjunctions_sha, str) and expected_conjunctions_sha:
+            if conjunctions_sha is None:
+                raise SweeperError(
+                    "manifest records conjunctions_sha256 but bundle has no conjunctions.json"
+                )
+            if conjunctions_sha != expected_conjunctions_sha:
+                raise SweeperError("conjunctions.json does not match the manifest fingerprint")
         return
 
     if release_manifest.get("catalog_sha256") != expected_sha:

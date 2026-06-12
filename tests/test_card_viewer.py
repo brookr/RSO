@@ -109,7 +109,7 @@ class CardArtifactTest(unittest.TestCase):
         # the famous constellations get their real silhouettes, in field and vignette alike
         self.assertIn("function payloadShape(", self.html)
         for marker in ('n.startsWith("STARLINK")', 'n.startsWith("ONEWEB")',
-                       'n.includes("IRIDIUM")', "STARLINK — flat slab + one broad sail",
+                       'n.includes("IRIDIUM")', "STARLINK v1 — flat bus, one LONG array off one end",
                        "ONEWEB — box-wing", "IRIDIUM — two wings + the big canted antenna",
                        "GEO comsat — long symmetric wings + dish"):
             self.assertIn(marker, self.html)
@@ -120,14 +120,52 @@ class CardArtifactTest(unittest.TestCase):
         self.assertIn('rcs === "LARGE" ? 1.55 : rcs === "MEDIUM" ? 1.0 : rcs === "SMALL" ? 0.62', self.html)
         self.assertIn("0.92 + rand2(nid, 89) * 0.16", self.html)
         self.assertIn('rcs === "LARGE" ? 1.28', self.html)   # vignette presence
-        self.assertIn("` · rcs ${m.rcs.toLowerCase()}`", self.html)
+        self.assertIn('tip(m.rcs.toLowerCase(), "radar cross-section class")', self.html)
 
-    def test_hourly_lap_and_persistent_inspector(self):
-        # at rest, every object laps in exactly one hour — spot it, see it again
-        self.assertIn("const LAP_SECONDS = 3600", self.html)
-        self.assertIn("restRate + warpFlow * o.wj", self.html)
+    def test_band_clocks_and_persistent_selection(self):
+        # each band returns on its own clean clock: LEO 5 min, MEO 12, GEO 36
+        self.assertIn("const LAP_BY_BAND = [300, 720, 2160]", self.html)
+        self.assertIn("o.lapRate + warpFlow * o.wj", self.html)
         # the inspector stays up until another tap or blank space — no auto-hide timer
         self.assertNotIn("5200", self.html)
+        # selection: halo rides the chosen object; hyperspace clears it
+        self.assertIn("RingGeometry", self.html)
+        self.assertIn("state.selIdx = -1;                                                                // hyperspace clears the selection", self.html)
+
+    def test_full_population_flies(self):
+        # desktop flies EVERY on-orbit object — buffers at the ceiling, draw range live
+        self.assertIn("const MAXF = mobile ? 9000 : 36000", self.html)
+        self.assertIn("pointGeo.setDrawRange(0, FIELD_N)", self.html)
+        self.assertIn("sampleByBand(objs, MAXF, date)", self.html)
+
+    def test_tier2_solids_and_tooltips(self):
+        # nearest objects fly as real lit solids; sprites dim to an aura behind them.
+        # The pool covers its WHOLE radius (full shell, no pool luck) and the model
+        # stage lives INSIDE the inspector, left of the text.
+        self.assertIn("const MESH_POOL = mobile ? 260 : 720", self.html)
+        # one draw call for the whole solid fleet: BatchedMesh with permanent reserved
+        # slots rewritten in place (r180 never reuses freed ranges — churn would
+        # exhaust the buffer)
+        self.assertIn("new THREE.BatchedMesh(", self.html)
+        self.assertIn("batch.setGeometryAt(free.bid, geo)", self.html)
+        self.assertIn("s.bid = batch.addGeometry(ph, RES_V, RES_I)", self.html)
+        # a solid's sprite is forced to a round dot (shape -1) — no ghost silhouette box
+        self.assertIn("forced dot — the soft round aura behind a flying solid", self.html)
+        self.assertIn("pShape[s.idx] = -1", self.html)
+        # silhouettes from a few pixels up — the LOD gate is visual, not a perf saving
+        self.assertIn("anything beyond a few pixels IS its shape", self.html)
+        self.assertIn('id="insp-stage"', self.html)
+        self.assertIn("altitude regime: ${BAND_FULL[o.band]}", self.html)
+        # one sun for the field and a dawn-bright arc on the sunward limb
+        self.assertIn("const SUN = new THREE.Vector3", self.html)
+        self.assertIn("dawn", self.html)
+        # Starlink generations split by NORAD id; arrays articulate per-sat
+        self.assertIn(">= 55000 ? 10 : 4", self.html)
+        self.assertIn("STARLINK v2 mini — bus amidships, TWO long arrays", self.html)
+        self.assertIn("updateMeshPool(meshCand)", self.html)
+        self.assertIn("pAlpha[s.idx] *= 0.25", self.html)
+        # inspector values are bare, each explained by a hover/tap tooltip
+        self.assertIn('`<span title="${why}">', self.html)
 
     def test_generative_identity_is_norad_seeded_and_guarded(self):
         # identity seeds key to the NORAD id → same silhouette everywhere, forever
@@ -138,9 +176,13 @@ class CardArtifactTest(unittest.TestCase):
         # …with the near-plane guarded and NaNs trapped before they paint the quad
         self.assertIn("step(0.05, clip.w) * step(0.05, clipP.w)", self.html)
         self.assertIn("d != d) discard", self.html)
-        # real elements drive placement: inclination weave + eccentric breathing
+        # real elements drive placement: RAAN spreads the planes, inclination tilts
+        # the family, eccentricity breathes the radius
         self.assertIn("Number(row.INCLINATION)", self.html)
+        self.assertIn("Number(row.RA_OF_ASC_NODE)", self.html)
         self.assertIn("o.eccV", self.html)
+        # taps prefer the near object over a pixel-perfect far speck
+        self.assertIn("camera distance is the primary key", self.html)
 
     def test_inspector_vignette_shares_context_and_seeds(self):
         self.assertIn("buildVigShape", self.html)

@@ -53,6 +53,7 @@ def build_static_index(
     doc_chain_id: str = RSO_DOC_CHAIN_ID,
     profile_uri: str = RSO_PROFILE_URI,
     chain_profile: Mapping[str, object] | None = None,
+    block_timestamps: Mapping[int, int] | None = None,
 ) -> dict[str, object]:
     """Build the RSO static index by decorating the generic Doc Chain index."""
     index = build_docchain_index(
@@ -94,6 +95,7 @@ def build_static_index(
         verified_claims=verified_claims,
         direct_witnesses=direct_witnesses,
         direct_witnesses_by_date=direct_witnesses_by_date,
+        block_timestamps=block_timestamps,
     )
 
 
@@ -105,6 +107,7 @@ def decorate_rso_index(
     verified_claims: Mapping[str, object] | None = None,
     direct_witnesses: Mapping[str, object] | None = None,
     direct_witnesses_by_date: Mapping[str, object] | None = None,
+    block_timestamps: Mapping[int, int] | None = None,
 ) -> dict[str, object]:
     """Add RSO-specific date and fingerprint aliases to a generic index."""
     backing = normalize_operator_backing(
@@ -135,6 +138,7 @@ def decorate_rso_index(
                 raise ValueError("event records must be JSON objects")
             event["date"] = date
             decorate_publication(event)
+            decorate_attestation_timing(event, block_timestamps)
             decorate_tdh_support(
                 event,
                 dated_backing.get(date, backing),
@@ -143,6 +147,12 @@ def decorate_rso_index(
             )
         group["agreementGroups"] = agreement_groups(events)
         group["leadingAgreementGroup"] = leading_agreement_group(group["agreementGroups"])
+        timed = [event for event in events if event.get("attestedAtUtc")]
+        if timed:
+            group["firstAttestedAtUtc"] = min(str(event["attestedAtUtc"]) for event in timed)
+            group["minAttestationLagDays"] = min(
+                int(event["attestationLagDays"]) for event in timed
+            )
 
     events = index.get("events", [])
     if not isinstance(events, list):
@@ -152,6 +162,7 @@ def decorate_rso_index(
             raise ValueError("event records must be JSON objects")
         event["date"] = doc_ref_to_date(str(event["docRef"]))
         decorate_publication(event)
+        decorate_attestation_timing(event, block_timestamps)
         event_date = str(event["date"])
         decorate_tdh_support(
             event,
@@ -160,6 +171,32 @@ def decorate_rso_index(
             dated_witnesses.get(event_date, witnesses),
         )
     return index
+
+
+def decorate_attestation_timing(
+    event: dict[str, object],
+    block_timestamps: Mapping[int, int] | None,
+) -> None:
+    """Stamp the event with its unforgeable commitment time.
+
+    An attestation's verifiable claim is "these bytes were committed no later
+    than this block": the block timestamp, not any observed_at value inside
+    the published artifacts, is what forensic consumers should weigh. Lag is
+    measured from the docRef day's state boundary (00:00 UTC); a node
+    witnessing the day as it closes attests at lag 0, a re-attestation of
+    history wears its distance openly.
+    """
+    if not block_timestamps:
+        return
+    timestamp = block_timestamps.get(int(event["ethereumBlock"]))
+    if timestamp is None:
+        return
+    attested_at = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
+    day_start = datetime.strptime(str(event["date"]), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    event["attestedAtUtc"] = attested_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+    event["attestationLagDays"] = max(
+        0, int((attested_at - day_start).total_seconds() // 86400)
+    )
 
 
 def decorate_tdh_support(

@@ -43,6 +43,71 @@ import snapshot  # noqa: E402
 # at the client's enforced pacing.
 AUDIT_RANGES = ((0, 19999), (20000, 39999), (40000, 59999), (60000, 99999), (270000, 279999))
 
+# Feed liveness: an upstream feed that is silently broken or discontinued
+# looks exactly like a quiet sky, and nothing in the per-day machinery
+# objects. A section is judged only on recent days whose annotations carry
+# its key (schema revisions add sections over time), and only once enough
+# such days exist to make all-empty surprising.
+LIVENESS_WINDOW_DAYS = 7
+LIVENESS_MIN_DAYS = 3
+ANNOTATION_FEED_SECTIONS = ("satcat_changes", "decay_messages", "tip_messages")
+
+
+def check_feed_liveness(archived_days):
+    recent = archived_days[-LIVENESS_WINDOW_DAYS:]
+    present = {section: 0 for section in ANNOTATION_FEED_SECTIONS}
+    empty = {section: 0 for section in ANNOTATION_FEED_SECTIONS}
+    conjunction_days = 0
+    empty_conjunction_days = 0
+    newest_missing_conjunctions = False
+    saw_conjunctions = False
+
+    for day in recent:
+        annotations = snapshot.load_annotations(day)
+        if isinstance(annotations, dict):
+            for section in ANNOTATION_FEED_SECTIONS:
+                if section in annotations:
+                    present[section] += 1
+                    if not annotations[section]:
+                        empty[section] += 1
+        conjunctions = snapshot.read_json_if_exists(
+            snapshot.snapshot_dir(day) / "conjunctions.json"
+        )
+        if isinstance(conjunctions, dict):
+            saw_conjunctions = True
+            conjunction_days += 1
+            summary = conjunctions.get("summary") or {}
+            if not summary.get("message_count"):
+                empty_conjunction_days += 1
+            newest_missing_conjunctions = False
+        elif saw_conjunctions:
+            # an older day carries the artifact but a newer one does not:
+            # the capture regressed, not the feed
+            newest_missing_conjunctions = True
+
+    alerts = []
+    for section in ANNOTATION_FEED_SECTIONS:
+        if present[section] >= LIVENESS_MIN_DAYS and empty[section] == present[section]:
+            alerts.append(
+                f"{section} empty across all {present[section]} recent days carrying it"
+            )
+    if conjunction_days >= LIVENESS_MIN_DAYS and empty_conjunction_days == conjunction_days:
+        alerts.append(
+            f"conjunctions empty across all {conjunction_days} recent days carrying them"
+        )
+    if newest_missing_conjunctions:
+        alerts.append(
+            "conjunctions.json stopped being produced (older recent days have it, newer do not)"
+        )
+    return {
+        "days_checked": list(recent),
+        "sections_present": present,
+        "sections_empty": empty,
+        "conjunction_days": conjunction_days,
+        "empty_conjunction_days": empty_conjunction_days,
+        "alerts": alerts,
+    }
+
 
 def audit_window(client, day, recorded_records):
     """Re-query day's window and diff against what the archive recorded."""
@@ -189,12 +254,16 @@ def main() -> int:
     alerts = [
         r for r in results if r["core_field_mutations"] or r["selection_drift"]
     ]
+    liveness = check_feed_liveness(archived)
+    for message in liveness["alerts"]:
+        print(f"  FEED LIVENESS: {message}")
     report = {
         "schema": "rso-drift-audit-v1",
         "generated_at_utc": snapshot.utc_stamp(),
         "content_excluded_fields": list(snapshot.CONTENT_EXCLUDED_FIELDS),
         "windows_checked": len(results),
         "alert_window_count": len(alerts),
+        "feed_liveness": liveness,
         "results": results,
     }
     report_path = Path(args.report) if args.report else (
@@ -207,6 +276,13 @@ def main() -> int:
         print(
             f"DRIFT ALERT: {len(alerts)} window(s) show core-field mutations or "
             "selection drift -- the consensus field partition may need widening.",
+            file=sys.stderr,
+        )
+        return 1
+    if liveness["alerts"]:
+        print(
+            f"FEED LIVENESS ALERT: {'; '.join(liveness['alerts'])} -- an upstream "
+            "observation feed may be silently broken or discontinued.",
             file=sys.stderr,
         )
         return 1

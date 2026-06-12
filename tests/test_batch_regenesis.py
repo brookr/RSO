@@ -24,7 +24,15 @@ from sweeper import rso_sweeper  # noqa: E402
 from tests.test_core_projection import gp_record  # noqa: E402
 
 
-def build_v2_bundle_bytes(records, *, include_annotations=True, corrupt_core=False):
+def build_v2_bundle_bytes(
+    records,
+    *,
+    include_annotations=True,
+    corrupt_core=False,
+    include_conjunctions=False,
+    corrupt_conjunctions=False,
+    omit_conjunctions_member=False,
+):
     """Build an in-memory v2 bundle the way the pipeline does."""
     data = sorted(records, key=snapshot.catalog_id_sort_key)
     catalog_bytes = snapshot.canonicalize(data)
@@ -42,6 +50,17 @@ def build_v2_bundle_bytes(records, *, include_annotations=True, corrupt_core=Fal
     annotations_bytes = json.dumps(annotations, indent=2, sort_keys=True).encode() + b"\n"
     if include_annotations:
         manifest["annotations_sha256"] = hashlib.sha256(annotations_bytes).hexdigest()
+    conjunctions = {
+        "schema": "rso-conjunctions-v1",
+        "date": "2026-04-20",
+        "messages": [],
+        "summary": {"message_count": 0, "emergency_reportable_count": 0, "max_pc": None},
+    }
+    conjunctions_bytes = json.dumps(conjunctions, indent=2, sort_keys=True).encode() + b"\n"
+    if include_conjunctions:
+        manifest["conjunctions_sha256"] = (
+            "cd" * 32 if corrupt_conjunctions else hashlib.sha256(conjunctions_bytes).hexdigest()
+        )
     release_manifest = {"catalog_sha256": manifest["sha256"], "manifest_sha256": "ignored"}
 
     catalog_gz = io.BytesIO()
@@ -60,6 +79,8 @@ def build_v2_bundle_bytes(records, *, include_annotations=True, corrupt_core=Fal
             add("manifest.json", json.dumps(manifest).encode())
             if include_annotations:
                 add("annotations.json", annotations_bytes)
+            if include_conjunctions and not omit_conjunctions_member:
+                add("conjunctions.json", conjunctions_bytes)
             add("release-manifest.json", json.dumps(release_manifest).encode())
     return out.getvalue(), manifest
 
@@ -84,6 +105,36 @@ class SweeperV2ValidationTest(unittest.TestCase):
         bundle, manifest = build_v2_bundle_bytes(records, corrupt_core=True)
 
         with self.assertRaises(rso_sweeper.SweeperError):
+            rso_sweeper.validate_release_bundle(
+                bundle, "0x" + manifest["content_sha256"], self.config()
+            )
+
+    def test_accepts_v2_bundle_with_conjunctions(self):
+        records = [gp_record()]
+        bundle, manifest = build_v2_bundle_bytes(records, include_conjunctions=True)
+
+        rso_sweeper.validate_release_bundle(
+            bundle, "0x" + manifest["content_sha256"], self.config()
+        )
+
+    def test_rejects_v2_bundle_with_mismatched_conjunctions(self):
+        records = [gp_record()]
+        bundle, manifest = build_v2_bundle_bytes(
+            records, include_conjunctions=True, corrupt_conjunctions=True
+        )
+
+        with self.assertRaisesRegex(rso_sweeper.SweeperError, "conjunctions.json"):
+            rso_sweeper.validate_release_bundle(
+                bundle, "0x" + manifest["content_sha256"], self.config()
+            )
+
+    def test_rejects_v2_bundle_with_declared_but_missing_conjunctions(self):
+        records = [gp_record()]
+        bundle, manifest = build_v2_bundle_bytes(
+            records, include_conjunctions=True, omit_conjunctions_member=True
+        )
+
+        with self.assertRaisesRegex(rso_sweeper.SweeperError, "no conjunctions.json"):
             rso_sweeper.validate_release_bundle(
                 bundle, "0x" + manifest["content_sha256"], self.config()
             )
@@ -252,6 +303,62 @@ class HydrateFromUpstreamTest(unittest.TestCase):
             self.assertEqual(adopted["bundle_sha256"], receipt["bundle_sha256"])
             self.assertEqual(adopted["verified_from_upstream"], "OMPub/RSO")
             self.assertIn("arweave", adopted["destinations"])
+
+    def test_hydrate_day_adopts_conjunctions(self):
+        records = [gp_record()]
+        bundle, _ = build_v2_bundle_bytes(records, include_conjunctions=True)
+        receipt = {
+            "bundle_sha256": hashlib.sha256(bundle).hexdigest(),
+            "destinations": {
+                "github_release": {
+                    "asset_url": "https://github.com/OMPub/RSO/releases/download/t/a.tar.gz"
+                },
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            args = argparse.Namespace(
+                start="2026-04-20", end="2026-04-20", upstream="OMPub/RSO",
+                branch="node", timeout=10.0,
+            )
+            with patch.object(
+                hydrate_from_upstream, "fetch_upstream_receipt", return_value=receipt
+            ), patch.object(
+                hydrate_from_upstream, "fetch_bundle", return_value=bundle
+            ), patch.object(
+                hydrate_from_upstream, "snapshot_dir", lambda d: tmp_path / d
+            ), patch.object(
+                hydrate_from_upstream,
+                "storage_receipt_path",
+                lambda d: tmp_path / d / "storage.json",
+            ), patch.object(
+                hydrate_from_upstream, "update_ledger", lambda manifest: None
+            ):
+                hydrate_from_upstream.hydrate_day(args, "2026-04-20")
+            self.assertTrue((tmp_path / "2026-04-20" / "conjunctions.json").exists())
+
+    def test_hydrate_day_rejects_mismatched_conjunctions(self):
+        records = [gp_record()]
+        bundle, _ = build_v2_bundle_bytes(
+            records, include_conjunctions=True, corrupt_conjunctions=True
+        )
+        receipt = {
+            "bundle_sha256": hashlib.sha256(bundle).hexdigest(),
+            "destinations": {
+                "github_release": {
+                    "asset_url": "https://github.com/OMPub/RSO/releases/download/t/a.tar.gz"
+                },
+            },
+        }
+        args = argparse.Namespace(
+            start="2026-04-20", end="2026-04-20", upstream="OMPub/RSO",
+            branch="node", timeout=10.0,
+        )
+        with patch.object(
+            hydrate_from_upstream, "fetch_upstream_receipt", return_value=receipt
+        ), patch.object(hydrate_from_upstream, "fetch_bundle", return_value=bundle):
+            with self.assertRaisesRegex(ValueError, "conjunctions.json"):
+                hydrate_from_upstream.hydrate_day(args, "2026-04-20")
 
     def test_hydrate_day_rejects_bundle_hash_mismatch(self):
         records = [gp_record()]

@@ -112,5 +112,100 @@ class DriftAuditTest(unittest.TestCase):
         self.assertTrue(set(days[-3:]).issubset(sample))
 
 
+class FeedLivenessTest(unittest.TestCase):
+    def liveness(self, annotations_by_day, conjunctions_by_day=None):
+        conjunctions_by_day = conjunctions_by_day or {}
+        days = sorted(annotations_by_day)
+
+        def fake_load_annotations(day):
+            return annotations_by_day.get(day)
+
+        def fake_read_json_if_exists(path, default=None):
+            for day, payload in conjunctions_by_day.items():
+                if day.replace("-", "/") in str(path):
+                    return payload
+            return default
+
+        with patch.object(
+            drift_audit.snapshot, "load_annotations", fake_load_annotations
+        ), patch.object(
+            drift_audit.snapshot, "read_json_if_exists", fake_read_json_if_exists
+        ):
+            return drift_audit.check_feed_liveness(days)
+
+    def test_quiet_feeds_with_some_activity_do_not_alert(self):
+        annotations = {
+            f"2026-06-{day:02d}": {
+                "satcat_changes": [{"x": "1"}] if day % 2 else [],
+                "decay_messages": [],
+                "tip_messages": [{"x": "1"}],
+            }
+            for day in range(5, 12)
+        }
+        annotations["2026-06-11"]["decay_messages"] = [{"x": "1"}]
+        result = self.liveness(annotations)
+        self.assertEqual(result["alerts"], [])
+
+    def test_all_empty_section_alerts(self):
+        annotations = {
+            f"2026-06-{day:02d}": {
+                "satcat_changes": [{"x": "1"}],
+                "decay_messages": [{"x": "1"}],
+                "tip_messages": [],
+            }
+            for day in range(5, 12)
+        }
+        result = self.liveness(annotations)
+        self.assertEqual(len(result["alerts"]), 1)
+        self.assertIn("tip_messages", result["alerts"][0])
+
+    def test_sections_missing_from_old_schema_files_are_not_judged(self):
+        # v1 annotations lack tip_messages entirely; two v2 days are below
+        # the minimum sample, so silence there is not yet suspicious
+        annotations = {
+            "2026-06-05": {"satcat_changes": [{"x": "1"}], "decay_messages": [{"x": "1"}]},
+            "2026-06-06": {"satcat_changes": [{"x": "1"}], "decay_messages": [{"x": "1"}]},
+            "2026-06-07": {"satcat_changes": [{"x": "1"}], "decay_messages": [{"x": "1"}]},
+            "2026-06-08": {"satcat_changes": [{"x": "1"}], "decay_messages": [{"x": "1"}]},
+            "2026-06-09": {"satcat_changes": [{"x": "1"}], "decay_messages": [{"x": "1"}]},
+            "2026-06-10": {
+                "satcat_changes": [{"x": "1"}],
+                "decay_messages": [{"x": "1"}],
+                "tip_messages": [],
+            },
+            "2026-06-11": {
+                "satcat_changes": [{"x": "1"}],
+                "decay_messages": [{"x": "1"}],
+                "tip_messages": [],
+            },
+        }
+        result = self.liveness(annotations)
+        self.assertEqual(result["alerts"], [])
+        self.assertEqual(result["sections_present"]["tip_messages"], 2)
+
+    def test_conjunction_capture_regression_alerts(self):
+        annotations = {
+            f"2026-06-{day:02d}": {"satcat_changes": [{"x": "1"}], "decay_messages": [{"x": "1"}]}
+            for day in range(5, 12)
+        }
+        conjunctions = {
+            "2026-06-08": {"summary": {"message_count": 90}},
+            "2026-06-09": {"summary": {"message_count": 95}},
+        }
+        result = self.liveness(annotations, conjunctions)
+        self.assertTrue(any("stopped being produced" in alert for alert in result["alerts"]))
+
+    def test_empty_conjunctions_across_window_alert(self):
+        annotations = {
+            f"2026-06-{day:02d}": {"satcat_changes": [{"x": "1"}], "decay_messages": [{"x": "1"}]}
+            for day in range(5, 12)
+        }
+        conjunctions = {
+            f"2026-06-{day:02d}": {"summary": {"message_count": 0}} for day in range(5, 12)
+        }
+        result = self.liveness(annotations, conjunctions)
+        self.assertTrue(any("conjunctions empty" in alert for alert in result["alerts"]))
+
+
 if __name__ == "__main__":
     unittest.main()

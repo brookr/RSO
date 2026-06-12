@@ -692,6 +692,33 @@ class RebuiltBundleTests(ReleaseBundleTests):
         snapshot.write_json(day_dir / "manifest.json", manifest)
         return manifest
 
+    def write_conjunctions(self, current_date_str, manifest):
+        day_dir = snapshot.snapshot_dir(current_date_str)
+        conjunctions = snapshot.build_conjunctions(
+            current_date_str,
+            [
+                {
+                    "CDM_ID": "7",
+                    "CREATED": f"{current_date_str} 05:00:00.000000",
+                    "EMERGENCY_REPORTABLE": "Y",
+                    "PC": "0.001",
+                    "TCA": f"{current_date_str}T12:00:00.000000",
+                    "SAT_1_ID": "1",
+                    "SAT_1_NAME": "A",
+                    "SAT_2_ID": "2",
+                    "SAT_2_NAME": "B",
+                    "MIN_RNG": "100",
+                }
+            ],
+            observed_at_utc=manifest["archived_at"],
+            window_start_utc=f"{current_date_str}T00:00:00Z",
+            window_end_utc=f"{current_date_str}T00:00:00Z",
+        )
+        snapshot.write_json(day_dir / "conjunctions.json", conjunctions)
+        manifest["conjunctions_sha256"] = snapshot.sha256_path(day_dir / "conjunctions.json")
+        snapshot.write_json(day_dir / "manifest.json", manifest)
+        return manifest
+
     def test_rebuilt_bundle_uses_plain_asset_name_and_includes_annotations(self):
         self.archive_v2_day()
 
@@ -705,6 +732,69 @@ class RebuiltBundleTests(ReleaseBundleTests):
         self.assertIn("annotations.json", names)
         self.assertIn("catalog.json.gz", names)
         self.assertIn("manifest.json", names)
+
+    def test_bundle_includes_conjunctions_when_present(self):
+        manifest = self.archive_v2_day()
+        self.write_conjunctions("2026-04-18", manifest)
+
+        bundle = snapshot.build_rebuilt_bundle(
+            "2026-04-18", output_dir=self.root / "out", min_count=1
+        )
+
+        with tarfile.open(bundle["path"], "r:gz") as tar:
+            names = set(tar.getnames())
+        self.assertIn("conjunctions.json", names)
+        self.assertIn("conjunctions.json", [f["path"] for f in bundle["files"]])
+
+    def test_validate_artifacts_checks_conjunctions_fingerprint_both_ways(self):
+        manifest = self.archive_v2_day()
+        day_dir = snapshot.snapshot_dir("2026-04-18")
+
+        # file present without a manifest fingerprint
+        (day_dir / "conjunctions.json").write_text("{}", encoding="utf-8")
+        errors, _ = snapshot.validate_snapshot_artifacts("2026-04-18", min_count=1)
+        self.assertTrue(any("manifest has no conjunctions_sha256" in e for e in errors))
+
+        # consistent fingerprint validates clean
+        manifest = self.write_conjunctions("2026-04-18", manifest)
+        errors, _ = snapshot.validate_snapshot_artifacts("2026-04-18", min_count=1)
+        self.assertEqual(errors, [])
+
+        # tampered bytes are caught
+        (day_dir / "conjunctions.json").write_text("{\"tampered\": true}", encoding="utf-8")
+        errors, _ = snapshot.validate_snapshot_artifacts("2026-04-18", min_count=1)
+        self.assertTrue(any("does not match manifest conjunctions_sha256" in e for e in errors))
+
+        # declared but missing is caught
+        (day_dir / "conjunctions.json").unlink()
+        errors, _ = snapshot.validate_snapshot_artifacts("2026-04-18", min_count=1)
+        self.assertTrue(any("conjunctions.json is missing" in e for e in errors))
+
+    def test_save_snapshot_records_conjunctions_fingerprint(self):
+        records = [gp_record("1")]
+        data = sorted(records, key=snapshot.catalog_id_sort_key)
+        conjunctions = snapshot.build_conjunctions(
+            "2026-04-19",
+            [],
+            observed_at_utc="2026-04-19T00:20:00Z",
+            window_start_utc="2026-04-18T00:00:00Z",
+            window_end_utc="2026-04-19T00:00:00Z",
+        )
+        manifest = snapshot.save_snapshot(
+            "2026-04-19",
+            snapshot.canonicalize(data),
+            data,
+            "genesis_from_gp",
+            "current_gp_genesis",
+            [],
+            conjunctions=conjunctions,
+        )
+        day_dir = snapshot.snapshot_dir("2026-04-19")
+        self.assertTrue((day_dir / "conjunctions.json").exists())
+        self.assertEqual(
+            manifest["conjunctions_sha256"],
+            snapshot.sha256_path(day_dir / "conjunctions.json"),
+        )
 
     def test_rebuilt_bundle_requires_content_fields(self):
         self.archive_day()
