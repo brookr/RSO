@@ -174,6 +174,7 @@ Space-Track *now* says it said then.
 | `boxscore` | not consumed | derived aggregate, recomputable from any catalog |
 | `tle`, `tle_latest`, `tle_publish`, `omm` | not consumed | legacy formats of the same data; `gp`/`gp_history` supersede them |
 | `announcement` | not consumed | service notices, not catalog knowledge |
+| public files (`/publicfiles/`, operator ephemerides) | not consumed | a different data product: operator-supplied trajectories and maneuver intent, outside `basicspacedata`. Volume is operator-controlled (measured 2026-06-12: NASA-JSC ISS ephemerides ~330KB; SpaceX and Kuiper directories empty — historically SpaceX published hundreds of MB/day) and partial capture (metadata without bytes) would be unverifiable provenance. Like `cdm_public`, files rotate in place: this decision has no backfill. |
 
 Maneuver histories, covariance, and owner/operator detail are not public
 (SP-restricted); the public picture tops out at this registry.
