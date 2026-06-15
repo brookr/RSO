@@ -79,13 +79,16 @@
     .prism { position: relative; overflow: hidden; cursor: pointer; perspective: 4000px; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
     .prism-inner { position: relative; height: 94px; transform-style: preserve-3d; transition: transform 0.62s cubic-bezier(0.45,0.05,0.2,1); }
     /* the border + dots live ON each face, so they rotate as part of the prism */
-    .face { position: absolute; inset: 0; backface-visibility: hidden; padding: 8px 10px 0; border-top: 1px solid var(--line); }
+    .face { position: absolute; inset: 0; backface-visibility: hidden; padding: 6px 10px 0; border-top: 1px solid var(--line); }
     .face:nth-child(1) { transform: rotateX(0deg)   translateZ(47px); }
     .face:nth-child(2) { transform: rotateX(90deg)  translateZ(47px); }
     .face:nth-child(3) { transform: rotateX(180deg) translateZ(47px); }
     .face:nth-child(4) { transform: rotateX(270deg) translateZ(47px); }
     /* The archive prism combines the two former lower-left records. Eight faces means
-       one compact object, with a 45-degree quarter-story per tap. */
+       one compact object, with a 45-degree eighth-turn per tap. Its faces sit far out
+       (a deep octagon), so it needs a much nearer vanishing point than the shallow
+       four-face witness prism — otherwise the deep rotation flattens into a vertical slide. */
+    .prism.eight { perspective: 900px; }
     .prism.eight .face:nth-child(1) { transform: rotateX(0deg)   translateZ(114px); }
     .prism.eight .face:nth-child(2) { transform: rotateX(45deg)  translateZ(114px); }
     .prism.eight .face:nth-child(3) { transform: rotateX(90deg)  translateZ(114px); }
@@ -96,11 +99,11 @@
     .prism.eight .face:nth-child(8) { transform: rotateX(315deg) translateZ(114px); }
     /* axial / centre-gutter alignment: counts right-align to a shared centreline (tabular figures),
        labels left-align off it — each column grows outward as needed */
-    .readout-rows { margin-top: 7px; display: grid; grid-template-columns: 1fr 3fr; column-gap: 14px; row-gap: 3px; align-items: baseline;
+    .readout-rows { margin-top: 6px; display: grid; grid-template-columns: 1fr 3fr; column-gap: 14px; row-gap: 2px; align-items: baseline;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-variant-numeric: tabular-nums; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; }
     .readout-rows .lbl { text-align: left; color: var(--muted); white-space: nowrap; }
     .readout-rows b { text-align: right; color: var(--ink); font-weight: 600; }
-    .readout-rows .hd { font-size: 8px; color: var(--muted); font-weight: 400; letter-spacing: 0.1em; padding-bottom: 5px; } /* face title, aligned to the same axis */
+    .readout-rows .hd { font-size: 8px; color: var(--muted); font-weight: 400; letter-spacing: 0.1em; padding-bottom: 3px; } /* face title, aligned to the same axis */
     /* altitude = neutral cool-grey brightness ramp (low→high), distinct from the categorical class colours */
     .readout-rows b.leo { color: #6e7790; } .readout-rows b.meo { color: #99a1b8; } .readout-rows b.geo { color: #d2d8ea; }
     /* object type = the same hues as the dots flying past */
@@ -136,15 +139,17 @@
     .insp-label { color: var(--accent); font-size: 8px; }
     .insp-name { margin-top: 5px; font-size: 14px; line-height: 1.1; }
     .insp-meta { margin-top: 6px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
-    .insp-meta span { position: relative; cursor: help; border-bottom: 1px dotted rgba(154,169,255,0.32); }
-    .insp-meta span:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
-    .insp-meta span.tip-open::after, .insp-meta span:hover::after, .insp-meta span:focus-visible::after { position: absolute; left: 50%; bottom: calc(100% + 7px); z-index: 8; width: max-content; max-width: min(220px, 72vw);
+    .insp-body [data-tip] { position: relative; cursor: help; border-bottom: 1px dotted rgba(154,169,255,0.32); }
+    .insp-body [data-tip]:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+    .insp-body [data-tip].tip-open::after, .insp-body [data-tip]:hover::after, .insp-body [data-tip]:focus-visible::after { position: absolute; left: 50%; bottom: calc(100% + 7px); z-index: 8; width: max-content; max-width: min(220px, 72vw);
       padding: 5px 7px; border: 1px solid var(--line); border-radius: 4px; content: attr(data-tip); transform: translateX(-50%);
       color: var(--ink); background: rgba(2,7,8,0.96); box-shadow: 0 4px 18px rgba(0,0,0,0.55); white-space: normal; text-align: center;
       font-size: 8px; line-height: 1.35; letter-spacing: 0.04em; text-transform: none; pointer-events: none; }
     .insp-obs { margin-top: 5px; color: var(--seal, #8cffd0); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; letter-spacing: 0.05em; }
     .insp-obs:empty { display: none; }
-    .insp-obs.tip { color: #ffd97a; text-shadow: 0 0 10px rgba(255,200,90,0.4); }   /* predicted reentry — the headline */
+    .insp-obs.tip { color: #fff0d6; text-shadow: 0 0 11px rgba(255,238,206,0.55); }   /* predicted reentry — incandescent, the headline */
+    .insp-drag { margin-top: 5px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9px; letter-spacing: 0.05em; }
+    .insp-drag:empty { display: none; }
     /* clickable line inside a rotating prism (e.g. the contract address) */
     .prism-link { pointer-events: auto; color: var(--muted); text-decoration: none; border-bottom: 1px dotted rgba(154,169,255,0.45); transition: color 150ms, border-color 150ms; }
     .prism-link:hover { color: var(--ink); border-color: var(--accent); }
@@ -405,10 +410,11 @@
 
     <section class="inspector" id="inspector">
       <div class="insp-stage" id="insp-stage"></div>
-      <div class="insp-body">
+      <div class="insp-body" id="insp-body">
         <div class="insp-label" id="insp-label">Tracked object</div>
         <div class="insp-name" id="insp-name">—</div>
         <div class="insp-meta" id="insp-meta">—</div>
+        <div class="insp-drag" id="insp-drag"></div>
         <div class="insp-obs" id="insp-obs"></div>
       </div>
     </section>
@@ -886,7 +892,7 @@
           const wi = cands[j].i;
           if (O[wi].solid) continue;
           const free = pool.find((s) => s.idx < 0);
-          if (!free || builds >= 1) continue;                     // never let geometry baking steal a whole frame
+          if (!free || (builds >= 1 && wi !== state.selIdx)) continue;   // ≤1 bake/frame — but the tapped object jumps the queue so it solidifies at once
           builds++;
           const geo = bakeSolid(O[wi]);
           if (geo.getAttribute("position").count > RES_V) { geo.dispose(); continue; } // never overflow a slot
@@ -960,7 +966,12 @@
     function orbitParams(src, band, nid) {
       const B = BAND[band];
       let g;
-      if (src && (src.raan || src.inc)) {
+      if (src && src.change === "reentry") {
+        // The headline objects: a predicted reentry is the most consequential thing in
+        // the sky, so pin it to the central river (a small spread keeps the few apart)
+        // instead of letting a real but unlucky orbital plane hide it off-screen forever.
+        g = (rand2(nid, 23) - 0.5) * 0.5;
+      } else if (src && (src.raan || src.inc)) {
         g = ((src.raan || 0) / 360 - 0.5) * (band === 0 ? 2.3 : 2.7)
           + ((src.inc - 65) / 65) * 0.35
           + (rand2(nid, 23) - 0.5) * 0.18;
@@ -976,8 +987,15 @@
         eccV: src ? Math.min(0.5, src.ecc * 1.8) : 0,
         ep: rand2(nid, 103) * 6.2832,
         wj: B.speed * (0.82 + rand2(nid, 31) * 0.36),
-        lapRate: 1 / LAP_BY_BAND[band]
+        // a predicted reentry drifts slowly so it lingers in the visible river for the
+        // whole session instead of whipping past once every few minutes
+        lapRate: src && src.change === "reentry" ? 1 / 2600 : 1 / LAP_BY_BAND[band]
       };
+    }
+    // The headline objects are pinned into the heart of the visible arc (measured phase
+    // window ~0.35–0.65) with a small spread, so a reentry forecast is always on screen.
+    function pinReentryPhase(o, nid) {
+      if (o.meta && o.meta.change === "reentry") { o.phase = 0.44 + rand2(nid, 47) * 0.16; o.pt = o.phase; }
     }
     function settleOrbit(o, objectDt) {
       const t = o.orbitTarget; if (!t) return;
@@ -1040,6 +1058,7 @@
       o.country = src ? (src.country || "—") : "—";
       o.launchYear = src && src.launch ? parseInt(src.launch.slice(0, 4)) || 0 : 0;
       o.hasPrev = false; o.solid = false;
+      pinReentryPhase(o, nid);
     }
     function assignField(objects, placeholderCount = FIELD) {
       state.objects = objects;
@@ -1072,6 +1091,7 @@
       // Preserve the exact current position at handoff, then continuously settle the
       // slot into the real object's shell and element-driven orbital plane.
       o.orbitTarget = orbitParams(src, src.band, nid);
+      pinReentryPhase(o, nid);   // snap the few headline objects into view, even mid-flight
       colorSlot(o);
     }
     // Attach a downloaded catalog without restarting the river. Existing slots keep their
@@ -1105,9 +1125,22 @@
     const LENSES = ["Object type", "Operator", "Launch age", "Radar size", "Daily changes"];
     // Daily-change lens: the dense GP refresh plus the rarer, more consequential
     // directory/new/decay events. Priority runs left-to-right in changeKind().
-    const UPD_REENTRY = [1.0, 0.85, 0.45], UPD_DECAY = [1.0, 0.22, 0.08], UPD_NEW = [0.55, 1.0, 0.86],
-      UPD_DYNAMIC = [1.0, 0.78, 0.30], UPD_META = [0.82, 0.52, 1.0],
+    // Reentry is incandescent white-hot (a body burning up) so it never reads as the
+    // same warm gold as high-drag; high-drag is a clear amber-orange, well clear of the
+    // deep-red decay and the white-hot reentry. Each category stays distinct at swatch size.
+    const UPD_REENTRY = [1.0, 0.95, 0.82], UPD_DECAY = [1.0, 0.22, 0.08], UPD_NEW = [0.55, 1.0, 0.86],
+      UPD_DYNAMIC = [1.0, 0.55, 0.13], UPD_META = [0.82, 0.52, 1.0],
       UPD_ORBIT = [0.35, 0.66, 1.0], UPD_DIM = [0.30, 0.34, 0.42];
+    // Daily-changes category → inspector headline + swatch colour (matches the legend),
+    // so the selected dot's category is unambiguous even when two hues sit close together.
+    const CHANGE_INFO = {
+      reentry: ["Re-entry predicted", UPD_REENTRY],
+      decay:   ["Decay / re-entry", UPD_DECAY],
+      new:     ["Launched this day", UPD_NEW],
+      dynamic: ["High drag / rapid change", UPD_DYNAMIC],
+      meta:    ["Directory / identity edit", UPD_META],
+      orbit:   ["Routine orbit solution", UPD_ORBIT],
+    };
     const TYPE_COLS = [COLORS.payload, COLORS.rocket, COLORS.debris, COLORS.unknown, COLORS.tba];
     const RCS_COLS = { LARGE: [1.0, 0.68, 0.28], MEDIUM: [0.42, 0.72, 1.0], SMALL: [0.72, 0.48, 1.0] };
     const OPERATORS = [
@@ -1154,6 +1187,10 @@
         col = TYPE_COLS[o.klass]; aMul = o.klass === 2 ? 0.74 : 1.0;
         if (re) { col = COLORS.ghost; size *= 0.8; aMul = 0.32; }
       }
+      // a predicted reentry stays a notable presence in EVERY lens — it keeps the lens's
+      // own colour but reads brighter and larger, so the headline objects are spottable
+      // (and tappable) without forcing the Daily-changes lens. The lens itself paints them gold.
+      if (o.change === "reentry" && !re && state.lens !== 4) { size = Math.max(size, 5.0); aMul = Math.max(aMul, 2.2); }
       if ((o.dataBand ?? o.band) === 1 && !re) aMul *= 1.15;   // MEO pops at eye level
       o.col = col; o.size = size; o.aMul = aMul;
     }
@@ -1265,10 +1302,18 @@
       const refreshMeshes = phase === stride - 1 || !meshCandidates.length;
       if (refreshMeshes) {
         let n = 0;
+        const sel = state.selIdx;
         for (let i = 0; i < FIELD_N; i++) {
           const o = O[i]; if (!o?.meshWanted) continue;
           const c = meshCandidates[n] || (meshCandidates[n] = {});
-          c.i = i; c.d = o.meshDist; c.px = o.meshPx; n++;
+          c.i = i; c.d = o.meshDist; c.px = i === sel ? Infinity : o.meshPx; n++;
+        }
+        // A tapped object always shows its true generated 3D solid, however far it has drifted:
+        // force it into the candidate set at top priority so the pool can't evict it while it
+        // stays selected. Deselecting simply stops the injection and it reverts to a sprite.
+        if (sel >= 0 && sel < FIELD_N && O[sel]?.meta && !O[sel].meshWanted) {
+          const c = meshCandidates[n] || (meshCandidates[n] = {});
+          c.i = sel; c.d = O[sel].meshDist || 0; c.px = Infinity; n++;
         }
         meshCandidates.length = n;
       }
@@ -1756,10 +1801,13 @@
     // ── view modes / colour lenses: swipe left/right + spacebar ──
     let modeAt = 0;
     function cycleMode(dir) { const now = performance.now(); if (now - modeAt < 320) return; modeAt = now; state.lens = (state.lens + dir + LENSES.length) % LENSES.length; applyMode(); }
-    function applyMode() { recolor(); populateLegend(); flashMode(LENSES[state.lens]); }
-    function setZen(on) { state.zen = on; document.body.classList.toggle("zen", on); flashMode(on ? "Zen" : LENSES[state.lens]); }
+    // No centre flash on lens change — the legend's title already names the active lens, and
+    // the toast could overlap the inspector at some aspect ratios. Zen still flashes on entry
+    // (the legend is hidden there); leaving Zen needs none, the legend fades back with its name.
+    function applyMode() { recolor(); populateLegend(); }
+    function setZen(on) { state.zen = on; document.body.classList.toggle("zen", on); if (on) flashMode("Zen"); }
     function toggleZen() { setZen(!state.zen); }
-    function flashMode(name) { const t = $("mode-toast"); t.textContent = name; t.classList.add("show"); clearTimeout(flashMode.t); flashMode.t = setTimeout(() => t.classList.remove("show"), 1100); }
+    function flashMode(name) { if (name !== RELOAD_MSG) reloadPrompted = false; const t = $("mode-toast"); t.textContent = name; t.classList.add("show"); clearTimeout(flashMode.t); flashMode.t = setTimeout(() => { t.classList.remove("show"); reloadPrompted = false; }, 1100); }
     const rgbStr = (c) => `rgb(${Math.round(c[0]*255)},${Math.round(c[1]*255)},${Math.round(c[2]*255)})`;
     function populateLegend() {
       const el = $("lens-legend"), lens = state.lens;
@@ -1781,8 +1829,9 @@
     }
 
     // ── scroll gestures: distance maps across time; one sideways gesture = one lens ──
-    let wheelGesture = null;
+    let wheelGesture = null, wheelEndTimer = 0;
     const WHEEL_GESTURE_GAP = 220;
+    const WHEEL_GESTURE_IDLE = 140;   // a lull this long ends the gesture, so the NEXT burst re-arms a lens shift
     function navigationDaysForDistance(px, oneDayPx) {
       const d = Math.abs(px);
       if (d < 8) return 0;
@@ -1801,6 +1850,11 @@
       const now = performance.now(), axis = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? "x" : "y";
       if (!wheelGesture || now - wheelGesture.at > WHEEL_GESTURE_GAP || wheelGesture.axis !== axis) beginWheelGesture(axis, now);
       wheelGesture.at = now; state.lastWheel = now;
+      // End the gesture a short lull after the LAST event. A continuous swipe fires far faster
+      // than this so it stays ONE gesture (one lens shift); two deliberate flicks at the same
+      // spot fall on opposite sides of the lull, so the second re-arms and shifts again.
+      clearTimeout(wheelEndTimer);
+      wheelEndTimer = setTimeout(() => { wheelGesture = null; }, WHEEL_GESTURE_IDLE);
       if (axis === "x") {
         wheelGesture.x += e.deltaX;
         if (!wheelGesture.lensShifted && Math.abs(wheelGesture.x) >= 24) {
@@ -1821,13 +1875,14 @@
     // ── keyboard: arrows + WASD steer; single-key controls keep the whole viewer reachable ──
     const LOOK_KEYS = new Set(["arrowleft", "arrowright", "arrowup", "arrowdown", "w", "a", "s", "d"]);
     // R reloads — but only on a confirmed double-press, so a stray key never discards the
-    // session. The first press arms a 5-second window and says so.
-    let reloadArmedAt = 0;
+    // session. It reloads only if the second R lands WHILE the prompt is still on screen;
+    // once the prompt has faded (or any other toast replaced it), R just prompts again.
+    const RELOAD_MSG = "Press R again to reload";
+    let reloadPrompted = false;
     function requestReload() {
-      const now = performance.now();
-      if (now - reloadArmedAt < 5000) { location.reload(); return; }
-      reloadArmedAt = now;
-      flashMode("Press R again to reload");
+      if (reloadPrompted) { location.reload(); return; }
+      reloadPrompted = true;
+      flashMode(RELOAD_MSG);
     }
     function resetDefaultView() {
       state.keys.clear();
@@ -2182,8 +2237,10 @@
     //    scissored corner of the SAME context (no second canvas — grids punish those).
     //    Same NORAD seeds as the field silhouettes → the shape in the box IS the dot
     //    you tapped, grown to full form. ──
-    const vig = { active: false, scene: null, camera: null, group: null };
-    function vigColor(klass) { const c = TYPE_COLS[klass] || TYPE_COLS[3]; return new THREE.Color(c[0], c[1], c[2]); }
+    const vig = { active: false, scene: null, camera: null, group: null, tint: null };
+    // The model wears the SAME colour its speck has under the active lens (vig.tint = o.col),
+    // falling back to the type palette — so the inspector's 3D self matches name, frame and field.
+    function vigColor(klass) { const c = vig.tint || TYPE_COLS[klass] || TYPE_COLS[3]; return new THREE.Color(c[0], c[1], c[2]); }
     function vigMat(klass, dim) {
       const col = vigColor(klass);
       const mat = new THREE.MeshPhongMaterial({ color: col, flatShading: true, shininess: 24,
@@ -2294,6 +2351,7 @@
         vig.scene.add(sun, new THREE.AmbientLight(0x8896c8, 0.55));
       }
       vigHide();
+      vig.tint = o.col || null;          // colour the model to the active lens before baking its materials
       vig.group = buildVigShape(o);
       vig.group.rotation.set(0.42, rand2(parseInt(o.meta?.id || 1, 10) || 1, 119) * 6.28, 0);
       // radar cross-section sets the model's presence in the frame too:
@@ -2339,7 +2397,7 @@
     function hideInspector() {
       state.selIdx = -1;
       $("inspector").classList.remove("visible");
-      $("insp-meta").querySelectorAll(".tip-open").forEach((e) => e.classList.remove("tip-open"));
+      $("insp-body").querySelectorAll(".tip-open").forEach((e) => e.classList.remove("tip-open"));
       vigHide();
     }
     function showInspector(best) {
@@ -2348,23 +2406,36 @@
       state.selIdx = best;
       const o = O[best], m = o.meta;
       const bandName = BAND[m?.band ?? o.dataBand ?? o.band].name;
-      $("insp-label").textContent = o.status === "new" ? "Launched this day" : o.status === "decayed" ? "Decay reported" : "Tracked object";
-      $("insp-name").textContent = m ? m.name : "Archive object";
+      // In the Daily-changes lens the headline names THIS object's change category, tinted to
+      // match its legend swatch — so "which one did I select?" is answered at a glance.
+      const labelEl = $("insp-label"), ci = state.lens === 4 && o.change && CHANGE_INFO[o.change];
+      if (ci) { labelEl.textContent = ci[0]; labelEl.style.color = rgbStr(ci[1]); }
+      else { labelEl.textContent = o.status === "new" ? "Launched this day" : o.status === "decayed" ? "Decay reported" : "Tracked object"; labelEl.style.color = ""; }
+      // Tint the object's name (and the model-stage frame) to the colour its speck wears in
+      // the river RIGHT NOW — o.col is whatever the active lens painted it (type / operator /
+      // age / radar size / daily change), so "which one did I tap?" matches across every lens.
+      const lensCol = o.col ? rgbStr(o.col) : "";
+      const nameEl = $("insp-name");
+      nameEl.textContent = m ? m.name : "Archive object";
+      nameEl.style.color = lensCol;
+      $("insp-stage").style.borderColor = lensCol || "";
       // bare values, each explained by its hover/tap tooltip — no inline labels
       const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
-      const tip = (txt, why) => `<span tabindex="0" title="${esc(why)}" data-tip="${esc(why)}">${esc(txt)}</span>`;
+      // data-tip drives the instant in-app tooltip; aria-label (NOT title) keeps it for
+      // screen readers without the browser's slow, redundant native title box.
+      const tip = (txt, why) => `<span tabindex="0" aria-label="${esc(txt)} — ${esc(why)}" data-tip="${esc(why)}">${esc(txt)}</span>`;
       const BAND_FULL = ["low Earth orbit", "medium Earth orbit", "geosynchronous Earth orbit"];
       $("insp-meta").innerHTML = m
         ? [
-            tip(`NORAD ${m.id}`, "NORAD catalog number"),
-            tip(bandName, `altitude regime: ${BAND_FULL[m?.band ?? o.dataBand ?? o.band]}`),
-            tip(m.type, "object type"),
-            m.country && m.country !== "—" ? tip(m.country, "country / operator code") : null,
+            tip(`NORAD ${m.id}`, "catalog number"),
+            tip(bandName, `how high it orbits — ${BAND_FULL[m?.band ?? o.dataBand ?? o.band]}`),
+            tip(m.type, "what kind of object it is"),
+            m.country && m.country !== "—" ? tip(m.country, "country / operator") : null,
             m.launch ? tip(m.launch, "launch date") : null,
-            m.inc ? tip(`${m.inc.toFixed(1)}°`, "orbital inclination") : null,
-            m.ecc > 0.1 ? tip(m.ecc.toFixed(2), "orbital eccentricity") : null,
-            m.raan ? tip(`Ω${m.raan.toFixed(0)}°`, "right ascension of the ascending node — the orbital plane's swivel") : null,
-            m.rcs ? tip(m.rcs.toLowerCase(), "radar cross-section class") : null,
+            m.inc ? tip(`${m.inc.toFixed(1)}°`, "orbit tilt — angle between its path and the equator") : null,
+            m.ecc > 0.1 ? tip(m.ecc.toFixed(2), "how oval the orbit is (0 is a circle)") : null,
+            m.raan ? tip(`Ω${m.raan.toFixed(0)}°`, "which way the orbit's plane is turned") : null,
+            m.rcs ? tip(m.rcs.toLowerCase(), "how big it looks on radar") : null,
           ].filter(Boolean).join(" · ")
         : `${bandName} · ${["payload", "rocket body", "debris", "unknown", "tba"][pickClass(best)]}`;
       // the observation plane: what the archive learned about THIS object this doc-day.
@@ -2372,6 +2443,13 @@
       const obsEl = $("insp-obs"), tipObs = o.anno && o.anno.kind === "tip";
       obsEl.textContent = o.anno ? `${tipObs ? "⚠ " : "◉ observed · "}${o.anno.text}` : "";
       obsEl.classList.toggle("tip", tipObs);
+      // High-drag objects get the two numbers that flagged them on their OWN line — keeps the
+      // data line from wrapping, and reads as the plain-language "why it's changing" note.
+      $("insp-drag").innerHTML = o.change === "dynamic" && m && (m.bstar || m.mmDot)
+        ? [ m.bstar ? tip(`B* ${m.bstar.toExponential(1)}`, "how hard the thin upper air is dragging it down") : null,
+            m.mmDot ? tip(`Δn ${m.mmDot.toExponential(1)}`, "how fast its orbit is shrinking") : null,
+          ].filter(Boolean).join(" · ")
+        : "";
       $("inspector").classList.add("visible");
       vigShow(o);   // stays up until another object — or blank space — is tapped
     }
@@ -2403,12 +2481,26 @@
       nearestCyclePos = 0; nearestCycleAt = now;
       showInspector(nearestCycle[0] ?? -1);
     }
+    // The point an object is actually DRAWN at this instant. Sprites dead-reckon between
+    // their last two exact orbit fixes — the same mix the vertex shader runs — so a fast,
+    // strided object glides smoothly between updates; near-field solids sit at the newest
+    // fix (pPos). The selection halo and the tap hit-test both read THIS, not the raw pPos,
+    // so the ring rides the object and a tap lands on the speck you can actually see.
+    function drawnPos(i, out) {
+      const b = i * 3;
+      if (O[i] && O[i].solid) return out.set(pPos[b], pPos[b + 1], pPos[b + 2]);
+      const blend = Math.min(1, Math.max(0, (state.time - pUpdated[i]) / Math.max(0.008, pStep[i])));
+      return out.set(
+        pPrev[b] + (pPos[b] - pPrev[b]) * blend,
+        pPrev[b + 1] + (pPos[b + 1] - pPrev[b + 1]) * blend,
+        pPrev[b + 2] + (pPos[b + 2] - pPrev[b + 2]) * blend);
+    }
     function inspectAt(cx, cy) {
       // a tap means "that one, the one I can SEE": within the radius, the nearer and
       // visually bigger object beats a distant speck that happens to sit pixel-perfect
       const R2 = 20 * 20;
       if (state.selIdx >= 0 && $("inspector").classList.contains("visible")) {
-        _proj.set(pPos[state.selIdx * 3], pPos[state.selIdx * 3 + 1], pPos[state.selIdx * 3 + 2]).project(camera);
+        drawnPos(state.selIdx, _proj).project(camera);
         const sx = (_proj.x * 0.5 + 0.5) * innerWidth, sy = (-_proj.y * 0.5 + 0.5) * innerHeight;
         if (_proj.z <= 1 && (sx - cx) * (sx - cx) + (sy - cy) * (sy - cy) <= R2) { hideInspector(); return; }
       }
@@ -2416,24 +2508,27 @@
       const solid = new Set(pool.map((s) => s.idx));   // solids stay tappable though their sprite is dimmed
       for (let i = 0; i < FIELD_N; i++) {
         const o = O[i]; if (!o || (pAlpha[i] < 0.08 && !solid.has(i))) continue;
-        _proj.set(pPos[i * 3], pPos[i * 3 + 1], pPos[i * 3 + 2]).project(camera);
+        drawnPos(i, _proj).project(camera);
         if (_proj.z > 1) continue;
         const sx = (_proj.x * 0.5 + 0.5) * innerWidth, sy = (-_proj.y * 0.5 + 0.5) * innerHeight;
         const d2 = (sx - cx) * (sx - cx) + (sy - cy) * (sy - cy);
         if (d2 > R2) continue;
         const dx = pPos[i * 3] - camera.position.x, dy = pPos[i * 3 + 1] - camera.position.y, dz = pPos[i * 3 + 2] - camera.position.z;
         // camera distance is the primary key — a dense field always has SOME far speck
-        // a pixel from the tap, and that is never the one you meant
-        const score = Math.sqrt(dx * dx + dy * dy + dz * dz) * (0.6 + 0.4 * d2 / R2);
+        // a pixel from the tap, and that is never the one you meant. But the rare event
+        // objects (a predicted reentry most of all, then decays and launches) are the ones
+        // worth tapping, so they win over an ordinary neighbour inside the same tap radius.
+        const w = o.change === "reentry" ? 0.05 : (o.change === "decay" || o.change === "new") ? 0.5 : 1;
+        const score = Math.sqrt(dx * dx + dy * dy + dz * dz) * (0.6 + 0.4 * d2 / R2) * w;
         if (score < bestScore) { bestScore = score; best = i; }
       }
       if (best < 0 || (best === state.selIdx && $("inspector").classList.contains("visible"))) { hideInspector(); return; }
       showInspector(best);
     }
-    $("insp-meta").addEventListener("click", (e) => {
+    $("insp-body").addEventListener("click", (e) => {
       const hit = e.target.closest("[data-tip]");
       const wasOpen = !!hit?.classList.contains("tip-open");
-      $("insp-meta").querySelectorAll(".tip-open").forEach((x) => x.classList.remove("tip-open"));
+      $("insp-body").querySelectorAll(".tip-open").forEach((x) => x.classList.remove("tip-open"));
       if (hit && !wasOpen) hit.classList.add("tip-open");
     });
     $("inspector").addEventListener("click", (e) => {
@@ -2519,11 +2614,15 @@ ${fmtNum(FIELD_N)} objects · ${PERF.solids} solids / ${PERF.candidates} approac
       // The halo eases onto a new find and hangs in the air for a beat when released.
       // Besides feeling less mechanical, the fade keeps near-plane and limb crossings
       // from looking like the selected object was abruptly switched off.
+      // A selection PERSISTS: the ring keeps riding its object for the whole orbit — off the
+      // frame edge, behind the Earth, and back around again — so anyone still reading the
+      // inspector never loses their place. drawnPos keeps it pinned to the exact drawn point
+      // (sprites dead-reckon between strided fixes), so it lands true when the object swings
+      // back into view.
       const haloTarget = state.selIdx >= 0 && state.warpBlend < 0.3 ? 1 : 0;
       state.haloFade += (haloTarget - state.haloFade) * Math.min(1, dt * (haloTarget ? 7 : 4));
       if (haloTarget) {
-        const si = state.selIdx * 3;
-        halo.position.set(pPos[si], pPos[si + 1], pPos[si + 2]);
+        drawnPos(state.selIdx, halo.position);   // ride the point the object is DRAWN at, not its last strided fix
         halo.lookAt(camera.position);
         const hd = halo.position.distanceTo(camera.position);
         const settle = 0.72 + 0.28 * smooth(0, 1, state.haloFade);
@@ -2597,6 +2696,17 @@ ${fmtNum(FIELD_N)} objects · ${PERF.solids} solids / ${PERF.candidates} approac
     function setupPrism(prismId, label) {
       const prism = $(prismId), inner = prism.querySelector(".prism-inner");
       const faces = [...inner.querySelectorAll(".face")], angle = 360 / faces.length;
+      // Seat the drum so the RESTING front face sits on the screen plane (z = 0). Each face is
+      // pushed +apothem toward the viewer to form the drum; under the shallow perspective that
+      // magnifies the front face and spills it past the clip box, shaving the left edge off
+      // left-aligned text. Pulling the whole drum back by that apothem cancels the magnify for
+      // the face you read, while the rotation still foreshortens dramatically (not a slide).
+      const depth = new DOMMatrix(getComputedStyle(faces[0]).transform).m43;   // the face's own translateZ
+      const seat = (deg) => `translateZ(${-depth}px) rotateX(${deg}deg)`;
+      inner.style.transition = "none";
+      inner.style.transform = seat(0);
+      inner.getBoundingClientRect();           // commit the seat without animating it on load
+      inner.style.transition = "";
       faces.forEach((face, at) => {
         const pager = face.querySelector(".pager");
         if (pager) pager.innerHTML = faces.map((_, i) => `<i class="${i === at ? "on" : ""}"></i>`).join("");
@@ -2605,14 +2715,14 @@ ${fmtNum(FIELD_N)} objects · ${PERF.solids} solids / ${PERF.candidates} approac
       prism.setAttribute("role", "button");
       prism.setAttribute("aria-label", `${label} — show the next face`);
       let turns = 0;
-      const rotate = () => { turns += 1; inner.style.transform = `rotateX(${-turns * angle}deg)`; };
+      const rotate = () => { turns += 1; inner.style.transform = seat(-turns * angle); };
       prism.addEventListener("click", (e) => { if (e.target.closest("a")) return; rotate(); });  // links inside a face open; they don't rotate it
       prism.addEventListener("keydown", (e) => {
         if (e.target.closest("a")) return;
         if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") { e.preventDefault(); e.stopPropagation(); rotate(); }
       });
       prismRotators[prismId] = rotate;
-      prismResets.push(() => { turns = 0; inner.style.transform = "rotateX(0deg)"; });
+      prismResets.push(() => { turns = 0; inner.style.transform = seat(0); });
     }
     setupPrism("prism-obj", "Archive record"); setupPrism("prism-witness", "Public witness");
 

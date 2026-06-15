@@ -1,7 +1,7 @@
 # RSO Doc Chain Profile
 
 **Profile URI (permanent protocol id):** `https://om.pub/rso/doc-chain`
-**Profile revision:** 4 — 2026-06-11
+**Profile revision:** 5 — 2026-06-14
 **Canonical source:** this file (`docs/profile.md`) in the OMPub/RSO repository;
 the page served at the profile URI mirrors the current revision.
 
@@ -85,6 +85,19 @@ audit detects a non-excluded field mutating):
 No re-genesis, no new chain id, no renamed artifacts. A revision is one
 registry row, one constants entry, and one effective date.
 
+**Schema version semantics.** A schema's version number tracks **breaking
+changes only** — a change to what bytes a consumer must parse or how a hash is
+computed. Adding an *optional* section to an observation artifact is a coverage
+event, not a version bump, because additive optional keys do not break a
+conforming reader. The `rso-annotations` schema was bumped `v1 → v2` on Sepolia
+when `tip_messages` was added; that was conservative and, under this rule,
+unnecessary. The mainnet deployment consolidates to a single
+`rso-annotations-v1` whose feed sections (`catalog_changes`, `satcat_changes`,
+`decay_messages`, `tip_messages`, …) are all optional and coverage-dated from
+genesis, so a fresh chain carries no version archaeology. Consensus
+(`rso-core`) versioning is governed by the procedure above; observation-plane
+versions move only on a genuine parse-breaking change.
+
 ## 5. Attestations
 
 - **blockHash** = EIP-712 `hashStruct(DocBlock{docChainId, docRef, parentHash,
@@ -126,6 +139,28 @@ registry row, one constants entry, and one effective date.
   after closest approach and can never be re-queried — so these captures
   are the feed's only public archive, and the artifact cannot exist for
   days before its coverage start (see the registry in §7).
+- **Observation artifacts are optional, by design — three layers.** A day
+  legitimately carries different observation artifacts depending on when it
+  was witnessed, and this never weakens its place in the chain:
+  1. *Consensus layer.* Annotations, conjunctions, and every feed section are
+     **never part of `contentHash`**. A day's witnessability is its core
+     catalog projection alone. An absent or sparse observation plane cannot
+     affect a blockHash or node agreement.
+  2. *Bundle layer.* Each artifact is optional by manifest declaration: the
+     manifest names a fingerprint (`annotations_sha256`, `conjunctions_sha256`)
+     only for artifacts that exist, and verifiers check a fingerprint only when
+     it is declared. A day with a leaner bundle validates cleanly.
+  3. *Coverage layer.* Each feed begins at its coverage-start date (§7);
+     absence before that date is correct, not missing. Days whose observation
+     artifacts were reconstructed after the fact from stored catalogs (rather
+     than captured live) carry `rebuilt: true` and empty feed sections — the
+     observation-plane analogue of a high `attestationLagDays`. Reconstructed
+     and hash-only days (including any deep-history backfill) may carry no
+     observation plane at all.
+
+  Consequently, adding a new optional section to an observation artifact (as
+  `tip_messages` was added) is a coverage event, **not** a schema break — see
+  the version semantics in §4.
 
 ## 6. Verification
 
@@ -187,4 +222,8 @@ indexed with the `hash_only` publication tier. r3 (2026-06-11): annotations
 schema `rso-annotations-v2` adds `tip_messages` (reentry predictions).
 r4 (2026-06-11): per-day `conjunctions.json` artifact (cdm_public capture),
 the source coverage registry (§7), commitment-time annotation in the index,
-and the feed-liveness canary.
+and the feed-liveness canary. r5 (2026-06-14): observation-artifact
+optionality stated explicitly as a three-layer rule (§5), schema version
+semantics defined (breaking-only; §4), and the mainnet consolidation to a
+single coverage-dated `rso-annotations-v1` recorded — adding an optional feed
+section is a coverage event, not a version bump.

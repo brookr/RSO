@@ -82,6 +82,42 @@ class CardArtifactTest(unittest.TestCase):
         self.assertIn('o.anno && o.anno.kind === "tip"', self.html)
         self.assertIn('sw(UPD_REENTRY, "Reentry predicted")', self.html)
 
+    def test_daily_change_colours_are_mutually_distinct(self):
+        # Re-entry (incandescent white-hot) used to read as the same warm gold as the
+        # high-drag swatch. Parse the constants and require real separation between every
+        # event colour so a legend dot is never ambiguous.
+        def rgb(name):
+            m = re.search(name + r"\s*=\s*\[\s*([0-9.]+),\s*([0-9.]+),\s*([0-9.]+)\s*\]", self.html)
+            self.assertIsNotNone(m, name + " colour not found")
+            return tuple(float(x) for x in m.groups())
+
+        def dist(a, b):
+            return sum((x - y) ** 2 for x, y in zip(a, b)) ** 0.5
+
+        cols = {k: rgb("UPD_" + k.upper()) for k in ("reentry", "decay", "new", "dynamic", "meta", "orbit")}
+        # the pair the user flagged: now clearly separated
+        self.assertGreater(dist(cols["reentry"], cols["dynamic"]), 0.35)
+        # re-entry reads incandescent — every channel near white
+        self.assertGreater(min(cols["reentry"]), 0.8)
+        # high-drag stays a warm amber, not white (mid channel well below white)
+        self.assertLess(cols["dynamic"][1], 0.75)
+        # no two event colours collide
+        keys = list(cols)
+        for i in range(len(keys)):
+            for j in range(i + 1, len(keys)):
+                self.assertGreater(dist(cols[keys[i]], cols[keys[j]]), 0.2,
+                                   f"{keys[i]} and {keys[j]} swatches are too similar")
+
+    def test_inspector_names_the_selected_change_category(self):
+        # "Which one did I select?" — in the Daily-changes lens the inspector headline
+        # names the object's change category and tints it to match its legend swatch.
+        self.assertIn("const CHANGE_INFO = {", self.html)
+        for kind in ("reentry", "decay", "new", "dynamic", "meta", "orbit"):
+            self.assertRegex(self.html, kind + r":\s*\[")
+        self.assertIn('reentry: ["Re-entry predicted", UPD_REENTRY]', self.html)
+        self.assertIn("state.lens === 4 && o.change && CHANGE_INFO[o.change]", self.html)
+        self.assertIn("labelEl.style.color = rgbStr(ci[1])", self.html)
+
     def test_witness_gate_defaults_are_coherent(self):
         # script default, persisted-settings fallback and slider markup must
         # agree: rank 0 = any sweeper-accepted witness counts
@@ -149,7 +185,7 @@ class CardArtifactTest(unittest.TestCase):
         self.assertIn('rcs === "LARGE" ? 1.55 : rcs === "MEDIUM" ? 1.0 : rcs === "SMALL" ? 0.62', self.html)
         self.assertIn("0.92 + rand2(nid, 89) * 0.16", self.html)
         self.assertIn('rcs === "LARGE" ? 1.28', self.html)   # vignette presence
-        self.assertIn('tip(m.rcs.toLowerCase(), "radar cross-section class")', self.html)
+        self.assertIn('tip(m.rcs.toLowerCase(), "how big it looks on radar")', self.html)
 
     def test_band_clocks_and_persistent_selection(self):
         # each band returns on its own clean story clock: LEO 5 min, MEO 12, GEO 60
@@ -207,7 +243,7 @@ class CardArtifactTest(unittest.TestCase):
         self.assertNotIn("aShape", self.html)
         self.assertNotIn("pShape", self.html)
         self.assertIn('id="insp-stage"', self.html)
-        self.assertIn("altitude regime: ${BAND_FULL[m?.band ?? o.dataBand ?? o.band]}", self.html)
+        self.assertIn("how high it orbits — ${BAND_FULL[m?.band ?? o.dataBand ?? o.band]}", self.html)
         # one sun for the field and a dawn-bright arc on the sunward limb
         self.assertIn("const SUN = new THREE.Vector3", self.html)
         self.assertIn("dawn", self.html)
@@ -226,8 +262,9 @@ class CardArtifactTest(unittest.TestCase):
         self.assertIn("attr.addUpdateRange(first * attr.itemSize, count * attr.itemSize)", self.html)
         self.assertIn("aUpdated", self.html)
         self.assertIn("aStep", self.html)
-        # inspector values are bare, each explained by a hover/tap tooltip
-        self.assertIn('`<span tabindex="0" title="${esc(why)}" data-tip="${esc(why)}">', self.html)
+        # inspector values are bare, each explained by an instant hover/tap tooltip
+        # (data-tip); aria-label keeps it for screen readers, no slow native title box
+        self.assertIn('`<span tabindex="0" aria-label="${esc(txt)} — ${esc(why)}" data-tip="${esc(why)}">', self.html)
 
     def test_generative_identity_is_norad_seeded_and_guarded(self):
         # identity seeds key to the NORAD id → same silhouette everywhere, forever
@@ -354,6 +391,19 @@ class CardArtifactTest(unittest.TestCase):
         self.assertIn(".prism-inner { position: relative; height: 94px", self.html)
         self.assertIn("translateZ(47px)", self.html)
         self.assertIn("translateZ(114px)", self.html)
+        # The densest face (on-orbit by type: header + four rows) must clear the fixed 94px
+        # box. Tight row spacing + a slim header gutter keep every row inside the face, so
+        # nothing clips on a display whose font metrics round the layout a pixel or two taller.
+        self.assertIn("row-gap: 2px", self.html)
+        self.assertIn("letter-spacing: 0.1em; padding-bottom: 3px;", self.html)
+        self.assertIn("padding: 6px 10px 0", self.html)
+        # The drum is seated so the RESTING front face sits on the screen plane (z=0): a face
+        # popped toward the viewer under the shallow perspective magnifies and spills past the
+        # clip box, shaving the left edge off left-aligned text. Pull it back by its apothem.
+        self.assertIn("new DOMMatrix(getComputedStyle(faces[0]).transform).m43", self.html)
+        self.assertIn("const seat = (deg) => `translateZ(${-depth}px) rotateX(${deg}deg)`", self.html)
+        self.assertIn("inner.style.transform = seat(-turns * angle)", self.html)
+        self.assertIn("turns = 0; inner.style.transform = seat(0)", self.html)
 
     def test_mobile_layout_gestures_and_tooltip_taps(self):
         # The former two lower-left prisms are one eight-face archive prism,
@@ -438,7 +488,7 @@ class CardArtifactTest(unittest.TestCase):
     def test_desktop_prisms_occupy_lower_corners_and_controls_top_right(self):
         self.assertIn("#prism-obj { left: calc(var(--safe-left) + 18px); }", self.html)
         self.assertIn("#prism-witness { right: calc(var(--safe-right) + 18px); }", self.html)
-        self.assertIn(".face { position: absolute; inset: 0; backface-visibility: hidden; padding: 8px 10px 0;", self.html)
+        self.assertIn(".face { position: absolute; inset: 0; backface-visibility: hidden; padding: 6px 10px 0;", self.html)
         status = re.search(r'<div class="status">(.*?)</div>', self.html, re.S)
         self.assertIsNotNone(status)
         self.assertLess(status.group(1).index('id="status-label"'),
@@ -475,13 +525,72 @@ class CardArtifactTest(unittest.TestCase):
         # is allowed to shift the lens once.
         self.assertIn("wheelGesture.lensShifted = true", self.html)
         self.assertNotIn("while (wheelAccumX", self.html)
+        # A lull ends the gesture, so a SECOND sideways flick at the same spot re-arms and
+        # shifts again — while a continuous swipe (events far closer than the lull) stays one.
+        self.assertIn("let wheelGesture = null, wheelEndTimer = 0;", self.html)
+        self.assertIn("const WHEEL_GESTURE_IDLE = 140;", self.html)
+        self.assertIn("wheelEndTimer = setTimeout(() => { wheelGesture = null; }, WHEEL_GESTURE_IDLE);", self.html)
+
+    def test_inspector_object_takes_the_active_lens_colour(self):
+        # The inspected object's name and model-frame are tinted to the colour its speck
+        # wears under the active lens (o.col, set by colorSlot) — in every lens, not just 4.
+        self.assertIn('const lensCol = o.col ? rgbStr(o.col) : "";', self.html)
+        self.assertIn("nameEl.style.color = lensCol;", self.html)
+        self.assertIn('$("insp-stage").style.borderColor = lensCol || "";', self.html)
+
+    def test_high_drag_objects_surface_their_drag_terms(self):
+        # A high-drag (dynamic) object shows the quantities that flagged it — the SGP4 B*
+        # drag term and the mean-motion derivative — on their OWN line (insp-drag), so the
+        # data line never wraps. Plain-language tooltips, gated so routine objects stay clean.
+        self.assertIn('$("insp-drag").innerHTML = o.change === "dynamic" && m && (m.bstar || m.mmDot)', self.html)
+        self.assertIn('m.bstar ? tip(`B* ${m.bstar.toExponential(1)}`, "how hard the thin upper air is dragging it down")', self.html)
+        self.assertIn('m.mmDot ? tip(`Δn ${m.mmDot.toExponential(1)}`, "how fast its orbit is shrinking")', self.html)
+        self.assertIn('<div class="insp-drag" id="insp-drag">', self.html)
+        self.assertIn(".insp-drag:empty { display: none; }", self.html)
+        # the drag terms no longer live in the (wrapping) data line
+        self.assertNotIn('m.rcs.toLowerCase(), "how big it looks on radar") : null,\n            o.change === "dynamic"', self.html)
+
+    def test_inspector_tooltips_are_instant_only_and_plain(self):
+        # data-tip drives the instant in-app tooltip; the slow, redundant native title box
+        # is gone (aria-label keeps the explanation for screen readers). Plain wording.
+        self.assertIn('aria-label="${esc(txt)} — ${esc(why)}" data-tip="${esc(why)}"', self.html)
+        self.assertNotIn('title="${esc(why)}" data-tip="${esc(why)}"', self.html)
+        self.assertIn('tip(`NORAD ${m.id}`, "catalog number")', self.html)
+        self.assertIn('"which way the orbit\'s plane is turned"', self.html)
+        # tooltips work for any data-tip span in the inspector body (meta AND drag line)
+        self.assertIn(".insp-body [data-tip]", self.html)
+        self.assertIn('$("insp-body").addEventListener("click"', self.html)
+
+    def test_inspector_model_follows_the_active_lens(self):
+        # The vignette's 3D model wears the active-lens colour (o.col via vig.tint), so the
+        # model matches the name, the stage frame, and the speck in the field — every lens.
+        self.assertIn("vig = { active: false, scene: null, camera: null, group: null, tint: null }", self.html)
+        self.assertIn("const c = vig.tint || TYPE_COLS[klass] || TYPE_COLS[3]", self.html)
+        self.assertIn("vig.tint = o.col || null;", self.html)
+
+    def test_lens_change_shows_no_centre_toast(self):
+        # The legend title already names the active lens; the centre flash could overlap the
+        # inspector, so lens changes no longer flash it. Zen still flashes on entry only.
+        self.assertIn("function applyMode() { recolor(); populateLegend(); }", self.html)
+        self.assertNotIn("flashMode(LENSES[state.lens])", self.html)
+        self.assertIn('if (on) flashMode("Zen");', self.html)
+        # the reload prompt and other status toasts still use flashMode
+        self.assertIn("flashMode(RELOAD_MSG)", self.html)
+
+    def test_tapped_object_is_forced_to_render_solid(self):
+        # Selecting an object injects it into the mesh-candidate set at top priority so it
+        # always wins a solid slot however far it has drifted, and jumps the 1-bake budget.
+        self.assertIn("c.px = i === sel ? Infinity : o.meshPx;", self.html)
+        self.assertIn("sel >= 0 && sel < FIELD_N && O[sel]?.meta && !O[sel].meshWanted", self.html)
+        self.assertIn("c.i = sel; c.d = O[sel].meshDist || 0; c.px = Infinity;", self.html)
+        self.assertIn("(builds >= 1 && wi !== state.selIdx)", self.html)
 
     def test_operator_legend_and_consistent_prism_gutters(self):
         # Every categorical legend follows aligned names with swatches on the right.
         self.assertIn('const sw = (c, label, shape) => `<div class="lg-row after">', self.html)
         self.assertIn("OPERATORS.map((o) => sw(o.col, o.name))", self.html)
         self.assertIn(".lg-row.after", self.html)
-        self.assertIn("padding: 8px 10px 0", self.html)
+        self.assertIn("padding: 6px 10px 0", self.html)
 
     def test_live_performance_meter_reports_phase_costs(self):
         self.assertIn('id="perf"', self.html)
@@ -499,6 +608,22 @@ class CardArtifactTest(unittest.TestCase):
         self.assertIn("if (best !== state.selIdx) state.haloFade = 0", self.html)
         self.assertIn("const haloTarget = state.selIdx >= 0 && state.warpBlend < 0.3 ? 1 : 0", self.html)
         self.assertIn("halo.visible = state.haloFade > 0.01", self.html)
+
+    def test_selection_rides_the_drawn_position_and_persists(self):
+        # The halo and the tap hit-test read the point the object is DRAWN at — sprites
+        # dead-reckon between strided fixes (the vertex shader's mix), solids sit at pPos —
+        # so the ring rides the speck and a tap lands on what you see, even under striding.
+        self.assertIn("function drawnPos(i, out)", self.html)
+        self.assertIn("if (O[i] && O[i].solid) return out.set(pPos[b], pPos[b + 1], pPos[b + 2])", self.html)
+        self.assertIn("(state.time - pUpdated[i]) / Math.max(0.008, pStep[i])", self.html)
+        self.assertIn("drawnPos(state.selIdx, halo.position)", self.html)
+        self.assertIn("drawnPos(state.selIdx, _proj).project(camera)", self.html)
+        self.assertIn("drawnPos(i, _proj).project(camera)", self.html)
+        # A selection PERSISTS through the whole orbit — including off-screen and back around —
+        # so it is NOT retired when the object merely leaves the frame. (No edge/behind-camera
+        # auto-dismiss of the halo or inspector.)
+        self.assertNotIn("_proj.copy(halo.position).project(camera)", self.html)
+        self.assertNotIn("Math.abs(_proj.y) > 1.18) { hideInspector()", self.html)
 
     def test_live_catalog_adopts_without_restarting_the_field(self):
         self.assertIn("async function adoptField(objects, token)", self.html)
@@ -558,7 +683,7 @@ class CardArtifactTest(unittest.TestCase):
         # the data prisms rotate a true fraction-of-a-turn per activation, are keyboard
         # operable, and X / C rotate the left / right record from anywhere.
         self.assertIn("angle = 360 / faces.length", self.html)
-        self.assertIn("rotateX(${-turns * angle}deg)", self.html)
+        self.assertIn("seat(-turns * angle)", self.html)   # a true fraction-of-a-turn, re-seated each time
         self.assertIn('setupPrism("prism-obj", "Archive record")', self.html)
         self.assertIn('prismRotators["prism-obj"]?.()', self.html)
         self.assertIn('prismRotators["prism-witness"]?.()', self.html)
@@ -575,10 +700,32 @@ class CardArtifactTest(unittest.TestCase):
         self.assertIn('role="tabpanel"', self.html)
 
     def test_reload_needs_a_confirmed_double_press(self):
+        # reload only if the second R lands while the prompt is still on screen; once it
+        # fades (or another toast replaces it) R re-prompts instead of reloading.
         self.assertIn("function requestReload()", self.html)
-        self.assertIn("now - reloadArmedAt < 5000", self.html)
-        self.assertIn('flashMode("Press R again to reload")', self.html)
+        self.assertIn("if (reloadPrompted) { location.reload(); return; }", self.html)
+        self.assertIn('const RELOAD_MSG = "Press R again to reload"', self.html)
+        self.assertIn("if (name !== RELOAD_MSG) reloadPrompted = false;", self.html)   # any other toast disarms
+        self.assertIn("t.classList.remove(\"show\"); reloadPrompted = false;", self.html)  # fade disarms
         self.assertIn("if (k === \"r\") { requestReload(); e.preventDefault(); return; }", self.html)
+
+    def test_tap_prefers_event_objects_and_prism_reads_as_rotation(self):
+        # a rare reentry (near-absolute), then a decay or launch, wins the tap over an
+        # ordinary neighbour, so the event objects worth inspecting are reachable in 34k.
+        self.assertIn('const w = o.change === "reentry" ? 0.05 : (o.change === "decay" || o.change === "new") ? 0.5 : 1;', self.html)
+        self.assertIn("Math.sqrt(dx * dx + dy * dy + dz * dz) * (0.6 + 0.4 * d2 / R2) * w", self.html)
+        # the deep eight-face prism needs a near vanishing point or its turn flattens to a slide
+        self.assertIn(".prism.eight { perspective: 900px; }", self.html)
+
+    def test_reentry_forecasts_are_always_visible_and_findable(self):
+        # The few predicted-reentry objects are pinned into the visible river (real planes
+        # could hide them off-screen for the whole session), drift slowly, and read as a
+        # notable presence in every lens — so the headline data is actually seen.
+        self.assertIn("function pinReentryPhase(o, nid)", self.html)
+        self.assertIn('if (o.meta && o.meta.change === "reentry") { o.phase = 0.44 + rand2(nid, 47) * 0.16;', self.html)
+        self.assertIn('lapRate: src && src.change === "reentry" ? 1 / 2600 : 1 / LAP_BY_BAND[band]', self.html)
+        self.assertIn('if (o.change === "reentry" && !re && state.lens !== 4) { size = Math.max(size, 5.0); aMul = Math.max(aMul, 2.2); }', self.html)
+        self.assertIn("pinReentryPhase(o, nid);", self.html)
 
     def test_perf_hud_defaults_off_and_top_date_fades_during_jump(self):
         self.assertIn("perfVisible: false", self.html)
