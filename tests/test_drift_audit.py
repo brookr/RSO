@@ -1,6 +1,8 @@
 """Tests for the drift-audit classification logic."""
 
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -205,6 +207,42 @@ class FeedLivenessTest(unittest.TestCase):
         }
         result = self.liveness(annotations, conjunctions)
         self.assertTrue(any("conjunctions empty" in alert for alert in result["alerts"]))
+
+
+class DriftAuditSkipTest(unittest.TestCase):
+    def test_unfetchable_catalog_skips_without_crashing(self):
+        liveness = {
+            "alerts": [], "days_checked": [], "sections_present": {},
+            "sections_empty": {}, "conjunction_days": 0, "empty_conjunction_days": 0,
+        }
+
+        class FakeClient:
+            def close(self):
+                pass
+
+        with tempfile.TemporaryDirectory() as tmp:
+            report = Path(tmp) / "report.json"
+            argv = [
+                "drift_audit.py", "--start", "2026-04-28", "--end", "2026-04-28",
+                "--report", str(report),
+            ]
+            with patch.object(sys, "argv", argv), patch.object(
+                drift_audit, "archived_day_list", lambda: ["2026-04-28"]
+            ), patch.object(
+                drift_audit.snapshot, "SpaceTrackClient", lambda: FakeClient()
+            ), patch.object(
+                drift_audit.snapshot, "read_catalog_bytes",
+                side_effect=snapshot.SnapshotError("release 404"),
+            ), patch.object(
+                drift_audit, "check_feed_liveness", lambda days: liveness
+            ):
+                rc = drift_audit.main()
+
+            self.assertEqual(rc, 0)  # an availability skip is not a drift alert
+            data = json.loads(report.read_text())
+            self.assertEqual(data["windows_checked"], 0)
+            self.assertEqual(len(data["windows_skipped"]), 1)
+            self.assertEqual(data["windows_skipped"][0]["date"], "2026-04-28")
 
 
 if __name__ == "__main__":

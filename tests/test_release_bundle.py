@@ -164,6 +164,68 @@ class ReleaseBundleTests(unittest.TestCase):
         with self.assertRaisesRegex(snapshot.SnapshotError, "HTTPS"):
             snapshot.validate_github_download_url("http://github.com/OMPub/RSO/releases/download/a/b")
 
+    def test_arweave_tx_confirmation_mapping(self):
+        self.assertEqual(
+            snapshot.arweave_tx_confirmation(200, {"block_height": 100, "number_of_confirmations": 5}),
+            ("confirmed", 5, 100),
+        )
+        self.assertEqual(snapshot.arweave_tx_confirmation(404, None), ("pending", None, None))
+        # 200 with no block data yet is still pending, not confirmed
+        self.assertEqual(snapshot.arweave_tx_confirmation(200, {}), ("pending", None, None))
+
+    def test_reconcile_promotes_pending_to_confirmed(self):
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"):
+            self.archive_day()
+            bundle = {
+                "date": "2026-04-18",
+                "asset_name": "rso-archive-2026-04-18.tar.gz",
+                "bytes": 1,
+                "bundle_sha256": "a" * 64,
+                "catalog_sha256": "b" * 64,
+                "manifest_sha256": "c" * 64,
+                "path": str(self.root / "b.tar.gz"),
+            }
+            snapshot.record_storage_destination(
+                bundle, "arweave",
+                {"status": "pending", "transaction_id": "txP", "bundle_sha256": "a" * 64},
+            )
+            original = snapshot.arweave_request
+            try:
+                snapshot.arweave_request = lambda *a, **k: (200, {"block_height": 7, "number_of_confirmations": 3})
+                settled = snapshot.reconcile_arweave_pending(["2026-04-18"])
+            finally:
+                snapshot.arweave_request = original
+            self.assertEqual(settled, 1)
+            receipt = snapshot.load_storage_receipt("2026-04-18")
+            arw = receipt["destinations"]["arweave"]
+            self.assertEqual(arw["status"], "confirmed")
+            self.assertEqual(arw["confirmations"], 3)
+            self.assertIn("last_checked_at", arw)
+
+    def test_reconcile_leaves_still_pending_unconfirmed(self):
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"):
+            self.archive_day()
+            bundle = {
+                "date": "2026-04-18", "asset_name": "x.tar.gz", "bytes": 1,
+                "bundle_sha256": "a" * 64, "catalog_sha256": "b" * 64,
+                "manifest_sha256": "c" * 64, "path": str(self.root / "b.tar.gz"),
+            }
+            snapshot.record_storage_destination(
+                bundle, "arweave",
+                {"status": "pending", "transaction_id": "txP", "bundle_sha256": "a" * 64},
+            )
+            original = snapshot.arweave_request
+            try:
+                snapshot.arweave_request = lambda *a, **k: (404, None)
+                settled = snapshot.reconcile_arweave_pending(["2026-04-18"])
+            finally:
+                snapshot.arweave_request = original
+            self.assertEqual(settled, 0)
+            self.assertEqual(
+                snapshot.load_storage_receipt("2026-04-18")["destinations"]["arweave"]["status"],
+                "pending",
+            )
+
     def test_arweave_gateway_is_https_arweave_net(self):
         with patch("pipeline.snapshot.socket.getaddrinfo", return_value=[(None, None, None, None, ("95.216.149.139", 443))]):
             snapshot.validate_arweave_gateway("https://arweave.net")
@@ -319,9 +381,13 @@ class ReleaseBundleTests(unittest.TestCase):
             snapshot.arweave_request = fake_request
             result = snapshot.publish_arweave_bundle(bundle, upload_policy="if_missing", force=False)
 
-            self.assertEqual(result["status"], "submitted")
+            # 404 status query == not yet mined -> honestly "pending", not a
+            # blanket "submitted" that implies durability.
+            self.assertEqual(result["status"], "pending")
             self.assertEqual(result["transaction_id"], "tx123")
             self.assertEqual(calls, [("POST", "/tx"), ("POST", "/chunk"), ("GET", "/tx/tx123/status")])
+            receipt = snapshot.load_storage_receipt("2026-04-18")
+            self.assertEqual(receipt["destinations"]["arweave"]["status"], "pending")
         finally:
             snapshot.arweave_wallet_jwk = original_wallet
             snapshot.arweave_build_transaction = original_build
@@ -389,7 +455,7 @@ class ReleaseBundleTests(unittest.TestCase):
             snapshot.arweave_request = fake_request
             result = snapshot.publish_arweave_bundle(bundle, upload_policy="if_missing", force=True)
 
-            self.assertEqual(result["status"], "submitted")
+            self.assertEqual(result["status"], "pending")
             self.assertEqual([call[1] for call in calls], ["/tx", "/chunk", "/chunk", "/tx/tx123/status"])
             receipt = json.loads(
                 snapshot.storage_receipt_path("2026-04-18").read_text(encoding="utf-8")
@@ -842,7 +908,7 @@ class ConsumerPointerTests(ReleaseBundleTests):
         }
         if arweave:
             receipt["destinations"]["arweave"] = {
-                "status": "submitted",
+                "status": "confirmed",
                 "transaction_id": "txABC",
                 "bundle_sha256": "ab" * 32,
             }
@@ -859,6 +925,20 @@ class ConsumerPointerTests(ReleaseBundleTests):
         receipt["destinations"]["arweave"]["bundle_sha256"] = "cd" * 32
         fields = snapshot.publication_fields_from_receipt(receipt)
         self.assertNotIn("arweave_tx", fields)
+
+    def test_publication_fields_does_not_advertise_pending_arweave(self):
+        receipt = self.receipt()
+        receipt["destinations"]["arweave"]["status"] = "pending"
+        fields = snapshot.publication_fields_from_receipt(receipt)
+        # a pending tx's ar:// URL 404s; advertising it would be a lie
+        self.assertNotIn("arweave_tx", fields)
+
+    def test_publication_fields_records_adopted_from(self):
+        receipt = self.receipt()
+        receipt["verified_from_upstream"] = "OMPub/RSO"
+        fields = snapshot.publication_fields_from_receipt(receipt)
+        self.assertEqual(fields["adopted_from"], "OMPub/RSO")
+        self.assertNotIn("adopted_from", snapshot.publication_fields_from_receipt(self.receipt()))
 
     def test_ledger_carries_publication_fields_after_publish(self):
         with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"):

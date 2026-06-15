@@ -237,9 +237,19 @@ def main() -> int:
 
     client = snapshot.SpaceTrackClient()
     results = []
+    skipped = []
     try:
         for day in sample:
-            recorded = json.loads(snapshot.read_catalog_bytes(day))
+            try:
+                recorded = json.loads(snapshot.read_catalog_bytes(day))
+            except (snapshot.SnapshotError, OSError, ValueError) as exc:
+                # An unfetchable recorded catalog is an availability problem,
+                # not consensus drift: skip the window loudly rather than
+                # crashing the canary (e.g. an adopted day whose upstream
+                # release is briefly unreachable).
+                print(f"  {day}: SKIP -- recorded catalog unavailable: {exc}")
+                skipped.append({"date": day, "reason": str(exc)[:200]})
+                continue
             result = audit_window(client, day, recorded)
             results.append(result)
             print(
@@ -262,6 +272,7 @@ def main() -> int:
         "generated_at_utc": snapshot.utc_stamp(),
         "content_excluded_fields": list(snapshot.CONTENT_EXCLUDED_FIELDS),
         "windows_checked": len(results),
+        "windows_skipped": skipped,
         "alert_window_count": len(alerts),
         "feed_liveness": liveness,
         "results": results,

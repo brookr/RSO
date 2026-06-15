@@ -490,7 +490,7 @@
           <dt>H</dt><dd>Hold or resume motion and rendering</dd>
           <dt>Z</dt><dd>Toggle Zen mode</dd>
           <dt>`</dt><dd>Toggle frame-rate and performance data</dd>
-          <dt>I</dt><dd>Open the About page</dd>
+          <dt>I</dt><dd>Find and follow the ISS</dd>
           <dt>P</dt><dd>Capture a PNG screenshot</dd>
           <dt>F</dt><dd>Toggle fullscreen</dd>
           <dt>,</dt><dd>Open witness settings</dd>
@@ -615,7 +615,7 @@
       attested: false, pulseY: 0, pulseStr: 0,
       maxSpeed: reduced ? 6 : 24, accel: 30,
       yaw: 0, pitch: 0, yawT: 0, pitchT: 0, wasTraveling: false,
-      pointer: null, loadToken: 0, selIdx: -1,
+      pointer: null, loadToken: 0, selIdx: -1, followNorad: null,   // a selection follows its NORAD across day changes
       lens: 0, keys: new Set(), tilt: null,   // tilt = {base:{b,g}} once enabled
       ethRank: 0, opSource: 0,                // witness settings (rank 0 = any sweeper-accepted witness)
       chainMeta: null,                        // {contractAddress, chainId} from the attestation index
@@ -1154,7 +1154,12 @@
       { code: "UK",  name: "United Kingdom", col: [0.78, 0.45, 1.0] }    // violet
     ];
     const OP_MAP = Object.fromEntries(OPERATORS.map((o) => [o.code, o.col]));
-    const OTHER_COL = [0.52, 0.54, 0.58];
+    const OTHER_COL = [0.52, 0.54, 0.58];                  // a real operator, just not one of the highlighted set
+    const UNKNOWN_COL = [0.30, 0.32, 0.37];                // no owner on record at all — dimmer, recedes
+    // Space-Track marks an unattributed object "—" (no COUNTRY_CODE) or "TBD" (undetermined):
+    // genuinely owner-unknown, distinct from a named operator (Italy, Canada, Intelsat…) that
+    // simply isn't one of the eight highlighted above.
+    const isUnattributed = (cc) => cc === "—" || cc === "TBD";
     function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
     function ageColor(year) {
       if (!year) return OTHER_COL;
@@ -1169,7 +1174,9 @@
       const lens = state.lens, re = o.reentered;
       let col, size = o.baseSize, aMul;
       if (lens === 1) {                 // operator
-        col = re ? COLORS.ghost : (OP_MAP[o.country] || OTHER_COL); aMul = re ? 0.3 : 1;
+        const opc = OP_MAP[o.country];
+        col = re ? COLORS.ghost : opc || (isUnattributed(o.country) ? UNKNOWN_COL : OTHER_COL);
+        aMul = re ? 0.3 : opc ? 1 : isUnattributed(o.country) ? 0.5 : 0.9;
       } else if (lens === 2) {          // launch age
         col = re ? COLORS.ghost : ageColor(o.launchYear); aMul = re ? 0.3 : 1;
       } else if (lens === 3) {          // radar cross-section: meaningful for every visible object that carries it
@@ -1754,7 +1761,7 @@
         state.catalogDate = date;
         if (!(await adoptField(objs, token))) return;   // superseded mid-adopt
         setStatus("ready", integrityByDate.get(date) ? "Live record · verified" : "Live record");
-        applyHud(recordMeta(date)); populateLegend();
+        applyHud(recordMeta(date)); populateLegend(); reacquireFollow();
       } catch (e) {
         if (token !== state.loadToken) return;
         console.info("archive bundle not reachable; field stays representative", date);
@@ -1765,6 +1772,7 @@
           state.objects = state.objects.map((o) => ({ ...o, status: "carried", anno: null }));
           state.catalogDate = null;                  // a later stop on this day retries the download
           await adoptField(state.objects, token);
+          reacquireFollow();
         }
         setStatus("ready", "Live record");
         applyHud(recordMeta(date)); populateLegend(); // annotations may have loaded even without the bundle
@@ -1804,17 +1812,24 @@
     // No centre flash on lens change — the legend's title already names the active lens, and
     // the toast could overlap the inspector at some aspect ratios. Zen still flashes on entry
     // (the legend is hidden there); leaving Zen needs none, the legend fades back with its name.
-    function applyMode() { recolor(); populateLegend(); }
+    // Recolour the field, refresh the legend, and — if an object is open — re-render the
+    // inspector so its name, frame, 3D model and data all follow the NEW lens in lock-step.
+    function applyMode() { recolor(); populateLegend(); if (state.selIdx >= 0 && $("inspector").classList.contains("visible")) showInspector(state.selIdx); }
     function setZen(on) { state.zen = on; document.body.classList.toggle("zen", on); if (on) flashMode("Zen"); }
     function toggleZen() { setZen(!state.zen); }
     function flashMode(name) { if (name !== RELOAD_MSG) reloadPrompted = false; const t = $("mode-toast"); t.textContent = name; t.classList.add("show"); clearTimeout(flashMode.t); flashMode.t = setTimeout(() => { t.classList.remove("show"); reloadPrompted = false; }, 1100); }
     const rgbStr = (c) => `rgb(${Math.round(c[0]*255)},${Math.round(c[1]*255)},${Math.round(c[2]*255)})`;
+    // A field dot is drawn with an additive glow that brightens it — and because warm colours
+    // already max out red, that lift pushes them toward yellow. The legend swatch is a flat
+    // chip, so it read a notch more orange than its own dots. Preview that luminous look here
+    // (gentle lift, tuned to keep every swatch distinct) so the key matches what flies past.
+    const litStr = (c) => rgbStr(c.map((v) => Math.min(1, v * 1.18) * 0.92 + 0.05));
     function populateLegend() {
       const el = $("lens-legend"), lens = state.lens;
-      const sw = (c, label, shape) => `<div class="lg-row after"><span>${label}</span><i class="${shape || ""}" style="background:${rgbStr(c)};color:${rgbStr(c)}"></i></div>`;
+      const sw = (c, label, shape) => `<div class="lg-row after"><span>${label}</span><i class="${shape || ""}" style="background:${litStr(c)};color:${litStr(c)}"></i></div>`;
       let rows = "";
       if (lens === 0) rows = sw(TYPE_COLS[0], "Payload") + sw(TYPE_COLS[1], "Rocket body", "sh-pill") + sw(TYPE_COLS[2], "Debris", "sh-shard") + sw(TYPE_COLS[3], "Unknown", "sh-ring");
-      else if (lens === 1) rows = OPERATORS.map((o) => sw(o.col, o.name)).join("") + sw(OTHER_COL, "Other");
+      else if (lens === 1) rows = OPERATORS.map((o) => sw(o.col, o.name)).join("") + sw(OTHER_COL, "Other operators") + sw(UNKNOWN_COL, "Unknown");
       else if (lens === 2) rows = `<div class="lg-grad"></div><div class="lg-years"><span>1957</span><span>${isoFor(TOTAL).slice(0, 4)}</span></div>`;
       else if (lens === 3) rows = sw(RCS_COLS.LARGE, "Large") + sw(RCS_COLS.MEDIUM, "Medium") + sw(RCS_COLS.SMALL, "Small") + sw(OTHER_COL, "Unclassified");
       else if (lens === 4) {
@@ -1908,7 +1923,7 @@
       // and the tablist arrows all work, and the inert background traps focus inside it.
       if (settings.classList.contains("open")) return;
       if (e.repeat && !LOOK_KEYS.has(k)) return;
-      if (k === "i") { showSettings(true, "about"); e.preventDefault(); return; }
+      if (k === "i") { findISS(); e.preventDefault(); return; }
       if (k === "r") { requestReload(); e.preventDefault(); return; }
       if (k === "z") { toggleZen(); e.preventDefault(); return; }
       if (e.code === "Backquote" || k === "`") { togglePerf(); e.preventDefault(); return; }
@@ -1946,7 +1961,8 @@
     };
     canvas.addEventListener("pointerdown", (e) => {
       if (settings.classList.contains("open")) return;
-      if (state.suspended) return;
+      // A held view still accepts taps so you can inspect a frozen object — only the
+      // look/navigate drag is suppressed (in pointermove), keeping the frame motionless.
       if (e.pointerType === "touch") {
         touches.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t: performance.now() });
         if (touches.size === 1) touchGesture = { mode: "look", id: e.pointerId, x: e.clientX, y: e.clientY };
@@ -1957,6 +1973,7 @@
       try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* pointer already gone — capture is best-effort */ }
     });
     canvas.addEventListener("pointermove", (e) => {
+      if (state.suspended) return;          // a held view doesn't pan or look — taps still inspect
       if (e.pointerType === "touch") {
         const p = touches.get(e.pointerId); if (!p) return;
         p.x = e.clientX; p.y = e.clientY;
@@ -2381,6 +2398,23 @@
       renderer.setViewport(0, 0, innerWidth, innerHeight);
       renderer.autoClear = true;
     }
+    // One frame drawn on demand. While the view is HELD the render loop is parked, so a tap
+    // (or its dismissal) needs a single manual paint to move the halo onto the frozen object
+    // and show its 3D model — without resuming the simulation. Mirrors the animate halo block.
+    function drawHeldFrame() {
+      const on = state.selIdx >= 0;
+      state.haloFade = on ? 1 : 0;
+      if (on) {
+        drawnPos(state.selIdx, halo.position);
+        halo.lookAt(camera.position);
+        const hd = halo.position.distanceTo(camera.position);
+        halo.scale.setScalar(Math.max(0.8, hd * 0.022));
+        haloMat.opacity = Math.min(0.85, 0.25 + pAlpha[state.selIdx] * 3);
+      }
+      halo.visible = on;
+      renderer.render(scene, camera);
+      renderInspectorVignette(0);
+    }
 
     // ── click to inspect: nearest projected object to the tap ──
     const _proj = new THREE.Vector3();
@@ -2396,15 +2430,19 @@
     }
     function hideInspector() {
       state.selIdx = -1;
+      state.followNorad = null;             // dismissing drops the cross-day follow lock
       $("inspector").classList.remove("visible");
       $("insp-body").querySelectorAll(".tip-open").forEach((e) => e.classList.remove("tip-open"));
       vigHide();
+      if (state.suspended) drawHeldFrame();   // parked loop: repaint once to clear the halo
     }
     function showInspector(best) {
       if (best < 0 || best >= FIELD_N || !O[best]) { hideInspector(); return; }
       if (best !== state.selIdx) state.haloFade = 0;
       state.selIdx = best;
       const o = O[best], m = o.meta;
+      state.followNorad = m ? m.id : null;  // keep this object selected as the days scrub past
+
       const bandName = BAND[m?.band ?? o.dataBand ?? o.band].name;
       // In the Daily-changes lens the headline names THIS object's change category, tinted to
       // match its legend swatch — so "which one did I select?" is answered at a glance.
@@ -2452,6 +2490,7 @@
         : "";
       $("inspector").classList.add("visible");
       vigShow(o);   // stays up until another object — or blank space — is tapped
+      if (state.suspended) drawHeldFrame();   // parked loop: repaint once so the halo + model show
     }
     let nearestCycle = [], nearestCyclePos = -1, nearestCycleAt = 0;
     function inspectClosestVisible() {
@@ -2480,6 +2519,32 @@
       nearestCycle = closest.slice(0, 6).map((x) => x.i);
       nearestCyclePos = 0; nearestCycleAt = now;
       showInspector(nearestCycle[0] ?? -1);
+    }
+    // The ISS is the one object everyone goes looking for. 'i' finds it by catalog number and
+    // selects it — leaving it followed (the selection re-acquires by NORAD across day changes,
+    // so you can scrub the timeline and watch the same station evolve). It rides a real LEO
+    // orbit, so it may be behind the camera right now: the inspector shows its record at once
+    // and the halo rings it the instant its lap carries it back into frame.
+    const ISS_NORAD = "25544";
+    function slotForNorad(nid) {
+      for (let i = 0; i < FIELD_N; i++) { const o = O[i]; if (o && o.meta && o.meta.id === nid) return i; }
+      return -1;
+    }
+    function findISS() {
+      const idx = slotForNorad(ISS_NORAD);
+      if (idx < 0) { flashMode("ISS not in this view"); return; }
+      showInspector(idx);
+      drawnPos(idx, _proj).project(camera);
+      const onScreen = _proj.z <= 1 && Math.abs(_proj.x) <= 1 && Math.abs(_proj.y) <= 1;
+      flashMode(onScreen ? "Following the ISS" : "Following the ISS · coming around");
+    }
+    // After a day loads, re-bind the followed selection to that NORAD's new slot (or, if the
+    // object isn't catalogued on this day, just hide the card but keep the lock for its return).
+    function reacquireFollow() {
+      if (!state.followNorad) return;
+      const idx = slotForNorad(state.followNorad);
+      if (idx >= 0) showInspector(idx);
+      else { state.selIdx = -1; $("inspector").classList.remove("visible"); vigHide(); }
     }
     // The point an object is actually DRAWN at this instant. Sprites dead-reckon between
     // their last two exact orbit fixes — the same mix the vertex shader runs — so a fast,
@@ -2666,13 +2731,14 @@ ${fmtNum(FIELD_N)} objects · ${PERF.solids} solids / ${PERF.candidates} approac
       if (shown !== state.shownDay) { state.shownDay = shown; showDay(isoFor(shown)); }
       if (!state.wasTraveling && traveling) {                                             // moving through days — no download yet
         setStatus("loading", "Scanning the chain…");
-        state.selIdx = -1;                                                                // hyperspace clears the selection
-        $("inspector").classList.remove("visible"); vigHide();                            // the inspected object is leaving with its day
+        state.selIdx = -1;                                                                // release the halo during the warp
+        if (!state.followNorad) { $("inspector").classList.remove("visible"); vigHide(); } // a followed object keeps its card and re-acquires on arrival
       }
       if (state.wasTraveling && !traveling) {                                             // arrived on a day → only now fetch it
         const d = isoFor(shown);
         if (state.catalogDate === d) setStatus("ready", integrityByDate.get(d) ? "Live record · verified" : "Live record"); // already have this day
-        else loadDayCatalog(d);                                                            // download just this one
+        else loadDayCatalog(d);                                                            // download just this one (re-acquires again after adopt)
+        reacquireFollow();                                                                 // re-select the followed object from the field we have right now
       }
       state.wasTraveling = traveling;
 

@@ -198,9 +198,11 @@ class CardArtifactTest(unittest.TestCase):
         self.assertNotIn("5200", self.html)
         self.assertIn("best === state.selIdx", self.html)
         self.assertIn("hideInspector()", self.html)
-        # selection: halo rides the chosen object; hyperspace clears it
+        # selection: halo rides the chosen object; travel releases the halo but a followed
+        # object keeps its card and re-acquires by NORAD on the next day (see ISS test)
         self.assertIn("RingGeometry", self.html)
-        self.assertIn("state.selIdx = -1;                                                                // hyperspace clears the selection", self.html)
+        self.assertIn("state.selIdx = -1;                                                                // release the halo during the warp", self.html)
+        self.assertIn("if (!state.followNorad) { $(\"inspector\").classList.remove(\"visible\"); vigHide(); }", self.html)
 
     def test_full_population_flies(self):
         # desktop flies EVERY on-orbit object — buffers at the ceiling, draw range live
@@ -531,6 +533,16 @@ class CardArtifactTest(unittest.TestCase):
         self.assertIn("const WHEEL_GESTURE_IDLE = 140;", self.html)
         self.assertIn("wheelEndTimer = setTimeout(() => { wheelGesture = null; }, WHEEL_GESTURE_IDLE);", self.html)
 
+    def test_operator_unknown_is_split_from_other(self):
+        # "Other" (a real operator not in the highlighted eight — Canada, Intelsat…) is a
+        # different thing from "Unknown" (no/TBD country on record). They get separate colours
+        # and separate legend rows; the genuinely-unattributed objects recede (dimmer alpha).
+        self.assertIn("const UNKNOWN_COL = [0.30, 0.32, 0.37];", self.html)
+        self.assertIn('const isUnattributed = (cc) => cc === "—" || cc === "TBD";', self.html)
+        self.assertIn("col = re ? COLORS.ghost : opc || (isUnattributed(o.country) ? UNKNOWN_COL : OTHER_COL);", self.html)
+        self.assertIn("aMul = re ? 0.3 : opc ? 1 : isUnattributed(o.country) ? 0.5 : 0.9;", self.html)
+        self.assertIn('sw(OTHER_COL, "Other operators") + sw(UNKNOWN_COL, "Unknown")', self.html)
+
     def test_inspector_object_takes_the_active_lens_colour(self):
         # The inspected object's name and model-frame are tinted to the colour its speck
         # wears under the active lens (o.col, set by colorSlot) — in every lens, not just 4.
@@ -568,14 +580,56 @@ class CardArtifactTest(unittest.TestCase):
         self.assertIn("const c = vig.tint || TYPE_COLS[klass] || TYPE_COLS[3]", self.html)
         self.assertIn("vig.tint = o.col || null;", self.html)
 
+    def test_held_view_still_accepts_taps_to_inspect(self):
+        # 'h' parks the render loop, but a tap must still inspect a frozen object. pointerdown
+        # no longer bails on suspend (only pointermove suppresses pan/look), and a one-shot
+        # drawHeldFrame() paints the halo + 3D model onto the frozen scene without resuming.
+        self.assertIn("if (state.suspended) return;          // a held view doesn't pan or look", self.html)
+        self.assertIn("function drawHeldFrame()", self.html)
+        self.assertIn("if (state.suspended) drawHeldFrame();   // parked loop: repaint once so the halo + model show", self.html)
+        self.assertIn("if (state.suspended) drawHeldFrame();   // parked loop: repaint once to clear the halo", self.html)
+        # pointerdown must NOT short-circuit on suspend any more (that was the tap blocker)
+        pd = self.html[self.html.index('canvas.addEventListener("pointerdown"'):]
+        pd = pd[:pd.index('canvas.addEventListener("pointermove"')]
+        self.assertNotIn("if (state.suspended) return;", pd)
+
+    def test_i_finds_and_follows_the_iss(self):
+        # 'i' selects the ISS by catalog number (25544) and follows it: a selection records
+        # its NORAD and re-acquires that slot after each day loads, so you can scrub the
+        # timeline and watch the same station change. Off-screen is handled (card shows now,
+        # halo rings it when its lap returns it). 'i' no longer opens the About page.
+        self.assertIn('if (k === "i") { findISS(); ', self.html)
+        self.assertNotIn('if (k === "i") { showSettings(true, "about");', self.html)
+        self.assertIn('const ISS_NORAD = "25544";', self.html)
+        self.assertIn("function findISS()", self.html)
+        self.assertIn('flashMode(onScreen ? "Following the ISS" : "Following the ISS · coming around")', self.html)
+        self.assertIn("function reacquireFollow()", self.html)
+        self.assertIn("state.followNorad = m ? m.id : null;", self.html)   # set on select
+        self.assertIn("state.followNorad = null;", self.html)              # cleared on dismiss
+        self.assertIn("reacquireFollow();", self.html)                     # wired after day load + on arrival
+        self.assertIn("<dt>I</dt><dd>Find and follow the ISS</dd>", self.html)
+
     def test_lens_change_shows_no_centre_toast(self):
         # The legend title already names the active lens; the centre flash could overlap the
         # inspector, so lens changes no longer flash it. Zen still flashes on entry only.
-        self.assertIn("function applyMode() { recolor(); populateLegend(); }", self.html)
+        self.assertIn("function applyMode() { recolor(); populateLegend();", self.html)
         self.assertNotIn("flashMode(LENSES[state.lens])", self.html)
         self.assertIn('if (on) flashMode("Zen");', self.html)
         # the reload prompt and other status toasts still use flashMode
         self.assertIn("flashMode(RELOAD_MSG)", self.html)
+
+    def test_lens_change_refreshes_an_open_inspector(self):
+        # Changing lens while an object is open re-renders the inspector so its name, frame,
+        # 3D model and data all follow the NEW lens together (not just the field specks).
+        self.assertIn('if (state.selIdx >= 0 && $("inspector").classList.contains("visible")) showInspector(state.selIdx);',
+                      self.html)
+
+    def test_legend_swatches_preview_the_luminous_field(self):
+        # A field dot is drawn with an additive glow that brightens (and warm-shifts) it; the
+        # flat legend chip read a notch more orange. The swatch previews that glow so the key
+        # matches the dots — a gentle lift tuned to keep every category distinct.
+        self.assertIn("const litStr = (c) => rgbStr(c.map((v) => Math.min(1, v * 1.18) * 0.92 + 0.05));", self.html)
+        self.assertIn('style="background:${litStr(c)};color:${litStr(c)}"', self.html)
 
     def test_tapped_object_is_forced_to_render_solid(self):
         # Selecting an object injects it into the mesh-candidate set at top priority so it

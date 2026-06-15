@@ -19,13 +19,14 @@ https://raw.githubusercontent.com/{node}/RSO/node/latest.json
   "tag": "rso-archive-2026-06-10",
   "asset_name": "rso-archive-2026-06-10.tar.gz",
   "asset_url": "https://github.com/.../rso-archive-2026-06-10.tar.gz",
-  "arweave_tx": "…",                  // present once the day is on Arweave
+  "arweave_tx": "…",                  // present only once the Arweave tx is CONFIRMED (mined) — a pending tx's ar:// URL 404s, so it is never advertised
   "bundle_sha256": "…",               // fingerprint of the bundle bytes
   "sha256": "…",                      // raw catalog (artifact integrity)
   "content_schema": "rso-core-v1",
   "content_sha256": "…",              // the consensus hash, attested on-chain
   "annotations_sha256": "…",
   "conjunctions_sha256": "…",         // present once the day captures CDMs
+  "adopted_from": "OMPub/RSO",        // present only on days this node mirrored from an upstream node (not its own capture)
   "object_count": 67917,
   "generated_at_utc": "…"
 }

@@ -151,12 +151,16 @@ versions move only on a genuine parse-breaking change.
      only for artifacts that exist, and verifiers check a fingerprint only when
      it is declared. A day with a leaner bundle validates cleanly.
   3. *Coverage layer.* Each feed begins at its coverage-start date (§7);
-     absence before that date is correct, not missing. Days whose observation
-     artifacts were reconstructed after the fact from stored catalogs (rather
-     than captured live) carry `rebuilt: true` and empty feed sections — the
-     observation-plane analogue of a high `attestationLagDays`. Reconstructed
-     and hash-only days (including any deep-history backfill) may carry no
-     observation plane at all.
+     absence before that date is correct, not missing. `observed_at_utc` is
+     always the moment the record was produced, never backdated, and
+     `observation_lag_days` (its distance from the docRef day) is the
+     observation-plane analogue of the chain's `attestationLagDays`: ~0 for a
+     live capture, large for a day whose changes were reconstructed after the
+     fact by diffing stored catalogs. A reconstructed day therefore carries a
+     large `observation_lag_days` and empty feed sections — no boolean flag is
+     needed, the honest timestamp tells the story. Reconstructed and hash-only
+     days (including any deep-history backfill) may carry no observation plane
+     at all.
 
   Consequently, adding a new optional section to an observation artifact (as
   `tip_messages` was added) is a coverage event, **not** a schema break — see
