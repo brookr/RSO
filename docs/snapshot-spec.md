@@ -138,3 +138,59 @@ Daily manifests include:
 - `api_query_base`
 - `api_query_paths`
 - `archived_at`
+
+### Card-parity aggregates
+
+Manifests (and the ledger entries derived from them) also carry a small
+observation-plane aggregate so consumers can render the "what's up there" HUD
+with **zero catalog download**. All are derived from the recorded catalog (plus
+the day's `delta.json` for `updated`/`new`) and mirror `card/index.html` exactly:
+
+- `on_orbit_count` — objects still on orbit on this date
+- `reentered_count` — objects whose `DECAY_DATE` calendar day is `<=` this date
+  (so `on_orbit_count + reentered_count == object_count`)
+- `band_counts` — `{leo, meo, geo}` over the on-orbit objects, by `MEAN_MOTION`
+  (GEO `0.9..1.1`, LEO `>=11.0`, else MEO)
+- `type_counts` — `{payload, rocket, debris, unknown, tba}` over the on-orbit
+  objects, by `OBJECT_TYPE` substring
+- `delta` — `{updated, new, decayed}`; `updated`/`new` from the bounded
+  `gp_history` delta, `decayed` = objects whose `DECAY_DATE` is exactly this date
+
+These are observation-plane, like the full `sha256` (`DECAY_DATE` is excluded
+from the consensus `content_sha256`): they may differ between nodes capturing the
+same day at different times. They are **optional** — manifests archived before
+the aggregates existed stay reproducible — and re-derive from the catalog under
+`validate` (catalog↔manifest) and from the manifest under `validate_ledger`
+(manifest↔ledger). `rebuild-content` backfills them onto already-archived days
+without re-deriving annotations (so published bundle bytes stay identical).
+
+## Tier-1 Index
+
+A lean, year-chunked aggregate timeline, separate from the heavy `ledger.json`,
+that a browser reads instantly. Built with `build-index` from the archived
+manifests + storage receipts:
+
+```
+index/
+  YYYY.json        # array of lean per-day entries for that year
+  manifest.json    # { schema, generated_at_utc, repo, branch, day_count,
+                   #   first, latest, chunks:[{year,path,sha256,count,first,last}],
+                   #   latestEntry:{...full aggregate for the head day...} }
+```
+
+Each `index/YYYY.json` entry carries only `date`, `object_count`,
+`on_orbit_count`, `reentered_count`, `band_counts`, `type_counts`, `delta`,
+`sha256`, `content_sha256`, `provenance`, `compressed_bytes`, plus a
+**CORS-fetchable catalog locator**: `catalog_url` (+ `catalog_url_kind`,
+`bundle_tar` for a confirmed Arweave tx, else `catalog_gz` for the node-branch
+`catalog.json.gz`). The GitHub release asset is never the locator — its redirect
+target serves no CORS headers, so a browser cannot read it.
+
+Mirrors: the node branch (GitHub-raw) is the convenience mirror, committed each
+run; `build-index --arweave` (with `ARWEAVE_JWK`) additionally uploads the
+chunks + manifest to Arweave for permanence (opt-in — it spends AR).
+
+The card's embedded `BASELINE` is this index inlined as-of-mint (compact keys
+`d,c,s,cs,sc,pv,by` + aggregates `oo,re,bc,tc,dl` + locator `cu,ck`), regenerated
+with `build-baseline --inject card/index.html` so the piece boots fully offline
+to its mint-day head with exact numbers.

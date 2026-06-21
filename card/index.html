@@ -44,7 +44,7 @@
     .corner.bl { bottom: var(--safe-bottom); left: var(--safe-left); border-width: 0 0 1px 1px; }
     .corner.br { right: var(--safe-right); bottom: var(--safe-bottom); border-width: 0 1px 1px 0; }
 
-    .mono, .brand-name, .eyebrow, .readout-label, .status-label, .insp-label {
+    .brand-name, .eyebrow, .readout-label, .status-label, .insp-label {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.12em; }
 
     .brand-cluster { position: absolute; top: calc(var(--safe-top) + 12px); left: calc(var(--safe-left) + 18px); display: flex; align-items: flex-start; }
@@ -63,18 +63,25 @@
     .status-light { width: 7px; height: 7px; border-radius: 50%; background: var(--seal); box-shadow: 0 0 13px rgba(154,255,214,0.9); }
     .status-light.loading { background: var(--amber); box-shadow: 0 0 13px rgba(255,196,92,0.9); animation: blink 0.7s steps(2,end) infinite; }
     .status-light.error { background: var(--magenta); box-shadow: 0 0 13px rgba(255,102,142,0.9); }
+    .status-light.offline { background: var(--amber); box-shadow: 0 0 13px rgba(255,196,92,0.55); }
     .status-label { font-size: 9px; }
+    .status[data-tip] { cursor: help; }
+    .status[data-tip]:focus-visible { outline: 1px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+    .status[data-tip].tip-open::after, .status[data-tip]:hover::after, .status[data-tip]:focus-visible::after {
+      position: absolute; top: calc(100% + 9px); right: 0; left: auto; z-index: 9; content: attr(data-tip);
+      width: max-content; max-width: min(264px, 78vw); padding: 7px 9px; border: 1px solid var(--line); border-radius: 5px;
+      color: var(--ink); background: rgba(2,7,8,0.97); box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      white-space: normal; text-align: left; font-size: 8.5px; line-height: 1.45; letter-spacing: 0.03em;
+      text-transform: none; font-weight: 400; pointer-events: none; }
 
 
     .readout { position: fixed; inset: 0; pointer-events: none; }
     .readout .prism { position: absolute; bottom: calc(var(--safe-bottom) + 18px); width: min(330px, calc(50vw - var(--safe-left) - 36px)); pointer-events: auto; }
     #prism-obj { left: calc(var(--safe-left) + 18px); }
     #prism-witness { right: calc(var(--safe-right) + 18px); }
-    .readout-block { padding-top: 7px; border-top: 1px solid var(--line); }
     .readout-label { color: var(--muted); font-size: 8px; }
     .readout-value { margin-top: 5px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: clamp(15px, 2.3vh, 22px); line-height: 1; }
     .readout-note { margin-top: 4px; color: var(--dim); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 8px; text-transform: uppercase; }
-    .readout-note .leo { color: var(--accent); } .readout-note .meo { color: #cdb6ff; } .readout-note .geo { color: var(--amber); }
     /* tap-to-rotate 4-sided data prism (a real quarter-turn each tap) */
     .prism { position: relative; overflow: hidden; cursor: pointer; perspective: 4000px; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
     .prism-inner { position: relative; height: 94px; transform-style: preserve-3d; transition: transform 0.62s cubic-bezier(0.45,0.05,0.2,1); }
@@ -217,6 +224,32 @@
     .set-label b { color: var(--seal); font-weight: 600; }
     .set-row input[type=range] { width: 100%; accent-color: #9aa9ff; }
     .set-note { margin-top: 5px; font-size: 9px; color: var(--dim); line-height: 1.4; }
+    .node-rank { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; max-height: 232px; overflow-y: auto; overscroll-behavior: contain; }
+    .node-rank::-webkit-scrollbar { width: 6px; } .node-rank::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    .node-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: rgba(255,255,255,0.018); font-family: ui-monospace, monospace; font-size: 10px; color: var(--ink); touch-action: none; cursor: grab; transition: border-color 160ms ease, background 160ms ease; }
+    .node-row.dragging { cursor: grabbing; border-color: var(--accent); background: rgba(154,169,255,0.10); box-shadow: 0 6px 20px rgba(0,0,0,0.35); position: relative; z-index: 2; }
+    .node-row .node-grab { color: var(--dim); letter-spacing: -1px; font-size: 12px; }
+    .node-row .node-rank-n { color: var(--muted); width: 12px; text-align: center; }
+    .node-name { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 5px 7px; text-transform: none; letter-spacing: 0; }
+    .node-tag { font-size: 7.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 4px; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+    .node-tag.live { color: var(--seal); border-color: rgba(154,255,214,0.4); }
+    .node-tdh { font-size: 7.5px; color: var(--dim); letter-spacing: 0.04em; white-space: nowrap; }
+    .node-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); flex: none; }
+    .node-dot.live { background: var(--seal); box-shadow: 0 0 9px rgba(154,255,214,0.9); }
+    .node-moves { display: flex; align-items: center; gap: 1px; flex: none; }
+    .node-mv { appearance: none; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 8px; line-height: 1; padding: 2px 3px; border-radius: 3px; }
+    .node-mv:hover { color: var(--ink); background: rgba(255,255,255,0.06); }
+    .node-mv:disabled { opacity: 0.25; cursor: default; }
+    .node-rm { appearance: none; background: none; border: none; color: var(--dim); cursor: pointer; font-size: 9px; line-height: 1; padding: 2px 4px; border-radius: 3px; margin-left: 2px; }
+    .node-rm:hover { color: var(--magenta); background: rgba(255,85,125,0.10); }
+    .node-add-row { display: flex; gap: 6px; margin-top: 7px; }
+    .node-add { flex: 1; min-width: 0; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font-family: ui-monospace, monospace; font-size: 10px; padding: 7px 9px; }
+    .node-add::placeholder { color: var(--dim); }
+    .node-add:focus { outline: none; border-color: var(--accent); }
+    .node-add-btn { appearance: none; background: rgba(154,169,255,0.10); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font-family: ui-monospace, monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; padding: 0 12px; cursor: pointer; }
+    .node-add-btn:hover { border-color: var(--accent); }
+    .set-reset { appearance: none; background: none; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font-family: ui-monospace, monospace; font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 6px; cursor: pointer; font-weight: 400; }
+    .set-reset:hover { color: var(--ink); border-color: var(--accent); }
     .settings-foot { margin-bottom: 0; }
     .set-save { font-family: ui-monospace, monospace; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 7px; cursor: pointer; }
     .shortcut-list { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; margin: 0; font-family: ui-monospace, monospace; font-size: 9px; line-height: 1.4; }
@@ -307,7 +340,7 @@
       <div class="date-index" id="date-index">—</div>
     </section>
 
-    <div class="status">
+    <div class="status" id="status" tabindex="0" role="status" aria-live="polite">
       <span class="status-label" id="status-label">Entering orbit</span>
       <span class="status-light loading" id="status-light"></span>
     </div>
@@ -457,9 +490,14 @@
           <div class="set-note">minimum on-chain TDH backing to count a day as attested</div>
         </div>
         <div class="set-row">
-          <div class="set-label">Operator index source <b id="set-op-val">ompub/rso</b></div>
-          <input type="range" id="set-op" min="0" max="2" step="1" value="0">
-          <div class="set-note">which operator's published index to read — your own node, for real decentralization</div>
+          <div class="set-label">Index source priority <button type="button" id="node-rank-reset" class="set-reset">TDH rank</button></div>
+          <ol class="node-rank" id="node-rank" aria-label="Backing nodes in priority order — drag to re-rank"></ol>
+          <div class="node-add-row">
+            <input type="text" id="node-add" class="node-add" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80" placeholder="add your own node — owner/repo" aria-label="Add a backing node by GitHub owner/repo">
+            <button type="button" id="node-add-btn" class="node-add-btn">add</button>
+          </div>
+          <div class="set-note" id="node-add-err" role="alert" aria-live="polite"></div>
+          <div class="set-note">ranked by on-chain TDH backing by default — the top node serves, any failure falls through to the next. Drag to override, paste your own node to take an arbitrary one, or reset to TDH. Extended by the network's published roster.</div>
         </div>
         <div class="set-row settings-foot"><label class="set-save"><input type="checkbox" id="set-persist" checked> remember on this device</label></div>
       </div>
@@ -520,19 +558,27 @@
     // CONFIG — live sources + tunable feel
     // ════════════════════════════════════════════════════════════════════
     const CONFIG = {
-      repo: "OMPub/RSO", branch: "node", indexBranch: "main",
       autoLoadCatalog: true,
-      // Head-pointer resolution order: the embedded BASELINE is the permanent floor, and
-      // these extend it with live days, first reachable source winning. Arweave / ArNS /
-      // on-chain-contract head sources prepend here once the aggregate ledger is published
-      // to permanent storage; GitHub raw is the convenience mirror, never the only memory.
-      ledgerSources: ["https://raw.githubusercontent.com/OMPub/RSO/node/ledger.json"]
+      // Backing publishers ("nodes"), tried top-down for EVERY live fetch — the lean Tier-1
+      // index, its year-chunks, the on-chain attestation index, and the heavy catalog — the
+      // first reachable one winning, the rest as automatic fallback. The visitor can re-rank
+      // them in settings; the live list is extended by the indexer's published nodes.json.
+      // ompub is the default head. The embedded BASELINE remains the permanent network-free floor.
+      nodes: [
+        { id: "ompub",  label: "OMPub",          repo: "OMPub/RSO",  node: "node", idx: "main" },
+        { id: "brookr", label: "brookr.eth",     repo: "brookr/RSO", node: "node", idx: "main" },
+      ]
     };
+    // Content schema of the consensus hash. Constant across every archived day, so the lean index
+    // omits it to stay small; the card defaults to this when an entry doesn't carry one.
+    const CONTENT_SCHEMA = "rso-core-v1";
     // ── Baseline snapshot, embedded at build time ───────────────────────────
     // The full per-day metadata timeline + the anchor day's attestation and annotation
     // digest as of build. The piece renders a real archive with ZERO network — every
     // gateway can die and it still shows the witnessed record. Live data layers on top.
-    const BASELINE = {"buildAt":"2026-06-12T05:05:15Z","startDate":"2026-06-12","chainMeta":{"contractAddress":"0x867FcC4f0339009043E9F6e554DD516Bcf1bcaa9","chainId":11155111},"days":[{"d":"2026-04-20","c":67208,"s":"5cd6af76f043b0335ced62c887703585560bdff0b5daf272fa4c76636e5ec1ab","cs":"1838a06696902f7397d78d906c4bd9f5e9d9e372725ccbf4629bbd377231a740","sc":"rso-core-v1","pv":"genesis_from_gp","by":11301379},{"d":"2026-04-21","c":67208,"s":"e2a06299f48298915a902f544234815a0e7e8d46ca97eaa356c46f5c93de7f06","cs":"c4ffe1aea1411239ec0d6b2059bec40415338994ca4914ef8753dad352bf6019","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302770},{"d":"2026-04-22","c":67211,"s":"b649c86ea8ef3e629b6ca4fe5a620218378b64f7788afa8ad3ce08785737844b","cs":"1d1658e33ce573829c89fbd6dab61223eb34607d597658fa06a57d429d1bc444","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11248229},{"d":"2026-04-23","c":67237,"s":"aca918b0d803343624625d52f906f16250c7c53f32755141f5296374f7028827","cs":"82bff6f34cf855595b16cb0a4f7085b1356eef8fe087cda6964be961cb65dbd1","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11281196},{"d":"2026-04-24","c":67247,"s":"0875b754cf11e1bd0f3bcb85abf466c63959bfe7eda02fd47ea64ae1c716bf4e","cs":"0a0b33a835f585f20b731de21975578a068f27784e07db9e5151ec9b224794a7","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11323100},{"d":"2026-04-25","c":67388,"s":"d495861c6a93d85b66dd55e95aaec05adf05dd31d4c28df90ea297f3e94b1bb0","cs":"1bbe5e9f6dc9bea6aad6112bcb91fdf83645043b372dcf571c7cba81b5c53bbd","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11210162},{"d":"2026-04-26","c":67389,"s":"01f8ca7d34acb5b442a01d2180fc68f6d5abfa0fcf9374e8225ff15af1a66e98","cs":"08de6e9c7fc87d20de17a8e41481d14ceb8cd3ba678fd281e832d97758ee9d15","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11217312},{"d":"2026-04-27","c":67391,"s":"0b80e3443908482aa720e41740c003e4b8965427be34a98d7463260a73bc48b8","cs":"9596d70d3bbbb50436da32bdcabce977f3c6b7a2bce8835f2d8be0535bb7bbb1","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11223865},{"d":"2026-04-28","c":67415,"s":"4727abba9fc4e599a4b768207ce31318c9b5e43a9deaa014ca7b0a8f873ec92b","cs":"9edbee00fab8035af57603e82dca61c339faab3757a636dc9f9f537416479822","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11233385},{"d":"2026-04-29","c":67440,"s":"69a1d6e549b9de74165ae42784d0c8ac0a9c40ba6104335d9be676d3d9eb7b50","cs":"01bdb8f2f8199e3d7770c4244b054b4e4cac5fa814fba815695fc9babf91f419","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11230417},{"d":"2026-04-30","c":67440,"s":"8d44ef178c730a7b6796c5564067fc1c4bd7eec2ef7c296eeefe391f4a25ddf7","cs":"6dee641f600bf3c303670d0fc14147881e5cc2cde3b1843733bcfa20430c2b33","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11258523},{"d":"2026-05-01","c":67440,"s":"f2a769f3791bb783e9a9ff1e989117dfee5ac106c82e92ea4d25ad09b5bdb6ab","cs":"e9fe102591934367c33fd6489412c575cc5f03d379bd4b71775678222b2c869d","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11301305},{"d":"2026-05-02","c":67494,"s":"ed49b7f51d1bd9c1664d93ab732588f7faf92e814950e47927b44cd2e7c54cf1","cs":"18c05784e969511a4e65596655f8bd3a5d41cdfd54dfee0f23f9b389d12d404b","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11252428},{"d":"2026-05-03","c":67494,"s":"1a703ba6183f6170b529fd0e3ab3d793b2dc0ceac618b183d9aa95b19c1da5b7","cs":"ed70676adf02636d92e40a5b25b2b406fb269e0772cfde5fe81fed321fc68df6","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11248451},{"d":"2026-05-04","c":67494,"s":"57527a66768b22ef11e9e3810862d57a587ef286b5c005f800323bc056141e05","cs":"02ccaf96a9d603f98475d7ad05685504a210c9b1e73f42bad6df5c27e4a30571","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11275209},{"d":"2026-05-05","c":67519,"s":"454ba7753cf3be3d73b10829f9b2d3e7a1379c9ff4dad70cc0077cc01f271763","cs":"e1e71d4740082618fba60e801f2a85a0ff5ce1f6ed4fdf46caa0566e12afa878","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11260788},{"d":"2026-05-06","c":67552,"s":"6f091caa8d0f929055860b2fe00d70ebc5ea71b598d75bc0489325bef4626fdf","cs":"0dd4af778d91246dd936eb4d56ae3d43448cbec01292ff21db4c9025dcc56d9f","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11269686},{"d":"2026-05-07","c":67552,"s":"9442399aa3ceabc380ce4b2e559e36e5cfbdb3c194a97d0a9690f910efbf1a6f","cs":"f72c94f4a4d8e5ed9354beb3f1a864edef280bde2f0dc2bdf136f3059beff1c7","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11310165},{"d":"2026-05-08","c":67552,"s":"070cba0139d3b7779aefdd578db77295b83f64b2135d52d66f57aa2624361560","cs":"d1abeaa192ea6b40f5e632c813062dae6e516d644b1edd84d1fc1d40efb657a9","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11282156},{"d":"2026-05-09","c":67552,"s":"324e8bc4429c1f934822f3be219b196afb948310fafad2f86882e2afa28711a3","cs":"cfd5dcbe110f3b3c7bc2aa9506ff627606ce05177165546672c5b30bd9f118a8","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11257315},{"d":"2026-05-10","c":67597,"s":"4231746b86f41453b22c8f53477ce6c8faab4426ee218815ee04260790f1925c","cs":"8c44b1d03a4f7f25dbee55eadbc69dd6fec53aa4dc1a6c639e4b5bc9e91c2b30","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11271631},{"d":"2026-05-11","c":67597,"s":"a9ba2e33611da3a64e4ccbbf362112ee2cdf7e3bceec800ad6bdbdda4e23a647","cs":"4f96c00a6cc305640727216bcd9532e066afc64998d75e90e6364d0549b73a71","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11270776},{"d":"2026-05-12","c":67600,"s":"6f5489502c1aeda5f6a50e928ac473b272bc8e67f11ae7e121d701e0fd970a35","cs":"bdd73f721e20d89139ab4d8805f8d48578700623179144060aef8eeac28cacdb","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11270241},{"d":"2026-05-13","c":67646,"s":"2b3af36b365f96eb5162fba75eb4849f9073a462d8a35191708531c98a763460","cs":"143d896e22f8612e7cff97736337a8b82cd9f7ddb528a00c9e03acf3ab291197","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11244789},{"d":"2026-05-14","c":67654,"s":"13903dcf63891e34d5e5f827d8b351acddb8c48f83274779a9e89ecd473bcfcc","cs":"9595361b83205801eeb78ac7c204125fe57cd9ccd1f7ff2a26d3e2b12ce1650c","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11288973},{"d":"2026-05-15","c":67655,"s":"9dd0ce634076256b8fb428ada43b1a411a7fb70de1e563e42f3ca7e51d6653ae","cs":"15717c219cba0ac389d5c953f81ccc9c8f5a4b54d58340479bd2c22ced77132e","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11342900},{"d":"2026-05-16","c":67657,"s":"6bb7ffae9c1e45238d0a30a934e54590d2fa428999b9ebfc365ea8438d8f2a23","cs":"56f6c67b81854923f7693671e84329bc3909e33ded2230e353c54ed8525a5e12","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11333330},{"d":"2026-05-17","c":67665,"s":"95807b05631aa7353af4ab9bffda3a7b84dbea1441377d77ac88422e79799f08","cs":"77ba7dbc5ad771296e86c0a135e0c2faa94ad31b6cfa9725fc82ca5bc4bf99eb","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11284531},{"d":"2026-05-18","c":67665,"s":"3921c7c12606f152973b31bea02c59e8e49401e5ecd3eda5b79c689712e6d043","cs":"624ea64533fa17ad910512456f0dd4a4a0058f3101b37642c12da691badba503","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11287909},{"d":"2026-05-19","c":67682,"s":"9d50e04d832fc6822aa3bc5ae41a0a880dac59bcdadc663e332f855628bb2477","cs":"2f86cc6f3a99dd0bb5fda28d3c0dd0850cbb29e9a926a95cd1b79eb4c653e50f","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11296071},{"d":"2026-05-20","c":67686,"s":"b6fe18ca536a5d971b86d28c1079c89f493633f2090521a467c7fb08cb8ddab7","cs":"2be5af69a8c3f3cbf10a479c48fe5898fa316af9389207f0b23a93b9a1f0064f","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11281312},{"d":"2026-05-21","c":67686,"s":"297eea809f97554e73527a5db008cecce25b5bafd282318d0352a75ab9664f55","cs":"ec30d582b78fdbd1905e2a01bb7faf3f76c00da5a79db339db4c5e125d38024f","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11351071},{"d":"2026-05-22","c":67686,"s":"6117f3f5edb840f97cb50144edb28e3fdb9bba6f5a3d84fe174040db7dba7c96","cs":"ebbb139c8b647d1cbed5c16db3651985168589e394ceccaafcba786555c9ae02","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302596},{"d":"2026-05-23","c":67687,"s":"24cf6ff665fb96f61f0bc8e5000791d8649357858adc6b2838f36c8e04d16dfa","cs":"13ccd247c21c0e324949f85ec2b90202d3ed04f877acaaa62ac1a0f2175c945b","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11281371},{"d":"2026-05-24","c":67690,"s":"afd61b63b5c88be641c5effb7274d28e002744bdfbfa1775ce4793ba6f109351","cs":"0f3c180ebdce41e8c87f002e31ba89571685153c06078ba8335a17bf6746aed6","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302464},{"d":"2026-05-25","c":67690,"s":"9060aeaf3c5e67cb7a4cc22b9955e812ea9f71633be8f7a8f88a167e218f0256","cs":"a27a561436809a81141e8038eac6c40f4b71d85ac5530e5188eb52cffa2fd3e6","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11265538},{"d":"2026-05-26","c":67692,"s":"971f4dfb156d1cd2d7618f165091fa5bee5ba02a19f126cf72904d21e5ce8fc8","cs":"4178b79a5427b8048ae8344bc685bb83a1443d8d9b7fa2167a083a702c94386e","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11312941},{"d":"2026-05-27","c":67694,"s":"1fc19e03ef1e3598a59dc504c667765fc97ba6d6b92d3fdb60fbae060be0855e","cs":"3f948b5ee394708fa0c5b575a2d4f5526ad727d4817fb86d32134f77ad8b86a4","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11324610},{"d":"2026-05-28","c":67749,"s":"bb9bc28bf8d859aad1095a63fef32b370a68adc39c1eedd04251aefece0ee895","cs":"2f089dae653c4f933d8e50da67305bea84d2487aa37327b920b92b999484095a","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302648},{"d":"2026-05-29","c":67770,"s":"b6d1e7862db5541d6aad5de754f2e02bbd8c12823d64e2ffc364db25caa6179b","cs":"5aafd9fe2d188aad720d9c6468f1831d0a83940e45e1be5971ad8873dacf5b86","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302341},{"d":"2026-05-30","c":67771,"s":"2dc136bc6d4d8ba64e2a76bf6540be3691fd56c1f2595a10b06f794df0733594","cs":"69e87c041e67b365e806256c684377bac98c56540e10861dba3b123de14a2c0d","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11324884},{"d":"2026-05-31","c":67771,"s":"714ba3b4e83245876fc647f9ecf70bb6d5d95f2388db02fe305479c3c7d905ab","cs":"2a0363c47d927da4313030f4f6c6678e9911129c2bf12424b17eecbbfb0a6ddc","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11320473},{"d":"2026-06-01","c":67771,"s":"fc5f292a64204e77a863497abe3d0305d247e5c4ef011c7bcceea348c432ec5a","cs":"8846cb904c9431f293a8c307f1b0cd665ef49e954d53979476124e6946e30ad4","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11301034},{"d":"2026-06-02","c":67773,"s":"5841482b5541175d8a39c19766abfac9b2936ce01251f4c02a18ec6867b5a39e","cs":"f1c0e0409203e57a3b256a4e51637faa5f76a43a789d00dff5a527f08d8debaf","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11347151},{"d":"2026-06-03","c":67862,"s":"b133724ebd34b76a61607dd3cb0be55d8afe1c23cf675ea85ba69a565b28962a","cs":"adaa25577aad221b6842b6f29b96b6de49ba2e0c3add4909bbb98f3f189f9039","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11380032},{"d":"2026-06-04","c":67915,"s":"0713f31e6121000f511b0a5b5c2d64aefa366a4e567947ad2689ac01afd45e56","cs":"3c6eed791367ca7485ab2c3cfb81babdc22ec8f6e823a896c2e46728038f6336","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11424219},{"d":"2026-06-05","c":67915,"s":"a217462bbc031ab4179e63fd3d69479d9ab69022e51d148ddc4bd7f3f7e5ec9d","cs":"156d34876b7a68aa0014e3e6d2313ec7bf995f832336ef68e6a951ad8aea0c27","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11452390},{"d":"2026-06-06","c":67915,"s":"78b4e985d70815579587402e2a97a707e8032a805642168cfbf4ced89d09e0b9","cs":"be7fc77a2eaf68c50273f66985142ad0b0b810d03c404428a0c87e92e5264105","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11379578},{"d":"2026-06-07","c":67915,"s":"d35dfd6ba531b98dbf5feb8cb787848b06dcc297ef5a36f88a93107ee97d36e3","cs":"086956fe197b16f2382187d462845b2e8aefc621fc1d8bec2f6a40aeaa30952b","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11384256},{"d":"2026-06-08","c":67915,"s":"96a07ef20b970a00f32a4f63d138dda4d4531a8eac511e2953be33a8033ffb39","cs":"6da11fe361442a6dab4d4bcd916a1ba2de88eeea16e2bfcc5620a835301fd3b1","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11388944},{"d":"2026-06-09","c":67915,"s":"69ffcbf4b4f3f0d45514021e9ab029af4f967c2aed16e574ccb9fa9f11ac4c7b","cs":"32f1fc3c886cffb71df31c443e9a1cbce56f78f59d7047df69d78b5fe4c2cc22","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11347977},{"d":"2026-06-10","c":67917,"s":"6c9be27fae31c850ba47d8a7b73a5f64423824216560804b6eedd81cfddf64a2","cs":"c9b50187fd74988ff935435ed3a8645ebe3461a0284c007f8d892ec2796d0754","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11394550},{"d":"2026-06-11","c":67971,"s":"88c61319f421b01f91c9b65b19cbe4999e28b16d591fd9246874a741aee02d72","cs":"05fb722f634a11139acfe45d4e1725f13c2d94a9a39bfed9c863f44720763f99","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11413914},{"d":"2026-06-12","c":67991,"s":"8ae46a22121dd9f68f28795dd83e9f7213a8f19d7391eeaeaf92fe1a30c41dc6","cs":"c3c7eb52cf467295d95a21dea1ae93b4e00643f4502f599a8bac9dc805f6781b","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11361687},{"d":"2026-06-13","c":67997,"s":"fe5333bef049520fddf35913b72cfbf74461a4691ed3bfc8658025c03bd3b592","cs":"971773513761cc3002c9b991cfe4cd95a36a505e35863389c1abc73ef5fb6831","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11401116}],"attest":{"2026-04-20":{"b":"0xe651a58398fe906551be2f4d2ec39bace608e7aa60f3c8c30cd276aac96e103e","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-21":{"b":"0xa1006d1e199ec15b56bc3764faeb0bf791764c1abcad2008805fd9b182bf2c3c","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-22":{"b":"0xa6ae90b4d7ddcfee71d1ca6d7fe55d551c2093f343044ce30445908d0bd4a653","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-23":{"b":"0x1a7f04542fcb001f75bdf555e9cc93cc5ced14d70405f2fb8313b07567e05d64","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-24":{"b":"0x170bf30e136ebbe53ed7a48355a888aea59379729ba92e6119cbcd5fdce21c4a","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-25":{"b":"0x3a5d90075252610e347a4502f641416feb54f2c36924919ed8824c98737d9896","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-26":{"b":"0x4451406a40a45aca3880032c9e2982c00ba30f04c3513627721c01e7ed0fe24d","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-27":{"b":"0x32cbd838729a0bf1bcb17c8ecda46bc62da94738f40c6727a727a014afa39026","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-28":{"b":"0x54fde370719768ddb6f71209c82fc0dce9ded60169cee3390b860db2d9ee87a0","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-29":{"b":"0x2a7742eb8537004ab68c42727b913682618f1e4e210ea4f73490dba8db088956","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-30":{"b":"0x76b5faa7ecc20afe1e90f74f77351795e2e386dd16152262e52c429e8388a903","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-01":{"b":"0x372b2394dd4c2cdb8770a333a18ad9b1ff30e03093d01edf68e927c27b099c5c","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-02":{"b":"0x762d59b1dc702e94794b049cc49f757ec493bf78eeb089714e619974abcd6045","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-03":{"b":"0x4de659d1a529139c5e2cf294ba464f5b2293c7238c1a515e959104dd5f24a920","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-04":{"b":"0x7df63ade68e09e32a9bc992ec4ad454caeeed05f736282786ca3602bb38b0eee","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-05":{"b":"0xa8c85b0c2d53cc6825e9a798a5ae185e2fdadaab7e292ccb5773bbd8004c0838","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-06":{"b":"0xe8c4bee2a45494b9dc155c1b2dd55260b65b3b5747e521c50c3edbe28cc91d48","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-07":{"b":"0xaecc54b4c142a7fb0cad55a6a18ccaa7e11b6ac6189b76fa022f33c949a8179a","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-08":{"b":"0xdb1c799f5a73a733d304323eaec0a2a6c16070ef383521f744a4c22ab7257cc5","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-09":{"b":"0x368af51a894a85b9f5217eb8cc615af9258c9f7122ca22e4991a3ee68baeb567","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-10":{"b":"0x2d8681fea89985c5d6fa9bbbb2b17edb633fe62f27cc684354d54aa4fed5f1b8","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-11":{"b":"0x67800ab59f99c40da3ece923d2652debc472700ef855e14ad635f48ff58450c5","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-12":{"b":"0xe894fe42359d674fb38e9f20f6284201116112202a9215993de88cd2790eb7dc","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-13":{"b":"0xb1628f223aa0ce1d30126ddb70cd46eaccc8b68fac79461eea288fcfdb42cd2e","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-14":{"b":"0x584f3e215518999db48c0ce5996144b1dc3674ec8e59a4d26a4caa4123a049f7","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-15":{"b":"0xd9f144c93cc6b9dbf2ea0d1d14aa2b8fd9158d5b1e88fa4e09e6c5355becec7f","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-16":{"b":"0xfd60086aaa933178c2bdd7ed4d8e591bcea909ca2f9532826241265eca8f251a","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-17":{"b":"0xd6b2987eb44eddbcb8735b6820106f13ac8dcf7195e22555d115aae17ca0f50f","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-18":{"b":"0xdc6914bd28b5aaa7f961b608576730e9c8ead963d621d8dcfff352e45e14849b","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-19":{"b":"0x6172f6221ece7eebebece3a1a1be9fd8f5fa3ea1dec540621e8588d8104a76df","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-20":{"b":"0xc09aaceec7d42f48808082770d767365eccd0d4a9a3bdc816d4aec7bae9a8e83","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-21":{"b":"0x0e4e7545235058c9d33b16b7c2d1975894b6bc995592c33b86e60e7a35c268b9","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-22":{"b":"0x7c981351dd3e0eaaf39798574e42e6be378d69af647456bc93859e8b4a55140e","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-23":{"b":"0x0903011869b1cf3d29b1f02370454d5c3ba3975388d5a0cabd1ac3149efe5b26","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-24":{"b":"0xea19eecbe3b4155369b42814e9c3cfb43b2983fc20832eaa2208acdf0af72c15","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-25":{"b":"0xabad2fe9bf69a74b37dfaf9d3e10b4aa954e156bd3c131c760df36e2252a9d47","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-26":{"b":"0x2d39920ad2e2fb60175e7c7cd00b69ef6c98261220629395e2dbe331ce2f713d","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-27":{"b":"0xc298eee124519c191ce7f7c7cac26b190452c206d2cafef1281e9e8a70253b97","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-28":{"b":"0xd9edc87c59e4ad73ddbfb74840693fae7ce76c3cf9ece46fc0f6fbc64514035e","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-29":{"b":"0xaa920d497b4b94d240dbc0697fa65acf655d7a09aec1905bbf5de2bb47f30e41","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-30":{"b":"0x99ee22ab9ca0762ae48cfccbadf461e18ae0f9af607ad78154b40577d17e7a46","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-31":{"b":"0xeb34cbbaace6dead277f524baa8165fd1279be3ad3d84b067876d64681accdf5","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-01":{"b":"0x691cc5e5af20b6991f4b10df9fa909d936053bda0ab3f51a2551010d132eba30","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-02":{"b":"0x48e4fd6e871ea981352e899a6cade2eb63a21d2ee72ed1823fc9b0e3e2b54847","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-03":{"b":"0x149934aa8289f034c113f243ed739be210be96908de11b6dd6ce05803d61719a","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-04":{"b":"0xc3c8b53567ffcdc08e335d517faa81218bf2d65180981d4f5ff8d86dd0700954","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-05":{"b":"0xd6dfae349e33dbd82122a0d58469609469ef50a915f77a4d972d1be7339880f0","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-06":{"b":"0x4fcf0ac19aee184905b1e4affb5a837c5b4b5c768e56fb991b86fd86ff54bc10","t":0,"g":1,"n":2,"a":2,"src":2,"ar":[]},"2026-06-07":{"b":"0x65db01610ee89979f47778515b1311be5331fa0e311eee2cd9a7d8efd573f068","t":1,"g":1,"n":2,"a":2,"src":2,"ar":[]},"2026-06-08":{"b":"0x0ee986879b439ffa4d0ee524e8d76e1490a30f0743638a02518a2a015b87ea24","t":1,"g":1,"n":2,"a":2,"src":2,"ar":[]},"2026-06-09":{"b":"0x06c958fd38fa8bffce8591fa3ec4aadfd63c4679710e0f0a6d50d14bc0f36574","t":0,"g":1,"n":2,"a":2,"src":2,"ar":[]},"2026-06-10":{"b":"0x798b9f69c010ce04df8a6eb8f5f7efc5ea958742772172b2a987385650240d5b","t":0,"g":1,"n":2,"a":2,"src":2,"ar":[]}},"annoDate":"2026-06-12","anno":{"decayNotices":88,"edits":202,"tipCount":2,"observedAt":"2026-06-12T05:05:15Z","byId":{"46585":{"kind":"tip","field":null,"text":"reentry predicted 2026-06-15 17:51 \u00b7 \u00b118h \u00b7 descending"},"45760":{"kind":"tip","field":null,"text":"reentry predicted 2026-06-15 19:51 \u00b7 \u00b118h \u00b7 descending"},"22442":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: MEDIUM \u2192 SMALL"},"29170":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"31431":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"31499":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"31996":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"33720":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"34239":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"35230":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"37457":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"38133":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"39806":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"46453":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"61327":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: MEDIUM \u2192 SMALL"},"63181":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: LARGE \u2192 MEDIUM"},"68437":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: TBD \u2192 US"},"68462":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: LARGE \u2192 MEDIUM"},"69010":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: LARGE \u2192 MEDIUM"},"69127":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69177":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: LARGE \u2192 MEDIUM"},"69188":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69202":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69203":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69204":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69205":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69206":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69207":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69208":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69209":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69210":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69214":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69241":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69242":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69245":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69246":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69267":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69268":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69269":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69270":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69271":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69272":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69273":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69274":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69275":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69276":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69277":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69278":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69279":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69280":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69281":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69282":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69283":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69284":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69285":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69286":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69287":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69288":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69289":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69290":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69291":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69292":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69293":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69294":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69295":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69323":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69353":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69355":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69356":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69357":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69358":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69359":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69360":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69361":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69362":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69382":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69383":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69384":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124C \u00b7 first observation"},"69385":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124D \u00b7 first observation"},"69386":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124E \u00b7 first observation"},"69387":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124F \u00b7 first observation"},"69388":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124G \u00b7 first observation"},"69389":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124H \u00b7 first observation"},"69390":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124J \u00b7 first observation"},"69391":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69392":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124L \u00b7 first observation"},"69393":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124M \u00b7 first observation"},"69394":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69395":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124P \u00b7 first observation"},"69396":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69397":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69398":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124S \u00b7 first observation"},"69399":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124T \u00b7 first observation"},"69400":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69474":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-129A \u00b7 first observation"},"27740":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-24"},"63227":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-10"},"55867":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-20"},"62823":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"62412":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-29"},"61757":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-16"},"61703":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-23"},"60557":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-14"},"59812":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-01"},"59538":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-25"},"59347":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-08"},"58665":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"58503":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-07"},"58467":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-01"},"58272":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"57437":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-15"},"57326":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-07"},"57323":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-13"},"56968":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-20"},"56811":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"56285":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-06"},"67718":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"69181":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-07"},"69179":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-07"},"69096":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-17"},"69094":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-18"},"69093":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-01"},"69050":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"68801":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-12"},"68537":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-16"},"68469":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-19"},"68363":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-06"},"63492":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-20"},"67692":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"66910":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-17"},"66645":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-29"},"66174":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"66143":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-08"},"65033":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-19"},"64543":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"63811":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-02"},"63666":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"45569":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-09"},"46701":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-31"},"46691":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-14"},"46588":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-19"},"46564":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-18"},"46461":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-09"},"46335":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-30"},"46328":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-30"},"46168":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-24"},"46130":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-27"},"45674":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-21"},"54975":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-05"},"45568":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-01"},"44724":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-14"},"44537":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"42174":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-28"},"39690":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"39266":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"35272":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-25"},"34859":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-13"},"31538":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-29"},"13481":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-31"},"46749":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-24"},"55206":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-27"},"54837":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"54836":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-03"},"54691":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-16"},"54578":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-16"},"54333":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"53559":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-09"},"52451":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"51841":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-05"},"51839":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-06"},"50843":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-25"},"50404":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-02"},"50201":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-03"},"49131":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-20"},"48614":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-14"},"48592":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-25"},"47958":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-05"},"47754":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-08"},"47588":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"46714":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"47061":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-08"},"53450":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-09"}},"tip":[{"id":"46585"},{"id":"45760"}]}};
+    // BASELINE:BEGIN — regenerated by `python3 pipeline/snapshot.py build-baseline --inject card/index.html`; do not hand-edit between the markers
+    const BASELINE = {"buildAt":"2026-06-20T01:03:14Z","startDate":"2026-06-19","days":[{"d":"2026-04-20","c":67208,"s":"5cd6af76f043b0335ced62c887703585560bdff0b5daf272fa4c76636e5ec1ab","cs":"1838a06696902f7397d78d906c4bd9f5e9d9e372725ccbf4629bbd377231a740","sc":"rso-core-v1","pv":"genesis_from_gp","by":11301379,"oo":33715,"re":33493,"bc":{"geo":1835,"leo":28201,"meo":3679},"tc":{"debris":12320,"payload":17390,"rocket":2226,"tba":0,"unknown":1779},"dl":{"decayed":0,"new":0,"updated":0},"as":{"decay_notices":0,"directory_changes":0,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/20/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-21","c":67208,"s":"e2a06299f48298915a902f544234815a0e7e8d46ca97eaa356c46f5c93de7f06","cs":"c4ffe1aea1411239ec0d6b2059bec40415338994ca4914ef8753dad352bf6019","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302770,"oo":33714,"re":33494,"bc":{"geo":1835,"leo":28200,"meo":3679},"tc":{"debris":12320,"payload":17389,"rocket":2226,"tba":0,"unknown":1779},"dl":{"decayed":0,"new":0,"updated":26767},"as":{"decay_notices":0,"directory_changes":3,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/21/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-22","c":67211,"s":"b649c86ea8ef3e629b6ca4fe5a620218378b64f7788afa8ad3ce08785737844b","cs":"1d1658e33ce573829c89fbd6dab61223eb34607d597658fa06a57d429d1bc444","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11248229,"oo":33715,"re":33496,"bc":{"geo":1835,"leo":28200,"meo":3680},"tc":{"debris":12320,"payload":17407,"rocket":2226,"tba":0,"unknown":1762},"dl":{"decayed":0,"new":3,"updated":27194},"as":{"decay_notices":0,"directory_changes":24,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/22/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-23","c":67237,"s":"aca918b0d803343624625d52f906f16250c7c53f32755141f5296374f7028827","cs":"82bff6f34cf855595b16cb0a4f7085b1356eef8fe087cda6964be961cb65dbd1","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11281196,"oo":33741,"re":33496,"bc":{"geo":1835,"leo":28226,"meo":3680},"tc":{"debris":12320,"payload":17431,"rocket":2227,"tba":0,"unknown":1763},"dl":{"decayed":0,"new":26,"updated":26775},"as":{"decay_notices":0,"directory_changes":37,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/23/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-24","c":67247,"s":"0875b754cf11e1bd0f3bcb85abf466c63959bfe7eda02fd47ea64ae1c716bf4e","cs":"0a0b33a835f585f20b731de21975578a068f27784e07db9e5151ec9b224794a7","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11323100,"oo":33751,"re":33496,"bc":{"geo":1835,"leo":28236,"meo":3680},"tc":{"debris":12320,"payload":17439,"rocket":2229,"tba":0,"unknown":1763},"dl":{"decayed":0,"new":10,"updated":25681},"as":{"decay_notices":0,"directory_changes":21,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/24/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-25","c":67388,"s":"d495861c6a93d85b66dd55e95aaec05adf05dd31d4c28df90ea297f3e94b1bb0","cs":"1bbe5e9f6dc9bea6aad6112bcb91fdf83645043b372dcf571c7cba81b5c53bbd","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11210162,"oo":33892,"re":33496,"bc":{"geo":1835,"leo":28371,"meo":3686},"tc":{"debris":12320,"payload":17439,"rocket":2229,"tba":0,"unknown":1904},"dl":{"decayed":0,"new":141,"updated":31269},"as":{"decay_notices":0,"directory_changes":170,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/25/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-26","c":67389,"s":"01f8ca7d34acb5b442a01d2180fc68f6d5abfa0fcf9374e8225ff15af1a66e98","cs":"08de6e9c7fc87d20de17a8e41481d14ceb8cd3ba678fd281e832d97758ee9d15","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11217312,"oo":33893,"re":33496,"bc":{"geo":1835,"leo":28372,"meo":3686},"tc":{"debris":12320,"payload":17439,"rocket":2229,"tba":0,"unknown":1905},"dl":{"decayed":0,"new":1,"updated":28198},"as":{"decay_notices":0,"directory_changes":1,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/26/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-27","c":67391,"s":"0b80e3443908482aa720e41740c003e4b8965427be34a98d7463260a73bc48b8","cs":"9596d70d3bbbb50436da32bdcabce977f3c6b7a2bce8835f2d8be0535bb7bbb1","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11223865,"oo":33895,"re":33496,"bc":{"geo":1835,"leo":28374,"meo":3686},"tc":{"debris":12320,"payload":17439,"rocket":2229,"tba":0,"unknown":1907},"dl":{"decayed":0,"new":2,"updated":28073},"as":{"decay_notices":0,"directory_changes":2,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/27/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-28","c":67415,"s":"4727abba9fc4e599a4b768207ce31318c9b5e43a9deaa014ca7b0a8f873ec92b","cs":"9edbee00fab8035af57603e82dca61c339faab3757a636dc9f9f537416479822","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11233385,"oo":33919,"re":33496,"bc":{"geo":1835,"leo":28397,"meo":3687},"tc":{"debris":12320,"payload":17439,"rocket":2229,"tba":0,"unknown":1931},"dl":{"decayed":0,"new":24,"updated":27721},"as":{"decay_notices":0,"directory_changes":24,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/28/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-29","c":67440,"s":"69a1d6e549b9de74165ae42784d0c8ac0a9c40ba6104335d9be676d3d9eb7b50","cs":"01bdb8f2f8199e3d7770c4244b054b4e4cac5fa814fba815695fc9babf91f419","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11230417,"oo":33944,"re":33496,"bc":{"geo":1835,"leo":28422,"meo":3687},"tc":{"debris":12320,"payload":17439,"rocket":2229,"tba":0,"unknown":1956},"dl":{"decayed":0,"new":25,"updated":28533},"as":{"decay_notices":0,"directory_changes":25,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/29/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-04-30","c":67440,"s":"8d44ef178c730a7b6796c5564067fc1c4bd7eec2ef7c296eeefe391f4a25ddf7","cs":"6dee641f600bf3c303670d0fc14147881e5cc2cde3b1843733bcfa20430c2b33","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11258523,"oo":33944,"re":33496,"bc":{"geo":1835,"leo":28422,"meo":3687},"tc":{"debris":12320,"payload":17439,"rocket":2229,"tba":0,"unknown":1956},"dl":{"decayed":0,"new":0,"updated":28461},"as":{"decay_notices":0,"directory_changes":1,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/04/30/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-01","c":67440,"s":"f2a769f3791bb783e9a9ff1e989117dfee5ac106c82e92ea4d25ad09b5bdb6ab","cs":"e9fe102591934367c33fd6489412c575cc5f03d379bd4b71775678222b2c869d","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11301305,"oo":33942,"re":33498,"bc":{"geo":1835,"leo":28420,"meo":3687},"tc":{"debris":12322,"payload":17596,"rocket":2233,"tba":0,"unknown":1791},"dl":{"decayed":0,"new":0,"updated":27129},"as":{"decay_notices":0,"directory_changes":167,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/01/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-02","c":67494,"s":"ed49b7f51d1bd9c1664d93ab732588f7faf92e814950e47927b44cd2e7c54cf1","cs":"18c05784e969511a4e65596655f8bd3a5d41cdfd54dfee0f23f9b389d12d404b","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11252428,"oo":33996,"re":33498,"bc":{"geo":1835,"leo":28474,"meo":3687},"tc":{"debris":12322,"payload":17654,"rocket":2233,"tba":0,"unknown":1787},"dl":{"decayed":0,"new":54,"updated":27587},"as":{"decay_notices":0,"directory_changes":186,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/02/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-03","c":67494,"s":"1a703ba6183f6170b529fd0e3ab3d793b2dc0ceac618b183d9aa95b19c1da5b7","cs":"ed70676adf02636d92e40a5b25b2b406fb269e0772cfde5fe81fed321fc68df6","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11248451,"oo":33994,"re":33500,"bc":{"geo":1835,"leo":28472,"meo":3687},"tc":{"debris":12322,"payload":17652,"rocket":2233,"tba":0,"unknown":1787},"dl":{"decayed":0,"new":0,"updated":28704},"as":{"decay_notices":0,"directory_changes":2,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/03/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-04","c":67494,"s":"57527a66768b22ef11e9e3810862d57a587ef286b5c005f800323bc056141e05","cs":"02ccaf96a9d603f98475d7ad05685504a210c9b1e73f42bad6df5c27e4a30571","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11275209,"oo":33993,"re":33501,"bc":{"geo":1835,"leo":28471,"meo":3687},"tc":{"debris":12322,"payload":17651,"rocket":2233,"tba":0,"unknown":1787},"dl":{"decayed":0,"new":0,"updated":28118},"as":{"decay_notices":0,"directory_changes":1,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/04/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-05","c":67519,"s":"454ba7753cf3be3d73b10829f9b2d3e7a1379c9ff4dad70cc0077cc01f271763","cs":"e1e71d4740082618fba60e801f2a85a0ff5ce1f6ed4fdf46caa0566e12afa878","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11260788,"oo":34016,"re":33503,"bc":{"geo":1835,"leo":28493,"meo":3688},"tc":{"debris":12321,"payload":17651,"rocket":2233,"tba":0,"unknown":1811},"dl":{"decayed":0,"new":25,"updated":28115},"as":{"decay_notices":0,"directory_changes":27,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/05/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-06","c":67552,"s":"6f091caa8d0f929055860b2fe00d70ebc5ea71b598d75bc0489325bef4626fdf","cs":"0dd4af778d91246dd936eb4d56ae3d43448cbec01292ff21db4c9025dcc56d9f","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11269686,"oo":34048,"re":33504,"bc":{"geo":1835,"leo":28524,"meo":3689},"tc":{"debris":12321,"payload":17716,"rocket":2234,"tba":0,"unknown":1777},"dl":{"decayed":0,"new":33,"updated":27288},"as":{"decay_notices":0,"directory_changes":68,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/06/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-07","c":67552,"s":"9442399aa3ceabc380ce4b2e559e36e5cfbdb3c194a97d0a9690f910efbf1a6f","cs":"f72c94f4a4d8e5ed9354beb3f1a864edef280bde2f0dc2bdf136f3059beff1c7","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11310165,"oo":34048,"re":33504,"bc":{"geo":1835,"leo":28524,"meo":3689},"tc":{"debris":12321,"payload":17717,"rocket":2234,"tba":0,"unknown":1776},"dl":{"decayed":0,"new":0,"updated":27875},"as":{"decay_notices":0,"directory_changes":3,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/07/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-08","c":67552,"s":"070cba0139d3b7779aefdd578db77295b83f64b2135d52d66f57aa2624361560","cs":"d1abeaa192ea6b40f5e632c813062dae6e516d644b1edd84d1fc1d40efb657a9","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11282156,"oo":34048,"re":33504,"bc":{"geo":1835,"leo":28523,"meo":3690},"tc":{"debris":12321,"payload":17724,"rocket":2234,"tba":0,"unknown":1769},"dl":{"decayed":0,"new":0,"updated":27639},"as":{"decay_notices":0,"directory_changes":42,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/08/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-09","c":67552,"s":"324e8bc4429c1f934822f3be219b196afb948310fafad2f86882e2afa28711a3","cs":"cfd5dcbe110f3b3c7bc2aa9506ff627606ce05177165546672c5b30bd9f118a8","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11257315,"oo":34047,"re":33505,"bc":{"geo":1835,"leo":28522,"meo":3690},"tc":{"debris":12321,"payload":17724,"rocket":2234,"tba":0,"unknown":1768},"dl":{"decayed":0,"new":0,"updated":28601},"as":{"decay_notices":0,"directory_changes":3,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/09/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-10","c":67597,"s":"4231746b86f41453b22c8f53477ce6c8faab4426ee218815ee04260790f1925c","cs":"8c44b1d03a4f7f25dbee55eadbc69dd6fec53aa4dc1a6c639e4b5bc9e91c2b30","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11271631,"oo":34092,"re":33505,"bc":{"geo":1835,"leo":28567,"meo":3690},"tc":{"debris":12321,"payload":17724,"rocket":2234,"tba":0,"unknown":1813},"dl":{"decayed":0,"new":45,"updated":28722},"as":{"decay_notices":0,"directory_changes":45,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/10/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-11","c":67597,"s":"a9ba2e33611da3a64e4ccbbf362112ee2cdf7e3bceec800ad6bdbdda4e23a647","cs":"4f96c00a6cc305640727216bcd9532e066afc64998d75e90e6364d0549b73a71","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11270776,"oo":34091,"re":33506,"bc":{"geo":1835,"leo":28566,"meo":3690},"tc":{"debris":12321,"payload":17723,"rocket":2234,"tba":0,"unknown":1813},"dl":{"decayed":0,"new":0,"updated":28907},"as":{"decay_notices":0,"directory_changes":2,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/11/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-12","c":67600,"s":"6f5489502c1aeda5f6a50e928ac473b272bc8e67f11ae7e121d701e0fd970a35","cs":"bdd73f721e20d89139ab4d8805f8d48578700623179144060aef8eeac28cacdb","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11270241,"oo":34093,"re":33507,"bc":{"geo":1835,"leo":28568,"meo":3690},"tc":{"debris":12320,"payload":17727,"rocket":2235,"tba":0,"unknown":1811},"dl":{"decayed":0,"new":3,"updated":28801},"as":{"decay_notices":0,"directory_changes":8,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/12/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-13","c":67646,"s":"2b3af36b365f96eb5162fba75eb4849f9073a462d8a35191708531c98a763460","cs":"143d896e22f8612e7cff97736337a8b82cd9f7ddb528a00c9e03acf3ab291197","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11244789,"oo":34139,"re":33507,"bc":{"geo":1835,"leo":28614,"meo":3690},"tc":{"debris":12320,"payload":17727,"rocket":2235,"tba":0,"unknown":1857},"dl":{"decayed":0,"new":46,"updated":28136},"as":{"decay_notices":0,"directory_changes":46,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/13/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-14","c":67654,"s":"13903dcf63891e34d5e5f827d8b351acddb8c48f83274779a9e89ecd473bcfcc","cs":"9595361b83205801eeb78ac7c204125fe57cd9ccd1f7ff2a26d3e2b12ce1650c","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11288973,"oo":34146,"re":33508,"bc":{"geo":1835,"leo":28622,"meo":3689},"tc":{"debris":12320,"payload":17784,"rocket":2234,"tba":0,"unknown":1808},"dl":{"decayed":0,"new":8,"updated":27952},"as":{"decay_notices":0,"directory_changes":59,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/14/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-15","c":67655,"s":"9dd0ce634076256b8fb428ada43b1a411a7fb70de1e563e42f3ca7e51d6653ae","cs":"15717c219cba0ac389d5c953f81ccc9c8f5a4b54d58340479bd2c22ced77132e","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11342900,"oo":34147,"re":33508,"bc":{"geo":1835,"leo":28623,"meo":3689},"tc":{"debris":12320,"payload":17784,"rocket":2234,"tba":0,"unknown":1809},"dl":{"decayed":0,"new":1,"updated":26269},"as":{"decay_notices":0,"directory_changes":1,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/15/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-16","c":67657,"s":"6bb7ffae9c1e45238d0a30a934e54590d2fa428999b9ebfc365ea8438d8f2a23","cs":"56f6c67b81854923f7693671e84329bc3909e33ded2230e353c54ed8525a5e12","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11333330,"oo":34149,"re":33508,"bc":{"geo":1835,"leo":28625,"meo":3689},"tc":{"debris":12320,"payload":17796,"rocket":2234,"tba":0,"unknown":1799},"dl":{"decayed":0,"new":2,"updated":26746},"as":{"decay_notices":0,"directory_changes":14,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/16/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-17","c":67665,"s":"95807b05631aa7353af4ab9bffda3a7b84dbea1441377d77ac88422e79799f08","cs":"77ba7dbc5ad771296e86c0a135e0c2faa94ad31b6cfa9725fc82ca5bc4bf99eb","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11284531,"oo":34157,"re":33508,"bc":{"geo":1835,"leo":28633,"meo":3689},"tc":{"debris":12320,"payload":17797,"rocket":2234,"tba":0,"unknown":1806},"dl":{"decayed":0,"new":8,"updated":28737},"as":{"decay_notices":0,"directory_changes":19,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/17/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-18","c":67665,"s":"3921c7c12606f152973b31bea02c59e8e49401e5ecd3eda5b79c689712e6d043","cs":"624ea64533fa17ad910512456f0dd4a4a0058f3101b37642c12da691badba503","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11287909,"oo":34157,"re":33508,"bc":{"geo":1835,"leo":28632,"meo":3690},"tc":{"debris":12320,"payload":17797,"rocket":2234,"tba":0,"unknown":1806},"dl":{"decayed":0,"new":0,"updated":28613},"as":{"decay_notices":0,"directory_changes":0,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/18/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-19","c":67682,"s":"9d50e04d832fc6822aa3bc5ae41a0a880dac59bcdadc663e332f855628bb2477","cs":"2f86cc6f3a99dd0bb5fda28d3c0dd0850cbb29e9a926a95cd1b79eb4c653e50f","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11296071,"oo":34174,"re":33508,"bc":{"geo":1835,"leo":28649,"meo":3690},"tc":{"debris":12320,"payload":17797,"rocket":2234,"tba":0,"unknown":1823},"dl":{"decayed":0,"new":17,"updated":28085},"as":{"decay_notices":0,"directory_changes":17,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/19/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-20","c":67686,"s":"b6fe18ca536a5d971b86d28c1079c89f493633f2090521a467c7fb08cb8ddab7","cs":"2be5af69a8c3f3cbf10a479c48fe5898fa316af9389207f0b23a93b9a1f0064f","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11281312,"oo":34174,"re":33512,"bc":{"geo":1835,"leo":28649,"meo":3690},"tc":{"debris":12320,"payload":17832,"rocket":2234,"tba":0,"unknown":1788},"dl":{"decayed":0,"new":4,"updated":29240},"as":{"decay_notices":0,"directory_changes":45,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/20/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-21","c":67686,"s":"297eea809f97554e73527a5db008cecce25b5bafd282318d0352a75ab9664f55","cs":"ec30d582b78fdbd1905e2a01bb7faf3f76c00da5a79db339db4c5e125d38024f","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11351071,"oo":34172,"re":33514,"bc":{"geo":1835,"leo":28647,"meo":3690},"tc":{"debris":12320,"payload":17830,"rocket":2237,"tba":0,"unknown":1785},"dl":{"decayed":0,"new":0,"updated":28420},"as":{"decay_notices":0,"directory_changes":31,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/21/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-22","c":67686,"s":"6117f3f5edb840f97cb50144edb28e3fdb9bba6f5a3d84fe174040db7dba7c96","cs":"ebbb139c8b647d1cbed5c16db3651985168589e394ceccaafcba786555c9ae02","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302596,"oo":34171,"re":33515,"bc":{"geo":1835,"leo":28646,"meo":3690},"tc":{"debris":12320,"payload":17833,"rocket":2237,"tba":0,"unknown":1781},"dl":{"decayed":0,"new":0,"updated":27670},"as":{"decay_notices":0,"directory_changes":6,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/22/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-23","c":67687,"s":"24cf6ff665fb96f61f0bc8e5000791d8649357858adc6b2838f36c8e04d16dfa","cs":"13ccd247c21c0e324949f85ec2b90202d3ed04f877acaaa62ac1a0f2175c945b","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11281371,"oo":34170,"re":33517,"bc":{"geo":1835,"leo":28645,"meo":3690},"tc":{"debris":12320,"payload":17832,"rocket":2236,"tba":0,"unknown":1782},"dl":{"decayed":0,"new":1,"updated":28147},"as":{"decay_notices":0,"directory_changes":3,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/23/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-24","c":67690,"s":"afd61b63b5c88be641c5effb7274d28e002744bdfbfa1775ce4793ba6f109351","cs":"0f3c180ebdce41e8c87f002e31ba89571685153c06078ba8335a17bf6746aed6","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302464,"oo":34173,"re":33517,"bc":{"geo":1835,"leo":28648,"meo":3690},"tc":{"debris":12320,"payload":17837,"rocket":2238,"tba":0,"unknown":1778},"dl":{"decayed":0,"new":3,"updated":27487},"as":{"decay_notices":0,"directory_changes":8,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/24/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-25","c":67690,"s":"9060aeaf3c5e67cb7a4cc22b9955e812ea9f71633be8f7a8f88a167e218f0256","cs":"a27a561436809a81141e8038eac6c40f4b71d85ac5530e5188eb52cffa2fd3e6","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11265538,"oo":34173,"re":33517,"bc":{"geo":1835,"leo":28648,"meo":3690},"tc":{"debris":12320,"payload":17837,"rocket":2238,"tba":0,"unknown":1778},"dl":{"decayed":0,"new":0,"updated":24979},"as":{"decay_notices":0,"directory_changes":0,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/25/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-26","c":67692,"s":"971f4dfb156d1cd2d7618f165091fa5bee5ba02a19f126cf72904d21e5ce8fc8","cs":"4178b79a5427b8048ae8344bc685bb83a1443d8d9b7fa2167a083a702c94386e","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11312941,"oo":34171,"re":33521,"bc":{"geo":1835,"leo":28646,"meo":3690},"tc":{"debris":12320,"payload":17834,"rocket":2238,"tba":0,"unknown":1779},"dl":{"decayed":0,"new":2,"updated":29418},"as":{"decay_notices":0,"directory_changes":6,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/26/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-27","c":67694,"s":"1fc19e03ef1e3598a59dc504c667765fc97ba6d6b92d3fdb60fbae060be0855e","cs":"3f948b5ee394708fa0c5b575a2d4f5526ad727d4817fb86d32134f77ad8b86a4","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11324610,"oo":34171,"re":33523,"bc":{"geo":1835,"leo":28644,"meo":3692},"tc":{"debris":12320,"payload":17836,"rocket":2238,"tba":0,"unknown":1777},"dl":{"decayed":0,"new":2,"updated":27692},"as":{"decay_notices":0,"directory_changes":18,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/27/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-28","c":67749,"s":"bb9bc28bf8d859aad1095a63fef32b370a68adc39c1eedd04251aefece0ee895","cs":"2f089dae653c4f933d8e50da67305bea84d2487aa37327b920b92b999484095a","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302648,"oo":34226,"re":33523,"bc":{"geo":1835,"leo":28699,"meo":3692},"tc":{"debris":12320,"payload":17836,"rocket":2238,"tba":0,"unknown":1832},"dl":{"decayed":0,"new":55,"updated":28042},"as":{"decay_notices":0,"directory_changes":58,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/28/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-29","c":67770,"s":"b6d1e7862db5541d6aad5de754f2e02bbd8c12823d64e2ffc364db25caa6179b","cs":"5aafd9fe2d188aad720d9c6468f1831d0a83940e45e1be5971ad8873dacf5b86","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11302341,"oo":34247,"re":33523,"bc":{"geo":1835,"leo":28721,"meo":3691},"tc":{"debris":12320,"payload":17890,"rocket":2238,"tba":0,"unknown":1799},"dl":{"decayed":0,"new":21,"updated":28278},"as":{"decay_notices":0,"directory_changes":5262,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/29/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-30","c":67771,"s":"2dc136bc6d4d8ba64e2a76bf6540be3691fd56c1f2595a10b06f794df0733594","cs":"69e87c041e67b365e806256c684377bac98c56540e10861dba3b123de14a2c0d","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11324884,"oo":34246,"re":33525,"bc":{"geo":1835,"leo":28720,"meo":3691},"tc":{"debris":12321,"payload":17910,"rocket":2239,"tba":0,"unknown":1776},"dl":{"decayed":0,"new":1,"updated":28122},"as":{"decay_notices":0,"directory_changes":4113,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/30/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-05-31","c":67771,"s":"714ba3b4e83245876fc647f9ecf70bb6d5d95f2388db02fe305479c3c7d905ab","cs":"2a0363c47d927da4313030f4f6c6678e9911129c2bf12424b17eecbbfb0a6ddc","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11320473,"oo":34245,"re":33526,"bc":{"geo":1835,"leo":28720,"meo":3690},"tc":{"debris":12321,"payload":17917,"rocket":2239,"tba":0,"unknown":1768},"dl":{"decayed":0,"new":0,"updated":28053},"as":{"decay_notices":0,"directory_changes":444,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/05/31/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-01","c":67771,"s":"fc5f292a64204e77a863497abe3d0305d247e5c4ef011c7bcceea348c432ec5a","cs":"8846cb904c9431f293a8c307f1b0cd665ef49e954d53979476124e6946e30ad4","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11301034,"oo":34245,"re":33526,"bc":{"geo":1835,"leo":28720,"meo":3690},"tc":{"debris":12321,"payload":17918,"rocket":2239,"tba":0,"unknown":1767},"dl":{"decayed":0,"new":0,"updated":27557},"as":{"decay_notices":0,"directory_changes":96,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/01/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-02","c":67773,"s":"5841482b5541175d8a39c19766abfac9b2936ce01251f4c02a18ec6867b5a39e","cs":"f1c0e0409203e57a3b256a4e51637faa5f76a43a789d00dff5a527f08d8debaf","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11347151,"oo":34246,"re":33527,"bc":{"geo":1835,"leo":28721,"meo":3690},"tc":{"debris":12321,"payload":17919,"rocket":2240,"tba":0,"unknown":1766},"dl":{"decayed":0,"new":2,"updated":28497},"as":{"decay_notices":0,"directory_changes":58,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/02/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-03","c":67862,"s":"b133724ebd34b76a61607dd3cb0be55d8afe1c23cf675ea85ba69a565b28962a","cs":"adaa25577aad221b6842b6f29b96b6de49ba2e0c3add4909bbb98f3f189f9039","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11380032,"oo":34334,"re":33528,"bc":{"geo":1835,"leo":28809,"meo":3690},"tc":{"debris":12321,"payload":18001,"rocket":2241,"tba":0,"unknown":1771},"dl":{"decayed":0,"new":89,"updated":24510},"as":{"decay_notices":0,"directory_changes":135,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/03/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-04","c":67915,"s":"0713f31e6121000f511b0a5b5c2d64aefa366a4e567947ad2689ac01afd45e56","cs":"3c6eed791367ca7485ab2c3cfb81babdc22ec8f6e823a896c2e46728038f6336","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11424219,"oo":34387,"re":33528,"bc":{"geo":1835,"leo":28862,"meo":3690},"tc":{"debris":12321,"payload":18003,"rocket":2241,"tba":0,"unknown":1822},"dl":{"decayed":0,"new":53,"updated":20959},"as":{"decay_notices":0,"directory_changes":84,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/04/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-05","c":67915,"s":"a217462bbc031ab4179e63fd3d69479d9ab69022e51d148ddc4bd7f3f7e5ec9d","cs":"156d34876b7a68aa0014e3e6d2313ec7bf995f832336ef68e6a951ad8aea0c27","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11452390,"oo":34387,"re":33528,"bc":{"geo":1835,"leo":28862,"meo":3690},"tc":{"debris":12321,"payload":18003,"rocket":2241,"tba":0,"unknown":1822},"dl":{"decayed":0,"new":0,"updated":18203},"as":{"decay_notices":0,"directory_changes":8,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/05/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-06","c":67915,"s":"78b4e985d70815579587402e2a97a707e8032a805642168cfbf4ced89d09e0b9","cs":"be7fc77a2eaf68c50273f66985142ad0b0b810d03c404428a0c87e92e5264105","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11379578,"oo":34387,"re":33528,"bc":{"geo":1836,"leo":28862,"meo":3689},"tc":{"debris":12321,"payload":18057,"rocket":2241,"tba":0,"unknown":1768},"dl":{"decayed":0,"new":0,"updated":26056},"as":{"decay_notices":0,"directory_changes":109,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/06/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-07","c":67915,"s":"d35dfd6ba531b98dbf5feb8cb787848b06dcc297ef5a36f88a93107ee97d36e3","cs":"086956fe197b16f2382187d462845b2e8aefc621fc1d8bec2f6a40aeaa30952b","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11384256,"oo":34386,"re":33529,"bc":{"geo":1836,"leo":28861,"meo":3689},"tc":{"debris":12321,"payload":18056,"rocket":2241,"tba":0,"unknown":1768},"dl":{"decayed":0,"new":0,"updated":27122},"as":{"decay_notices":0,"directory_changes":42,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/07/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-08","c":67915,"s":"96a07ef20b970a00f32a4f63d138dda4d4531a8eac511e2953be33a8033ffb39","cs":"6da11fe361442a6dab4d4bcd916a1ba2de88eeea16e2bfcc5620a835301fd3b1","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11388944,"oo":34386,"re":33529,"bc":{"geo":1836,"leo":28861,"meo":3689},"tc":{"debris":12321,"payload":18056,"rocket":2241,"tba":0,"unknown":1768},"dl":{"decayed":0,"new":0,"updated":23758},"as":{"decay_notices":0,"directory_changes":28,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/08/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-09","c":67915,"s":"69ffcbf4b4f3f0d45514021e9ab029af4f967c2aed16e574ccb9fa9f11ac4c7b","cs":"32f1fc3c886cffb71df31c443e9a1cbce56f78f59d7047df69d78b5fe4c2cc22","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11347977,"oo":34386,"re":33529,"bc":{"geo":1836,"leo":28861,"meo":3689},"tc":{"debris":12321,"payload":18056,"rocket":2241,"tba":0,"unknown":1768},"dl":{"decayed":0,"new":0,"updated":27580},"as":{"decay_notices":0,"directory_changes":39,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/09/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-10","c":67917,"s":"6c9be27fae31c850ba47d8a7b73a5f64423824216560804b6eedd81cfddf64a2","cs":"c9b50187fd74988ff935435ed3a8645ebe3461a0284c007f8d892ec2796d0754","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11394550,"oo":34387,"re":33530,"bc":{"geo":1836,"leo":28863,"meo":3688},"tc":{"debris":12321,"payload":18063,"rocket":2241,"tba":0,"unknown":1762},"dl":{"decayed":0,"new":2,"updated":27042},"as":{"decay_notices":88,"directory_changes":21,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/10/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-11","c":67971,"s":"88c61319f421b01f91c9b65b19cbe4999e28b16d591fd9246874a741aee02d72","cs":"05fb722f634a11139acfe45d4e1725f13c2d94a9a39bfed9c863f44720763f99","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11413914,"oo":34440,"re":33531,"bc":{"geo":1836,"leo":28916,"meo":3688},"tc":{"debris":12321,"payload":18115,"rocket":2241,"tba":0,"unknown":1763},"dl":{"decayed":0,"new":54,"updated":26094},"as":{"decay_notices":87,"directory_changes":106,"tip_count":0},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/11/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-12","c":67991,"s":"8ae46a22121dd9f68f28795dd83e9f7213a8f19d7391eeaeaf92fe1a30c41dc6","cs":"c3c7eb52cf467295d95a21dea1ae93b4e00643f4502f599a8bac9dc805f6781b","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11361687,"oo":34460,"re":33531,"bc":{"geo":1836,"leo":28935,"meo":3689},"tc":{"debris":12321,"payload":18133,"rocket":2242,"tba":0,"unknown":1764},"dl":{"decayed":0,"new":20,"updated":26691},"as":{"decay_notices":88,"directory_changes":93,"tip_count":2},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/12/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-13","c":67997,"s":"fe5333bef049520fddf35913b72cfbf74461a4691ed3bfc8658025c03bd3b592","cs":"971773513761cc3002c9b991cfe4cd95a36a505e35863389c1abc73ef5fb6831","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11401116,"oo":34466,"re":33531,"bc":{"geo":1836,"leo":28941,"meo":3689},"tc":{"debris":12321,"payload":18133,"rocket":2242,"tba":0,"unknown":1770},"dl":{"decayed":0,"new":6,"updated":23493},"as":{"decay_notices":86,"directory_changes":28,"tip_count":6},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/13/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-14","c":67998,"s":"44de7c269ebe83aab075887528b8b03f59de8d2f9c5bc0065196164d632f3b5d","cs":"92c36eae7bef6b2024fc0d176c1f65a08172652f5933433c81f4db9f3e472779","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11357573,"oo":34467,"re":33531,"bc":{"geo":1836,"leo":28942,"meo":3689},"tc":{"debris":12321,"payload":18133,"rocket":2243,"tba":0,"unknown":1770},"dl":{"decayed":0,"new":1,"updated":27819},"as":{"decay_notices":86,"directory_changes":108,"tip_count":25},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/14/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-15","c":67998,"s":"6109ed01b4d6cdecca614d904f07ecf3fb3be6f675bc6bb244a2f64ec493200b","cs":"e61b3c5bda28ca276e8d91f33e4257f9d225ddb74ae44fcf15a7979acf64cd94","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11371050,"oo":34465,"re":33533,"bc":{"geo":1835,"leo":28940,"meo":3690},"tc":{"debris":12321,"payload":18131,"rocket":2243,"tba":0,"unknown":1770},"dl":{"decayed":0,"new":0,"updated":27065},"as":{"decay_notices":87,"directory_changes":21,"tip_count":27},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/15/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-16","c":68006,"s":"beb49ac476387d7e7f19161f009b5b6209ab8c44defe0ea5fe8eac7798e066a2","cs":"741c505a4bfa072afd8d74d059eb3eff4ce3c17fec8d87da174aacf66c18ef7f","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11423557,"oo":34471,"re":33535,"bc":{"geo":1836,"leo":28946,"meo":3689},"tc":{"debris":12320,"payload":18130,"rocket":2243,"tba":0,"unknown":1778},"dl":{"decayed":0,"new":8,"updated":26245},"as":{"decay_notices":95,"directory_changes":20,"tip_count":18},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/16/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-17","c":68066,"s":"5b101de2ec537dd1b1394ab10edf370a9c7a41e067a737f2c4fcf07a2665ae07","cs":"814bda5b876797d8bbef6ee13c954c1ab9f004312de9818d9d8f0d1c394fc41a","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11377124,"oo":34530,"re":33536,"bc":{"geo":1838,"leo":29003,"meo":3689},"tc":{"debris":12320,"payload":18131,"rocket":2244,"tba":0,"unknown":1835},"dl":{"decayed":0,"new":60,"updated":27468},"as":{"decay_notices":92,"directory_changes":92,"tip_count":5},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/17/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-18","c":68130,"s":"012abd23fe95d728af76ff96a9d23c3bc9dbaf847f52d1aea349f938dc44c8cf","cs":"3461abb045fa40342b711133db077d468acc5eab9bf1884143ebec8a5c8e4179","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11394888,"oo":34593,"re":33537,"bc":{"geo":1839,"leo":29063,"meo":3691},"tc":{"debris":12320,"payload":18131,"rocket":2243,"tba":0,"unknown":1899},"dl":{"decayed":0,"new":64,"updated":25473},"as":{"decay_notices":4,"directory_changes":68,"tip_count":4},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/18/catalog.json.gz","ck":"catalog_gz"},{"d":"2026-06-19","c":68138,"s":"ab91a5cb0839e5cd2a22e08fb9736ab2f5ce27738f8348707d5ddf39527afa04","cs":"bdb3e743254e66be2ddb9165342269f47fcf9df1630f3cbd91f76cc3d0efefb1","sc":"rso-core-v1","pv":"rolling_gp_history_delta","by":11365255,"oo":34601,"re":33537,"bc":{"geo":1839,"leo":29071,"meo":3691},"tc":{"debris":12320,"payload":18236,"rocket":2247,"tba":0,"unknown":1798},"dl":{"decayed":0,"new":8,"updated":27247},"as":{"decay_notices":91,"directory_changes":143,"tip_count":4},"cu":"https://raw.githubusercontent.com/OMPub/RSO/node/data/2026/06/19/catalog.json.gz","ck":"catalog_gz"}],"chainMeta":{"contractAddress":"0x867FcC4f0339009043E9F6e554DD516Bcf1bcaa9","chainId":11155111},"attest":{"2026-04-20":{"b":"0xe651a58398fe906551be2f4d2ec39bace608e7aa60f3c8c30cd276aac96e103e","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-21":{"b":"0xa1006d1e199ec15b56bc3764faeb0bf791764c1abcad2008805fd9b182bf2c3c","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-22":{"b":"0xa6ae90b4d7ddcfee71d1ca6d7fe55d551c2093f343044ce30445908d0bd4a653","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-23":{"b":"0x1a7f04542fcb001f75bdf555e9cc93cc5ced14d70405f2fb8313b07567e05d64","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-24":{"b":"0x170bf30e136ebbe53ed7a48355a888aea59379729ba92e6119cbcd5fdce21c4a","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-25":{"b":"0x3a5d90075252610e347a4502f641416feb54f2c36924919ed8824c98737d9896","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-26":{"b":"0x4451406a40a45aca3880032c9e2982c00ba30f04c3513627721c01e7ed0fe24d","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-27":{"b":"0x32cbd838729a0bf1bcb17c8ecda46bc62da94738f40c6727a727a014afa39026","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-28":{"b":"0x54fde370719768ddb6f71209c82fc0dce9ded60169cee3390b860db2d9ee87a0","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-29":{"b":"0x2a7742eb8537004ab68c42727b913682618f1e4e210ea4f73490dba8db088956","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-04-30":{"b":"0x76b5faa7ecc20afe1e90f74f77351795e2e386dd16152262e52c429e8388a903","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-01":{"b":"0x372b2394dd4c2cdb8770a333a18ad9b1ff30e03093d01edf68e927c27b099c5c","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-02":{"b":"0x762d59b1dc702e94794b049cc49f757ec493bf78eeb089714e619974abcd6045","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-03":{"b":"0x4de659d1a529139c5e2cf294ba464f5b2293c7238c1a515e959104dd5f24a920","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-04":{"b":"0x7df63ade68e09e32a9bc992ec4ad454caeeed05f736282786ca3602bb38b0eee","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-05":{"b":"0xa8c85b0c2d53cc6825e9a798a5ae185e2fdadaab7e292ccb5773bbd8004c0838","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-06":{"b":"0xe8c4bee2a45494b9dc155c1b2dd55260b65b3b5747e521c50c3edbe28cc91d48","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-07":{"b":"0xaecc54b4c142a7fb0cad55a6a18ccaa7e11b6ac6189b76fa022f33c949a8179a","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-08":{"b":"0xdb1c799f5a73a733d304323eaec0a2a6c16070ef383521f744a4c22ab7257cc5","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-09":{"b":"0x368af51a894a85b9f5217eb8cc615af9258c9f7122ca22e4991a3ee68baeb567","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-10":{"b":"0x2d8681fea89985c5d6fa9bbbb2b17edb633fe62f27cc684354d54aa4fed5f1b8","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-11":{"b":"0x67800ab59f99c40da3ece923d2652debc472700ef855e14ad635f48ff58450c5","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-12":{"b":"0xe894fe42359d674fb38e9f20f6284201116112202a9215993de88cd2790eb7dc","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-13":{"b":"0xb1628f223aa0ce1d30126ddb70cd46eaccc8b68fac79461eea288fcfdb42cd2e","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-14":{"b":"0x584f3e215518999db48c0ce5996144b1dc3674ec8e59a4d26a4caa4123a049f7","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-15":{"b":"0xd9f144c93cc6b9dbf2ea0d1d14aa2b8fd9158d5b1e88fa4e09e6c5355becec7f","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-16":{"b":"0xfd60086aaa933178c2bdd7ed4d8e591bcea909ca2f9532826241265eca8f251a","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-17":{"b":"0xd6b2987eb44eddbcb8735b6820106f13ac8dcf7195e22555d115aae17ca0f50f","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-18":{"b":"0xdc6914bd28b5aaa7f961b608576730e9c8ead963d621d8dcfff352e45e14849b","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-19":{"b":"0x6172f6221ece7eebebece3a1a1be9fd8f5fa3ea1dec540621e8588d8104a76df","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-20":{"b":"0xc09aaceec7d42f48808082770d767365eccd0d4a9a3bdc816d4aec7bae9a8e83","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-21":{"b":"0x0e4e7545235058c9d33b16b7c2d1975894b6bc995592c33b86e60e7a35c268b9","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-22":{"b":"0x7c981351dd3e0eaaf39798574e42e6be378d69af647456bc93859e8b4a55140e","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-23":{"b":"0x0903011869b1cf3d29b1f02370454d5c3ba3975388d5a0cabd1ac3149efe5b26","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-24":{"b":"0xea19eecbe3b4155369b42814e9c3cfb43b2983fc20832eaa2208acdf0af72c15","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-25":{"b":"0xabad2fe9bf69a74b37dfaf9d3e10b4aa954e156bd3c131c760df36e2252a9d47","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-26":{"b":"0x2d39920ad2e2fb60175e7c7cd00b69ef6c98261220629395e2dbe331ce2f713d","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-27":{"b":"0xc298eee124519c191ce7f7c7cac26b190452c206d2cafef1281e9e8a70253b97","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-28":{"b":"0xd9edc87c59e4ad73ddbfb74840693fae7ce76c3cf9ece46fc0f6fbc64514035e","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-29":{"b":"0xaa920d497b4b94d240dbc0697fa65acf655d7a09aec1905bbf5de2bb47f30e41","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-30":{"b":"0x99ee22ab9ca0762ae48cfccbadf461e18ae0f9af607ad78154b40577d17e7a46","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-05-31":{"b":"0xeb34cbbaace6dead277f524baa8165fd1279be3ad3d84b067876d64681accdf5","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-01":{"b":"0x691cc5e5af20b6991f4b10df9fa909d936053bda0ab3f51a2551010d132eba30","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-02":{"b":"0x48e4fd6e871ea981352e899a6cade2eb63a21d2ee72ed1823fc9b0e3e2b54847","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-03":{"b":"0x149934aa8289f034c113f243ed739be210be96908de11b6dd6ce05803d61719a","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-04":{"b":"0xc3c8b53567ffcdc08e335d517faa81218bf2d65180981d4f5ff8d86dd0700954","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-05":{"b":"0xd6dfae349e33dbd82122a0d58469609469ef50a915f77a4d972d1be7339880f0","t":0,"g":1,"n":2,"a":2,"src":1,"ar":[]},"2026-06-06":{"b":"0x4fcf0ac19aee184905b1e4affb5a837c5b4b5c768e56fb991b86fd86ff54bc10","t":0,"g":1,"n":2,"a":2,"src":2,"ar":[]},"2026-06-07":{"b":"0x65db01610ee89979f47778515b1311be5331fa0e311eee2cd9a7d8efd573f068","t":1,"g":1,"n":2,"a":2,"src":2,"ar":[]},"2026-06-08":{"b":"0x0ee986879b439ffa4d0ee524e8d76e1490a30f0743638a02518a2a015b87ea24","t":1,"g":1,"n":2,"a":2,"src":2,"ar":[]},"2026-06-09":{"b":"0x06c958fd38fa8bffce8591fa3ec4aadfd63c4679710e0f0a6d50d14bc0f36574","t":0,"g":1,"n":2,"a":2,"src":2,"ar":[]},"2026-06-10":{"b":"0x798b9f69c010ce04df8a6eb8f5f7efc5ea958742772172b2a987385650240d5b","t":0,"g":1,"n":2,"a":2,"src":2,"ar":[]}},"annoDate":"2026-06-12","anno":{"decayNotices":88,"edits":202,"tipCount":2,"observedAt":"2026-06-12T05:05:15Z","byId":{"46585":{"kind":"tip","field":null,"text":"reentry predicted 2026-06-15 17:51 \u00b7 \u00b118h \u00b7 descending"},"45760":{"kind":"tip","field":null,"text":"reentry predicted 2026-06-15 19:51 \u00b7 \u00b118h \u00b7 descending"},"22442":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: MEDIUM \u2192 SMALL"},"29170":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"31431":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"31499":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"31996":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"33720":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"34239":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"35230":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"37457":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"38133":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"39806":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"46453":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: SMALL \u2192 MEDIUM"},"61327":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: MEDIUM \u2192 SMALL"},"63181":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: LARGE \u2192 MEDIUM"},"68437":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: TBD \u2192 US"},"68462":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: LARGE \u2192 MEDIUM"},"69010":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: LARGE \u2192 MEDIUM"},"69127":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69177":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: LARGE \u2192 MEDIUM"},"69188":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69202":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69203":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69204":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69205":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69206":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69207":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69208":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69209":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69210":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69214":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69241":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69242":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69245":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69246":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69267":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69268":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69269":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69270":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69271":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69272":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69273":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69274":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69275":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69276":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69277":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69278":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69279":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69280":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69281":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69282":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69283":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69284":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69285":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69286":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69287":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69288":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69289":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69290":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69291":{"kind":"other","field":"SITE","text":"SITE: AFWTR \u2192 AFETR"},"69292":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69293":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69294":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69295":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69323":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69353":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69355":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69356":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69357":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69358":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69359":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69360":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69361":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69362":{"kind":"physical","field":"RCS_SIZE","text":"RCS_SIZE: None \u2192 LARGE"},"69382":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69383":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69384":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124C \u00b7 first observation"},"69385":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124D \u00b7 first observation"},"69386":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124E \u00b7 first observation"},"69387":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124F \u00b7 first observation"},"69388":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124G \u00b7 first observation"},"69389":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124H \u00b7 first observation"},"69390":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124J \u00b7 first observation"},"69391":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69392":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124L \u00b7 first observation"},"69393":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124M \u00b7 first observation"},"69394":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69395":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124P \u00b7 first observation"},"69396":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69397":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69398":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124S \u00b7 first observation"},"69399":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-124T \u00b7 first observation"},"69400":{"kind":"identity","field":"COUNTRY_CODE","text":"COUNTRY_CODE: None \u2192 PRC \u00b7 first observation"},"69474":{"kind":"identity","field":"OBJECT_ID","text":"OBJECT_ID: None \u2192 2026-129A \u00b7 first observation"},"27740":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-24"},"63227":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-10"},"55867":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-20"},"62823":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"62412":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-29"},"61757":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-16"},"61703":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-23"},"60557":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-14"},"59812":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-01"},"59538":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-25"},"59347":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-08"},"58665":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"58503":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-07"},"58467":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-01"},"58272":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"57437":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-15"},"57326":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-07"},"57323":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-13"},"56968":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-20"},"56811":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"56285":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-06"},"67718":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"69181":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-07"},"69179":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-07"},"69096":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-17"},"69094":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-18"},"69093":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-01"},"69050":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"68801":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-12"},"68537":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-16"},"68469":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-19"},"68363":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-06"},"63492":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-20"},"67692":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"66910":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-17"},"66645":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-29"},"66174":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"66143":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-08"},"65033":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-19"},"64543":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"63811":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-02"},"63666":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"45569":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-09"},"46701":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-31"},"46691":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-14"},"46588":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-19"},"46564":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-18"},"46461":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-09"},"46335":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-30"},"46328":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-30"},"46168":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-24"},"46130":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-27"},"45674":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-21"},"54975":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-05"},"45568":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-01"},"44724":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-14"},"44537":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"42174":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-28"},"39690":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"39266":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"35272":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-25"},"34859":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-13"},"31538":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-29"},"13481":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-31"},"46749":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-24"},"55206":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-27"},"54837":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"54836":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-03"},"54691":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-16"},"54578":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-16"},"54333":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"53559":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-09"},"52451":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-26"},"51841":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-05"},"51839":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-06"},"50843":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-25"},"50404":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-02"},"50201":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-03"},"49131":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-20"},"48614":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-14"},"48592":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-25"},"47958":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-05"},"47754":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-08"},"47588":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-04"},"46714":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-05-22"},"47061":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-08"},"53450":{"kind":"other","field":null,"text":"decay reported \u00b7 epoch 2026-06-09"}},"tip":[{"id":"46585"},{"id":"45760"}]}};
+    // BASELINE:END
 
     const mobile = matchMedia("(max-width: 760px)").matches;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -557,6 +603,10 @@
     // Band speeds above only flavour the WARP rush.
     const LAP_BY_BAND = [300, 720, 3600];
     const PROP = { bands: { LEO: 0.905, MEO: 0.066, GEO: 0.029 } };
+    // The on-orbit share of the record is very stable day to day (~0.51). We keep the last
+    // exact value seen so "on orbit now" can show a near-exact figure the instant a day opens —
+    // before its full catalog downloads — then snap to the precise count once it does.
+    let onOrbitRatio = 0.507;
     const COLORS = {                                  // distinct hues that survive the brightness clip
       payload: [0.30, 0.52, 1.0],   // blue — stays blue (not white) when bright/near
       rocket:  [1.0, 0.58, 0.16],   // hot orange
@@ -601,7 +651,7 @@
     const typeCountsByDate = new Map(); // date -> {payload,rocket,debris,unknown,tba}  (on-orbit)
     const orbitByDate = new Map();      // date -> {onOrbit, reentered, total}
     const deltaByDate = new Map();      // date -> {updated,new,decayed,carried}
-    const annoByDate = new Map();       // date -> {decayNotices, edits, renames, byId:Map(norad -> note)}
+    const annoByDate = new Map();       // date -> {decayNotices, tipCount, changedObjects, byId:Map(norad -> note)}
     const integrityByDate = new Map();  // date -> true: downloaded catalog bytes hash to the ledger sha256
     const attestByDate = new Map();   // date -> {blockHash, tdh, groups, nodes, attestations, sources, ar}
     // first4…last4, the way eth hashes/addresses are usually shown (0x-aware)
@@ -617,7 +667,8 @@
       yaw: 0, pitch: 0, yawT: 0, pitchT: 0, wasTraveling: false,
       pointer: null, loadToken: 0, selIdx: -1, followNorad: null,   // a selection follows its NORAD across day changes
       lens: 0, keys: new Set(), tilt: null,   // tilt = {base:{b,g}} once enabled
-      ethRank: 0, opSource: 0,                // witness settings (rank 0 = any sweeper-accepted witness)
+      ethRank: 0,                             // witness setting (rank 0 = any sweeper-accepted witness)
+      liveNode: null, manifest: null,         // which ranked node is serving live, + its index manifest
       chainMeta: null,                        // {contractAddress, chainId} from the attestation index
       objects: [], catalogDate: null, suspended: false, zen: false, perfVisible: false, haloFade: 0, engaged: false,
       workStride: mobile ? 2 : 2, workPhase: 0, jumpDay: -1, timebarPct: -1
@@ -779,8 +830,12 @@
     // one sun for the whole scene: low over the limb, upper-left — solids take raking
     // light and the atmosphere wears a dawn-bright arc on the same side
     const SUN = new THREE.Vector3(-0.55, 0.42, -0.72).normalize();
-    scene.add(new THREE.AmbientLight(0x46525e, 0.6));
-    const fieldSun = new THREE.DirectionalLight(0xffffff, 1.9); fieldSun.position.copy(SUN).multiplyScalar(10); scene.add(fieldSun);
+    // Bright cool hemisphere fill so every face of a solid reads its own (legend) colour, not black —
+    // the BatchedMesh uses vertexColors, so a brighter omni fill paints the unlit side in the object's
+    // hue. A reduced key sun keeps 3D form; an anti-sun fill lifts the shadow side the camera often sees.
+    scene.add(new THREE.HemisphereLight(0xccd6ea, 0x232a33, 0.92));
+    const fieldSun = new THREE.DirectionalLight(0xffffff, 1.5); fieldSun.position.copy(SUN).multiplyScalar(10); scene.add(fieldSun);
+    const fieldFill = new THREE.DirectionalLight(0xc2cee2, 0.6); fieldFill.position.copy(SUN).multiplyScalar(-9); scene.add(fieldFill);
     const batch = new THREE.BatchedMesh(MESH_POOL, MESH_POOL * RES_V, MESH_POOL * RES_I,
       new THREE.MeshPhongMaterial({ vertexColors: true, flatShading: true, shininess: 26 }));
     // Reserved placeholder geometry gives the batch itself an empty cached bound on its
@@ -979,6 +1034,7 @@
       } else {
         g = (rand2(nid, 23) - 0.5) * (band === 0 ? 1.5 : 2.1);
       }
+      if (nid === 25544) g *= 0.4; // the ISS: bias its orbital plane toward the central river so it floats by a little nearer the middle (still a normal orbiting object)
       if (band === 1) g *= 0.16; // keep MEO near the viewer's level while retaining slight parallax
       return {
         band,
@@ -1408,11 +1464,6 @@
     // ════════════════════════════════════════════════════════════════════
     // DATA — indexer + ledger on boot; download/unzip the day's archive on stop
     // ════════════════════════════════════════════════════════════════════
-    async function fetchJson(url, optional = false) {
-      const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) { if (optional && r.status === 404) return null; throw new Error(`${r.status} ${url}`); }
-      return r.json();
-    }
     // Seed the timeline, ledger metadata, attestation summary and the anchor day's
     // annotation digest from the embedded baseline — so the archive renders with NO
     // network. Live data layers on top; the baseline is the permanent floor.
@@ -1422,8 +1473,11 @@
       if (ds.length) {
         witnessDates = ds.map((e) => e.d);
         TOTAL = witnessDates.length - 1;
-        ds.forEach((e) => ledgerByDate.set(e.d, { count: e.c, sha: e.s || "", bands: null,
-          raw: { object_count: e.c, sha256: e.s, content_sha256: e.cs, content_schema: e.sc, provenance: e.pv, compressed_bytes: e.by, source: "space-track.org", format: "OMM/JSON" } }));
+        ds.forEach((e) => { seedAnnoSummary(e.d, e.as); ledgerByDate.set(e.d, { count: e.c, sha: e.s || "", bands: e.bc || null,
+          // The compact Tier-1 aggregate, inlined as-of-mint: e.oo/e.re (on-orbit/re-entered split),
+          // e.bc/e.tc (band/type counts), e.dl (delta {updated,new,decayed}), e.cu/e.ck (CORS catalog
+          // locator). Present → the HUD is exact on the first frame with no catalog; absent → estimated.
+          raw: { object_count: e.c, on_orbit_count: e.oo, reentered_count: e.re, band_counts: e.bc, type_counts: e.tc, delta: e.dl, catalog_url: e.cu, catalog_url_kind: e.ck, sha256: e.s, content_sha256: e.cs, content_schema: e.sc, provenance: e.pv, compressed_bytes: e.by, source: "space-track.org", format: "OMM/JSON" } }); });
       }
       for (const [date, a] of Object.entries(BASELINE.attest || {})) {
         attestByDate.set(date, { blockHash: a.b, tdh: a.t, groups: a.g, nodes: a.n, attestations: a.a, sources: a.src, ar: a.ar || [] });
@@ -1435,47 +1489,212 @@
         const tipIds = new Set((a.tip || []).map((t) => String(t.id)));
         const decayIds = new Set(), changedIds = new Set();
         for (const [id, n] of byId) { if (n.kind === "tip") continue; if (/decay reported/.test(n.text || "")) decayIds.add(id); else changedIds.add(id); }
-        annoByDate.set(BASELINE.annoDate, { decayNotices: a.decayNotices || 0, edits: a.edits || 0, tipCount: a.tipCount || 0,
-          changedObjects: changedIds.size, changedIds, decayIds, tipIds, renames: 0, observedAt: a.observedAt || null, byId });
+        annoByDate.set(BASELINE.annoDate, { decayNotices: a.decayNotices || 0, tipCount: a.tipCount || 0,
+          changedObjects: changedIds.size, changedIds, decayIds, tipIds, byId });
       }
       const si = witnessDates.indexOf(BASELINE.startDate);
       if (si >= 0) { state.cursor = si; state.target = si; state.shownDay = -1; }
     }
-    async function boot() {
-      seedFromBaseline();                                  // instant, network-free archive
-      const anchorDate = isoFor(state.cursor), startRec = recordMeta(anchorDate);
-      // The ledger carries the full record count before the catalog arrives. Its stable
-      // on-orbit share gives the placeholder river almost exactly its eventual density,
-      // so attaching live identities does not redraw the whole sky.
-      assignField([], Math.max(FIELD, Math.round(startRec.count * 0.507)));
-      showDay(anchorDate);
-      // Permanence-first head resolution: the embedded baseline already stands; these
-      // sources extend it with live days. The ledger's ordered dates ARE the timeline —
-      // correct for a 1957 backfill, partial runs, or gaps between witnessed days.
-      for (const url of CONFIG.ledgerSources) {
-        try {
-          const ledger = await fetchJson(url);
-          const ordered = Array.isArray(ledger) ? ledger.filter((e) => e && /^\d{4}-\d{2}-\d{2}$/.test(e.date)).sort((a, b) => a.date.localeCompare(b.date)) : [];
-          if (!ordered.length) continue;
-          ordered.forEach((e) => ledgerByDate.set(e.date, { count: e.object_count, sha: String(e.sha256 || ""), bands: e.band_counts || e.bands || null, raw: e }));
-          witnessDates = ordered.map((e) => e.date);
-          TOTAL = witnessDates.length - 1;
-          // Hold the camera on the anchor day even as the live timeline extends past it,
-          // unless the visitor has already started flying.
-          if (!state.engaged) { const ai = Math.max(0, witnessDates.indexOf(anchorDate)); state.cursor = ai; state.target = ai; state.shownDay = -1; }
-          break;
-        } catch (e) { /* try next source; the baseline stands */ }
+    // ── live source nodes ──────────────────────────────────────────────────────────────────
+    // Every live fetch walks the ranked nodes top-down; the first to answer wins, the rest are
+    // automatic fallback. state.nodes is re-orderable in settings and persisted per device.
+    // Hardening: a node is a backing publisher on GitHub raw. EVERY node — from CONFIG, the
+    // published roster, or pasted by the visitor — passes through sanitizeNode before it can reach
+    // a URL or the DOM, so an attacker who controls a roster (or social-engineers a paste) can only
+    // ever cause a fetch of github.com/<owner>/<repo>: no other host, no path-traversal, no script.
+    // All fetched payloads are read with JSON.parse only (safeParse) — never eval/Function, and the
+    // catalog bytes are still hash-checked against the index. Strings are escaped at render time.
+    // owner/repo: owner is a GitHub login (alnum + single hyphens, no dots); repo allows . _ - ;
+    // exactly one slash. Locks every node to a real-looking github.com/<owner>/<repo> path.
+    const REPO_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
+    const BRANCH_RE = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;                            // a git ref, no leading dot
+    const MAX_NODES = 64;                                                         // cap on an untrusted roster
+    const safeBranch = (b, fallback) => (typeof b === "string" && BRANCH_RE.test(b) && !b.includes("..")) ? b : fallback;
+    // Parse a pasted node: accept "owner/repo" or a github.com/owner/repo URL, nothing else.
+    function parseNodeInput(text) {
+      let s = String(text || "").trim();
+      const m = s.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([^/]+\/[^/#?]+)/i);
+      if (m) s = m[1];
+      s = s.replace(/\.git$/i, "").replace(/\/+$/, "");
+      return REPO_RE.test(s) && !s.includes("..") ? s : null;
+    }
+    // The single gate every node definition passes. Returns a clean node or null. The id is the
+    // CANONICAL "github:<owner>/<repo>" (lowercased) — the same key the on-chain attestation index
+    // uses for nodeId — so TDH, dedup and persistence all key off it regardless of a roster's label.
+    function sanitizeNode(raw, { custom = false } = {}) {
+      if (!raw || typeof raw !== "object") return null;
+      const repo = typeof raw.repo === "string" ? raw.repo.trim() : "";
+      if (!REPO_RE.test(repo) || repo.includes("..")) return null;
+      const tdh = Number.isFinite(+raw.tdh) && +raw.tdh >= 0 ? Math.floor(+raw.tdh) : null;
+      return {
+        id: "github:" + repo.toLowerCase(),
+        label: String(raw.label || repo).slice(0, 48),
+        repo, node: safeBranch(raw.node, "node"), idx: safeBranch(raw.idx, "main"),
+        tdh, custom: !!custom,
+      };
+    }
+    state.nodes = CONFIG.nodes.map((n) => sanitizeNode(n)).filter(Boolean);
+    const nodeTdhLive = new Map();    // canonical nodeId -> TDH backing, from the live attestation index
+    const tdhOf = (n) => (nodeTdhLive.has(n.id) ? nodeTdhLive.get(n.id) : (n.tdh || 0));
+    const rawUrl = (n, branch, path) => `https://raw.githubusercontent.com/${n.repo}/${branch}/${path}`;
+    const nodeUrl = {
+      manifest: (n) => rawUrl(n, n.node, "index/manifest.json"),
+      chunk: (n, y) => rawUrl(n, n.node, `index/${y}.json`),
+      ledger: (n) => rawUrl(n, n.node, "ledger.json"),
+      docchain: (n) => rawUrl(n, n.idx, "indexer/generated/sepolia/rso-docchain-index.json"),
+      roster: (n) => rawUrl(n, n.idx, "indexer/generated/nodes.json"),
+      catalog: (n, date) => rawUrl(n, n.node, `data/${date.replaceAll("-", "/")}`),
+    };
+    const safeParse = (t) => { try { return JSON.parse(t); } catch (e) { return null; } };
+    // Size caps + a host allowlist for the ONE class of URL not built by rawUrl: bundle locators
+    // copied out of node-served JSON (the index/ledger catalog_url, and signed Arweave mirrors from
+    // the attestation index). A hostile node can put any string there, so before fetching we require
+    // https on a known host, and EVERY download is byte-capped — a gzip bomb or a giant payload from
+    // a hostile node can't beacon to an arbitrary host or exhaust memory. Caps mirror the pipeline.
+    const MAX_JSON_BYTES = 32 * 1024 * 1024;       // any node-served JSON (index, chunk, docchain, roster, anno, delta)
+    const MAX_GZ_BYTES = 64 * 1024 * 1024;         // the compressed catalog on the wire
+    const MAX_CATALOG_BYTES = 200 * 1024 * 1024;   // the decompressed catalog (matches snapshot.py MAX_CATALOG_BYTES)
+    const MAX_CHUNK_DAYS = 400;                    // a year-chunk holds <= 366 day entries
+    const LOCATOR_HOSTS = new Set(["raw.githubusercontent.com", "arweave.net", "arweave.dev"]);
+    const safeLocator = (u) => {                   // honour a locator only if https on a known host
+      try { const x = new URL(String(u)); return x.protocol === "https:" && LOCATOR_HOSTS.has(x.hostname) ? x.href : null; }
+      catch (e) { return null; }
+    };
+    // Read a response body with a hard byte cap, so a hostile node can't stream gigabytes into memory.
+    async function readCapped(res, max) {
+      const reader = res.body && res.body.getReader();
+      if (!reader) { const b = new Uint8Array(await res.arrayBuffer()); if (b.byteLength > max) throw new Error("oversized response"); return b; }
+      const chunks = []; let total = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.byteLength;
+        if (total > max) { try { await reader.cancel(); } catch (e) {} throw new Error("oversized response"); }
+        chunks.push(value);
       }
+      const out = new Uint8Array(total); let off = 0;
+      for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+      return out;
+    }
+    // Walk the ranked nodes; resolve { node, res } from the first to answer OK, else null. The
+    // caller reads res via readCapped (the heavy catalog is gzip, the index is JSON) — never uncapped.
+    async function fromNodes(urlOf, cache = "no-store") {
+      for (const n of state.nodes) {
+        // redirect:"error" — a GitHub-raw path serves file bytes, never an off-host 3xx; refusing to
+        // FOLLOW one means a node can't smuggle content from another host via a redirect (a github.io
+        // page redirect, etc.). A redirect just errors and we fall through to the next node.
+        try { const res = await fetch(urlOf(n), { cache, redirect: "error" }); if (res.ok) return { node: n, res }; }
+        catch (e) { /* unreachable node / redirect — fall through to the next */ }
+      }
+      return null;
+    }
+    const jsonFromNodes = async (urlOf, cache) => {
+      const g = await fromNodes(urlOf, cache);
+      if (!g) return null;
+      try { return { node: g.node, data: safeParse(new TextDecoder().decode(await readCapped(g.res, MAX_JSON_BYTES))) }; }
+      catch (e) { return null; }   // oversized / unreadable — treat as a miss, fall through
+    };
+    // A lean index entry maps straight onto the ledger shape the HUD already reads.
+    const ledgerFromIndex = (e) => ({ count: e.object_count, sha: String(e.sha256 || ""), bands: e.band_counts || null, raw: e });
+    // Seed the daily-changes legend's counts (directory edits / TIP forecasts / decay notices) from
+    // an aggregate summary so lens 4 is instant the whole timeline — no ~11 MB catalog. A later
+    // catalog load upgrades this to the full per-object digest. Never clobbers a fuller digest.
+    function seedAnnoSummary(date, s) {
+      if (!s || annoByDate.has(date)) return;
+      annoByDate.set(date, { decayNotices: s.decay_notices || 0, tipCount: s.tip_count || 0,
+        changedObjects: s.directory_changes || 0, changedIds: new Set(), decayIds: new Set(), tipIds: new Set(), byId: new Map() });
+    }
+
+    // The lean Tier-1 index IS the live timeline: per-day aggregates (counts, on-orbit / re-entered
+    // split, band / type / delta / annotation summary) + a CORS catalog locator, ~340 B/day, chunked
+    // by year. The manifest names the latest day and INLINES its full aggregate, so the piece opens
+    // on the newest day with exact numbers and zero catalog download.
+    async function loadIndex() {
+      const got = await jsonFromNodes(nodeUrl.manifest);
+      if (!got || !got.data) return null;                  // no node reachable — caller keeps the baseline
+      const m = got.data; state.liveNode = got.node;
+      if (m.latestEntry && m.latestEntry.date) { ledgerByDate.set(m.latestEntry.date, ledgerFromIndex(m.latestEntry)); seedAnnoSummary(m.latestEntry.date, m.latestEntry.anno_summary); }
+      const latest = m.latest || (m.latestEntry && m.latestEntry.date);
+      const yr = String(latest || isoFor(state.cursor)).slice(0, 4);
+      const meta = (m.chunks || []).find((c) => String(c.year) === yr) || (m.chunks || []).slice(-1)[0];
+      await loadIndexChunk(yr, meta);
+      const dates = [...ledgerByDate.keys()].filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+      if (dates.length) { witnessDates = dates; TOTAL = witnessDates.length - 1; }
+      state.manifest = m;
+      return { manifest: m, latest };
+    }
+    // A year-chunk holds every day's aggregate. Cached in localStorage and validated by the
+    // manifest's content hash, so a return trip is instant and offline. A sandboxed iframe that
+    // blocks storage simply re-fetches for the session — the baseline still guarantees a render.
+    async function loadIndexChunk(year, meta) {
+      const key = `rso-idx-${year}`, want = (meta && meta.sha256) || "";
+      const ingest = (e) => e && e.date && (ledgerByDate.set(e.date, ledgerFromIndex(e)), seedAnnoSummary(e.date, e.anno_summary));
+      try {
+        const c = JSON.parse(localStorage.getItem(key) || "null");
+        if (c && c.sha === want && Array.isArray(c.days)) { c.days.slice(0, MAX_CHUNK_DAYS).forEach(ingest); return; }
+      } catch (e) { /* no storage, or stale — fetch fresh */ }
+      const got = await jsonFromNodes((n) => nodeUrl.chunk(n, year));
+      let days = got && got.data;
+      if (!Array.isArray(days)) return;
+      if (days.length > MAX_CHUNK_DAYS) days = days.slice(0, MAX_CHUNK_DAYS);   // a year has <= 366 days; bound a hostile chunk
+      days.forEach(ingest);
+      try { localStorage.setItem(key, JSON.stringify({ sha: want, days })); } catch (e) { /* not persisted — session only */ }
+    }
+    // Legacy fallback: the pre-index ledger.json (whole-timeline, bloated entries, no catalog_url).
+    // Used only when the chosen node hasn't published the lean index yet.
+    async function loadLedger() {
+      const got = await jsonFromNodes(nodeUrl.ledger);
+      const arr = got && got.data;
+      if (!Array.isArray(arr)) return false;
+      const ordered = arr.filter((e) => e && /^\d{4}-\d{2}-\d{2}$/.test(e.date)).sort((a, b) => a.date.localeCompare(b.date));
+      if (!ordered.length) return false;
+      state.liveNode = got.node;
+      ordered.forEach((e) => ledgerByDate.set(e.date, { count: e.object_count, sha: String(e.sha256 || ""), bands: e.band_counts || e.bands || null, raw: e }));
+      witnessDates = ordered.map((e) => e.date); TOTAL = witnessDates.length - 1;
+      return true;
+    }
+    async function boot() {
+      seedFromBaseline();                                  // instant, network-free archive (the floor)
+      const anchorDate = isoFor(state.cursor), startRec = recordMeta(anchorDate);
+      // The baseline carries the full record count before any catalog arrives. Its stable on-orbit
+      // share gives the placeholder river almost exactly its eventual density, so attaching live
+      // identities does not redraw the whole sky.
+      assignField([], Math.max(FIELD, Math.round(startRec.orbit ? startRec.orbit.onOrbit : startRec.count * onOrbitRatio)));
+      showDay(anchorDate);
+      // Lean index first (timeline + exact aggregates + catalog locator), legacy ledger as the
+      // fallback for nodes that lag, the embedded baseline alone if every node is dark.
+      const idx = await loadIndex();
+      if (!idx) await loadLedger();
+      // Boot to the LATEST witnessed day — the piece opens on "now", not an arbitrary past day —
+      // unless the visitor already started flying. The manifest inlined that day's aggregate, so
+      // its numbers are exact on the very first frame.
+      if (!state.engaged) { const li = Math.max(0, witnessDates.length - 1); state.cursor = li; state.target = li; state.shownDay = -1; }
       const date = isoFor(state.cursor);
       showDay(date);
-      await fetchIndex();
+      setStatus(state.liveNode ? "ready" : "offline", state.liveNode ? `Live · ${state.liveNode.label}` : "Embedded archive");
+      renderNodeRank();                                    // mark which ranked node is serving live
+      await fetchIndex();                                  // on-chain attestation overlay (also node-ranked)
       loadDayCatalog(date);
+      loadRoster();                                        // extend the rank with the network's roster
     }
 
     function bandFromMM(mm) { const v = Number(mm); if (Number.isFinite(v) && v > 0) { if (v >= 0.9 && v <= 1.1) return 2; if (v >= 11.0) return 0; return 1; } return 1; }
     function klassFromType(t) { t = String(t || "").toUpperCase(); return t.includes("DEBRIS") ? 2 : t.includes("ROCKET") ? 1 : t.includes("PAYLOAD") ? 0 : 3; }
 
-    async function gunzip(buf) { const s = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip")); return new Response(s).arrayBuffer(); }
+    async function gunzip(buf) {   // capped at MAX_CATALOG_BYTES so a gzip bomb from a hostile node can't OOM the tab
+      const reader = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip")).getReader();
+      const chunks = []; let total = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.byteLength;
+        if (total > MAX_CATALOG_BYTES) { try { await reader.cancel(); } catch (e) {} throw new Error("catalog exceeds size cap"); }
+        chunks.push(value);
+      }
+      const out = new Uint8Array(total); let off = 0;
+      for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+      return out.buffer;
+    }
     function untar(buf, suffix) {
       const b = new Uint8Array(buf), dec = new TextDecoder(); let off = 0;
       while (off + 512 <= b.length) {
@@ -1535,12 +1754,9 @@
         const dir = t.DIRECTION ? ` · ${t.DIRECTION}` : "";
         note(id, "tip", null, `reentry predicted ${ep} · ${fmtWin(t.WINDOW)}${dir}`);
       }
-      let renames = 0;
       for (const c of anno.catalog_changes || []) {
         changedIds.add(String(c.norad_cat_id));
         if (c.field === "DECAY_DATE") decayIds.add(String(c.norad_cat_id));
-        const isName = c.field === "OBJECT_NAME" || c.field === "OBJECT_ID";
-        if (isName) renames++;
         note(c.norad_cat_id, fieldKind(c.field), c.field,
           `${c.field}: ${c.previous ?? "—"} → ${c.current ?? "—"}${c.first_observation ? " · first observation" : ""}`);
       }
@@ -1550,35 +1766,43 @@
         decayIds.add(id);
         note(id, "other", null, `decay reported${ep ? " · epoch " + ep : ""}`);
       }
-      return { decayNotices: (anno.decay_messages || []).length, edits: (anno.catalog_changes || []).length,
+      return { decayNotices: (anno.decay_messages || []).length,
         tipCount: (anno.tip_messages || []).length, changedObjects: changedIds.size,
-        changedIds, decayIds, tipIds, renames, observedAt: anno.observed_at_utc || null, byId };
+        changedIds, decayIds, tipIds, byId };
     }
     async function loadCatalog(date) {
       if (catalogCache.has(date)) return catalogCache.get(date);
-      const path = date.replaceAll("-", "/");
-      const base = `https://raw.githubusercontent.com/${CONFIG.repo}/${CONFIG.branch}/data/${path}`;
-      const [storage, delta, anno] = await Promise.all([
-        fetchJson(`${base}/storage.json`, true), fetchJson(`${base}/delta.json`, true), fetchJson(`${base}/annotations.json`, true)]);
-      const annoSum = digestAnnotations(anno);
+      // Per-object detail for click-to-inspect and the daily-changes coloring: annotations
+      // (directory edits, decay reports, TIP forecasts) and the delta's new/updated NORAD id lists.
+      // The numeric aggregates already arrived via the lean index, so these matter only once you stop
+      // on a day. Each is served by whichever ranked node answers; the storage.json locator is gone
+      // (the index entry's catalog_url already names the bundle mirror).
+      const catBase = (n) => nodeUrl.catalog(n, date);
+      const [annoRes, deltaRes] = await Promise.all([
+        jsonFromNodes((n) => `${catBase(n)}/annotations.json`),
+        jsonFromNodes((n) => `${catBase(n)}/delta.json`),
+      ]);
+      const delta = deltaRes && deltaRes.data;
+      const annoSum = digestAnnotations(annoRes && annoRes.data);
       if (annoSum) annoByDate.set(date, annoSum);
-      const dest = storage?.destinations || {};
-      // Bundle mirrors, in trust/permanence order. The GitHub RELEASE asset is never tried:
-      // its redirect target sends no CORS headers, so a browser can never read it. The raw
-      // node-branch catalog.json.gz IS CORS-friendly and serves as the live mirror until the
-      // day lands on Arweave.
+      // Bundle mirrors, in trust / permanence order. The index entry already names a CORS-fetchable
+      // locator (Arweave bundle tar when the day is permanent, else the node-branch catalog.json.gz).
+      // Any witness's signed Arweave locations are fair mirrors — the bytes prove themselves against
+      // the ledger hash, not the address. Last resort: the ranked nodes' raw catalog.json.gz. The
+      // GitHub RELEASE asset is never tried: its redirect target sends no CORS headers.
       let ab = null, isTar = false;
-      if (dest.arweave?.transaction_url) {
-        try { const r = await fetch(dest.arweave.transaction_url, { cache: "force-cache" }); if (r.ok) { ab = await r.arrayBuffer(); isTar = true; } } catch (e) { /* fall through */ }
+      const led = ledgerByDate.get(date) || {}, locator = led.raw && safeLocator(led.raw.catalog_url);
+      if (locator) {
+        try { const r = await fetch(locator, { cache: "force-cache", redirect: "error" }); if (r.ok) { ab = (await readCapped(r, MAX_GZ_BYTES)).buffer; isTar = (led.raw.catalog_url_kind !== "catalog_gz"); } } catch (e) { /* fall through */ }
       }
-      // any witness's signed publication locations (from the attestation index) are fair
-      // mirrors — the bytes prove themselves against the ledger hash, not the address
       for (const u of (attestByDate.get(date) || {}).ar || []) {
         if (ab) break;
-        try { const r = await fetch(u, { cache: "force-cache" }); if (r.ok) { ab = await r.arrayBuffer(); isTar = true; } } catch (e) { /* try next */ }
+        const url = safeLocator(u); if (!url) continue;     // attestation locators are host-allowlisted too
+        try { const r = await fetch(url, { cache: "force-cache", redirect: "error" }); if (r.ok) { ab = (await readCapped(r, MAX_GZ_BYTES)).buffer; isTar = true; } } catch (e) { /* try next */ }
       }
       if (!ab) {
-        try { const r = await fetch(`${base}/catalog.json.gz`, { cache: "force-cache" }); if (r.ok) ab = await r.arrayBuffer(); } catch (e) { /* fall through */ }
+        const g = await fromNodes((n) => `${nodeUrl.catalog(n, date)}/catalog.json.gz`, "force-cache");
+        if (g) { try { ab = (await readCapped(g.res, MAX_GZ_BYTES)).buffer; } catch (e) { /* oversized — no bundle */ } }
       }
       if (!ab) throw new Error("no bundle mirror reachable");
       const cgz = isTar ? untar(await gunzip(ab), "catalog.json.gz") : ab;
@@ -1629,6 +1853,7 @@
       bandCountsByDate.set(date, bc);
       typeCountsByDate.set(date, tc);
       orbitByDate.set(date, { onOrbit, reentered: reenteredTot, total: objs.length });
+      if (objs.length) onOrbitRatio = onOrbit / objs.length;        // refine the estimate from this exact split
       deltaByDate.set(date, {
         updated: delta?.updated_object_count ?? delta?.deduped_update_count ?? 0,
         new: delta?.new_object_count ?? launched, decayed: decToday, carried: delta?.carried_forward_count ?? 0
@@ -1647,16 +1872,39 @@
       const quotas = groups.map((g) => Math.floor(limit * g.length / objs.length));
       let s = quotas.reduce((a, b) => a + b, 0); let bi = 0; while (s < limit) { quotas[bi % 3]++; s++; bi++; }
       return groups.flatMap((g, b) => {
-        // launches, decay events and annotated objects (fresh observations) are guaranteed a slot
-        const rare = g.filter((o) => o.status === "new" || o.status === "decayed" || o.anno);
-        const rest = g.filter((o) => !(o.status === "new" || o.status === "decayed" || o.anno))
+        // launches, decay events, annotated objects (fresh observations) and the ISS (the one
+        // object visitors go looking for, via 'i') are guaranteed a slot in the sampled field
+        const keep = (o) => o.status === "new" || o.status === "decayed" || o.anno || o.id === "25544";
+        const rare = g.filter(keep);
+        const rest = g.filter((o) => !keep(o))
           .sort((a, x) => hashUnit(`${a.id}:${date}`) - hashUnit(`${x.id}:${date}`));
         return rare.concat(rest).slice(0, quotas[b]);
       });
     }
 
     // ── HUD ──
-    function setStatus(type, label) { $("status-light").className = `status-light ${type === "ready" || type === "attested" ? "" : type}`.trim(); $("status-label").textContent = label; }
+    // Each status label carries a plain-language tooltip (hover / focus / tap) so the small HUD
+    // word is always self-explaining. "Live · <node>" varies by node, so it's matched by prefix.
+    const STATUS_TIP = {
+      "Live record · verified": "The full record for this day is loaded, and its content hash matches the on-chain attestation — you're seeing the exact witnessed catalogue.",
+      "Live record": "The full record for this day is loaded from a live source.",
+      "Summary only": "The counts for this day are live and exact from the index — but its full per-object catalogue isn't published for download, so individual objects can't be inspected for this day.",
+      "Embedded archive": "No live source is reachable, so the piece is showing the permanent snapshot embedded in the artwork itself — it renders even if every gateway disappears.",
+      "Downloading archive": "Fetching this day's full per-object record…",
+      "Re-ranking sources…": "Re-ranking the backing sources and re-pulling the record from the new top node…",
+      "Scanning the chain…": "Reading the on-chain attestation index…",
+    };
+    function setStatus(type, label) {
+      $("status-light").className = `status-light ${type === "ready" || type === "attested" ? "" : type}`.trim();
+      $("status-label").textContent = label;
+      const el = $("status"); if (!el) return;
+      const tip = STATUS_TIP[label] || (label.startsWith("Live · ") ? "Live data, served by the top-ranked backing node. Stop on a day to load its full per-object record." : "");
+      if (tip) { el.setAttribute("data-tip", tip); el.setAttribute("aria-label", `${label}. ${tip}`); }
+      else { el.removeAttribute("data-tip"); el.setAttribute("aria-label", label); }
+    }
+    $("status").addEventListener("click", (e) => { e.stopPropagation(); $("status").classList.toggle("tip-open"); });   // tap to reveal on touch
+    $("status").addEventListener("blur", () => $("status").classList.remove("tip-open"));
+    document.addEventListener("click", () => $("status").classList.remove("tip-open"));
     function syncCatalogButton(date) {
       const ready = catalogGzByDate.has(date), btn = $("catalog-btn");
       btn.hidden = !ready; btn.disabled = !ready;
@@ -1669,9 +1917,9 @@
       // values computed from the full catalog on stop, then to a proportional estimate.
       const bands = bandCountsByDate.get(date) || (led && led.bands) || (raw && raw.band_counts) || null;
       const types = typeCountsByDate.get(date) || (raw && raw.type_counts) || null;
-      const delta = deltaByDate.get(date) || (raw && (raw.delta || raw.delta_summary)) || null;
+      const delta = deltaByDate.get(date) || (raw && raw.delta) || null;
       const orbit = orbitByDate.get(date) || (raw && raw.on_orbit_count != null
-        ? { onOrbit: raw.on_orbit_count, reentered: raw.reentered_count ?? raw.decayed_count ?? 0, total: count } : null);
+        ? { onOrbit: raw.on_orbit_count, reentered: raw.reentered_count ?? 0, total: count } : null);
       return { date, count, sha, bands, types, delta, orbit, raw, verified: !!led,
         integrity: integrityByDate.get(date), attest: attestByDate.get(date) || null };
     }
@@ -1682,10 +1930,14 @@
       const day = Math.round(state.cursor) + 1;
       $("date-index").textContent = `Day ${String(day).padStart(3, "0")} / ${TOTAL + 1} witnessed days`;
       // ── objects prism ── (what's still up there vs the full record)
-      const orb = rec.orbit;
-      $("onorbit-count").textContent = orb ? fmtNum(orb.onOrbit) : fmtNum(rec.count);
+      // "On orbit now" = record minus what's already re-entered. The exact split arrives with
+      // the day's index aggregate or its processed catalog; until then estimate it from the
+      // stable on-orbit ratio so the count is a real, decayed-subtracted figure on the very
+      // first frame (never the bare total), then snaps to exact when the day loads.
+      const orb = rec.orbit, onOrbit = orb ? orb.onOrbit : Math.round(rec.count * onOrbitRatio);
+      $("onorbit-count").textContent = fmtNum(onOrbit);
       $("tracked-count").textContent = fmtNum(rec.count);
-      $("reentered-count").textContent = orb ? fmtNum(orb.reentered) : "—";
+      $("reentered-count").textContent = fmtNum(orb ? orb.reentered : rec.count - onOrbit);
       const b = rec.bands; // real on-orbit band counts when known, else proportional estimate
       $("leo-count").textContent = fmtNum(b ? b.leo : Math.round(rec.count * PROP.bands.LEO));
       $("meo-count").textContent = fmtNum(b ? b.meo : Math.round(rec.count * PROP.bands.MEO));
@@ -1712,7 +1964,7 @@
       // not the raw-capture fingerprint, is what the nodes agree on and put on chain
       const core = r && (r.content_sha256 || null);
       $("fp-core").textContent = core ? shortHex(core) : "—";
-      $("fp-core-note").textContent = core ? `${r.content_schema || "core"} · consensus hash` : "awaiting record";
+      $("fp-core-note").textContent = core ? `${r.content_schema || CONTENT_SCHEMA} · consensus hash` : "awaiting record";
       if (attest) { $("fp-block").textContent = shortHex(attest.blockHash); $("fp-blocknote").textContent = attest.tdh > 0 ? `Ethereum · TDH ${attest.tdh}` : "Ethereum"; }
       else { $("fp-block").textContent = "—"; $("fp-blocknote").textContent = "awaiting attestation"; }
       const cm = state.chainMeta, ca = $("fp-contract");
@@ -1774,7 +2026,9 @@
           await adoptField(state.objects, token);
           reacquireFollow();
         }
-        setStatus("ready", "Live record");
+        // Honest status: the HUD aggregates are still live from the index, but the per-object
+        // bundle for inspection didn't land — never claim "Live record" when the fetch failed.
+        setStatus("offline", state.liveNode ? "Summary only" : "Embedded archive");
         applyHud(recordMeta(date)); populateLegend(); // annotations may have loaded even without the bundle
       }
     }
@@ -1838,7 +2092,7 @@
         rows = sw(UPD_REENTRY, "Reentry predicted") + sw(UPD_DECAY, "Decay / re-entry") + sw(UPD_NEW, "New object") + sw(UPD_DYNAMIC, "High drag / rapid change")
           + sw(UPD_META, "Directory / identity") + sw(UPD_ORBIT, "Routine orbit solution")
           + (d ? `<div class="lg-note">${fmtNum(d.updated + d.new)} GP-updated${a ? ` · ${fmtNum(a.changedObjects)} directory${a.tipCount ? ` · ${a.tipCount} reentry forecast${a.tipCount === 1 ? "" : "s"}` : ""}` : ""}</div>`
-               : `<div class="lg-note">stop on a day to load</div>`);
+               : "");
       }
       el.innerHTML = `<div class="lg-title">${LENSES[lens]}</div>${rows}`;
     }
@@ -2198,17 +2452,14 @@
     $("settings-btn").addEventListener("click", () => showSettings(true, "witness"));
     $("settings-close").addEventListener("click", () => showSettings(false));
     settings.addEventListener("click", (e) => { if (e.target === settings) showSettings(false); });
-    const OP_SOURCES = [
-      { id: "ompub/rso",  repo: "OMPub/RSO",  branch: "main" },
-      { id: "brookr/rso", repo: "brookr/RSO", branch: "main" },
-      { id: "ompub/rso (mirror)", repo: "OMPub/RSO", branch: "main" }
-    ];
-    // read the attestation index from the chosen operator's node — switching source is the
-    // decentralization knob: a node that hasn't published shows "not yet attested", and so on.
+    // The on-chain attestation overlay — read from whichever ranked node serves its doc-chain index.
+    // A node that hasn't published a given day shows "not yet attested"; re-ranking the nodes in
+    // settings is the decentralization knob. Independent of the aggregate timeline index above.
     async function fetchIndex() {
-      const src = OP_SOURCES[state.opSource]; attestByDate.clear();
-      try {
-        const idx = await fetchJson(`https://raw.githubusercontent.com/${src.repo}/${src.branch}/indexer/generated/sepolia/rso-docchain-index.json`);
+      attestByDate.clear();
+      const got = await jsonFromNodes(nodeUrl.docchain);
+      const idx = got && got.data;
+      if (idx) {
         if (idx.contractAddress) state.chainMeta = { contractAddress: idx.contractAddress, chainId: idx.chainId || 11155111 };
         for (const [ref, rec] of Object.entries(idx.docRefs || {})) {
           const groups = rec.agreementGroups || [];
@@ -2217,7 +2468,7 @@
             // permanence: each node signs its publication locations into its attestation —
             // distinct Arweave locators = independent pay-once-store-forever copies
             const locations = [...new Set((strongest.locations || []).map(String).filter(Boolean))];
-            const ar = locations.filter((u) => /^ar:\/\/|arweave\.(net|dev)\//i.test(u));
+            const ar = locations.map(safeLocator).filter(Boolean);   // https on a known host only (no substring bypass)
             const nodeIds = new Set((rec.events || []).map((e) => e.publication?.nodeId || e.claimedNodeId || e.nodeId).filter(Boolean));
             const attesters = (strongest.attesters || []).length;
             attestByDate.set(rec.date, {
@@ -2231,23 +2482,199 @@
             });
           }
         }
-      } catch (e) { console.info("index source unreachable:", src.id); }
+        // Per-node TDH backing, keyed by canonical nodeId ("github:owner/repo") — the honest
+        // "TDH rank" the source list defaults to: each node's strongest OWN backing across its events
+        // (nodeBackingTdh only; combinedSupportTdh is the agreement group's aggregate, not per-node).
+        // Key extraction mirrors pipeline node_tdh_from_attestations exactly so roster + live agree.
+        nodeTdhLive.clear();
+        for (const e of idx.events || []) {
+          const nid = String((e.nodeId || e.claimedNodeId || (e.publication && e.publication.nodeId) || "")).toLowerCase();
+          if (!nid) continue;
+          const t = +e.nodeBackingTdh || 0;
+          if (t > (nodeTdhLive.get(nid) || 0)) nodeTdhLive.set(nid, t);
+        }
+        autoRankByTdh();   // re-rank to TDH order unless the visitor has set a manual order
+      }
       if (state.shownDay >= 0) applyHud(recordMeta(isoFor(state.shownDay)));
     }
     function applyEthRank() { $("set-eth-val").textContent = state.ethRank ? `≥ ${state.ethRank} TDH` : "any witness"; if (state.shownDay >= 0) applyHud(recordMeta(isoFor(state.shownDay))); }
-    function applyOpSource() { $("set-op-val").textContent = OP_SOURCES[state.opSource].id; }
     $("set-eth").addEventListener("input", (e) => { state.ethRank = +e.target.value; applyEthRank(); persistSettings(); });
-    $("set-op").addEventListener("input", (e) => { state.opSource = +e.target.value; applyOpSource(); fetchIndex(); persistSettings(); });
+
+    // ── index-source rank: draggable, TDH-default, visitor-extensible ───────────────────────
+    // The list IS state.nodes; the top one serves every fetch and any failure falls through. By
+    // default it is ranked by each node's on-chain TDH backing (descending); the visitor can drag
+    // to override (persisted), paste their own node, or reset back to TDH. Re-ranking re-pulls the
+    // index, attestation overlay and the open day's bundle from the new head. Drag works on mouse +
+    // touch; ▲▼ give a keyboard / no-drag path. Custom nodes carry a ✕ to remove.
+    const escHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const fmtTdh = (t) => t >= 1e6 ? (t / 1e6).toFixed(1).replace(/\.0$/, "") + "M" : t >= 1e3 ? Math.round(t / 1e3) + "k" : String(t | 0);
+    let nodeOrderManual = false;                            // true once the visitor drags / adds / removes
+    const nodesByTdh = () =>                                // custom (visitor-chosen) first, then TDH desc — stable
+      [...state.nodes].sort((a, b) => (b.custom ? 1 : 0) - (a.custom ? 1 : 0) || tdhOf(b) - tdhOf(a));
+    function autoRankByTdh() {                              // re-rank to TDH unless the visitor took control
+      if (!nodeOrderManual) state.nodes = nodesByTdh();
+      renderNodeRank();
+    }
+    function renderNodeRank() {
+      const ol = $("node-rank"); if (!ol) return;
+      ol.innerHTML = "";
+      state.nodes.forEach((n, i) => {
+        const li = document.createElement("li");
+        li.className = "node-row"; li.dataset.id = n.id;
+        const live = state.liveNode && state.liveNode.id === n.id, last = i === state.nodes.length - 1, t = tdhOf(n);
+        const tags = (i === 0 ? '<span class="node-tag">head</span>' : "")
+          + (live ? '<span class="node-tag live">live</span>' : "")
+          + (n.custom ? '<span class="node-tag">yours</span>' : "")
+          + (t > 0 ? `<span class="node-tdh">TDH ${escHtml(fmtTdh(t))}</span>` : "");
+        li.innerHTML = `<span class="node-grab" aria-hidden="true">⠿</span><span class="node-rank-n">${i + 1}</span>`
+          + `<span class="node-name">${escHtml(n.label)}${tags}</span>`
+          + `<span class="node-dot${live ? " live" : ""}"></span><span class="node-moves">`
+          + `<button class="node-mv" data-d="-1" aria-label="move ${escHtml(n.label)} up"${i === 0 ? " disabled" : ""}>▲</button>`
+          + `<button class="node-mv" data-d="1" aria-label="move ${escHtml(n.label)} down"${last ? " disabled" : ""}>▼</button>`
+          + (n.custom ? `<button class="node-rm" data-rm="1" aria-label="remove ${escHtml(n.label)}">✕</button>` : "")
+          + `</span>`;
+        ol.appendChild(li);
+      });
+    }
+    function moveNode(from, to) {                           // an explicit drag / ▲▼ — THIS is what latches manual
+      if (from < 0 || to < 0 || to >= state.nodes.length || from === to) return;
+      const [n] = state.nodes.splice(from, 1); state.nodes.splice(to, 0, n);
+      nodeOrderManual = true; renderNodeRank(); persistSettings(); scheduleRefresh();
+    }
+    function addCustomNode(text) {                          // a visitor's own node — validated, never eval'd
+      const err = $("node-add-err"), inp = $("node-add");
+      const repo = parseNodeInput(text);
+      const node = repo && sanitizeNode({ repo }, { custom: true });
+      if (!node) { if (err) err.textContent = "enter a GitHub owner/repo"; return; }
+      if (state.nodes.some((n) => n.id === node.id)) { if (err) err.textContent = "already in the list"; return; }
+      if (state.nodes.length >= MAX_NODES) { if (err) err.textContent = "source list is full"; return; }
+      state.nodes.unshift(node);                            // custom nodes float to the head via nodesByTdh
+      if (inp) inp.value = ""; if (err) err.textContent = "";
+      autoRankByTdh();                                      // re-sort (custom-first) WITHOUT latching manual
+      persistSettings(); scheduleRefresh();
+    }
+    function removeCustomNode(id) {
+      const i = state.nodes.findIndex((n) => n.id === id && n.custom);
+      if (i < 0) return;
+      state.nodes.splice(i, 1);
+      autoRankByTdh();                                      // no manual latch — a removal isn't an ordering choice
+      persistSettings(); scheduleRefresh();
+    }
+    function resetNodeRank() {                              // back to the TDH default
+      nodeOrderManual = false;
+      try { localStorage.removeItem("rso-node-order"); } catch (e) {}
+      autoRankByTdh(); persistSettings(); scheduleRefresh();
+    }
+    // A re-rank changes which node serves, but rapid reorders shouldn't fire one full re-pull each:
+    // debounce + an in-flight token so only the latest ranking's fetch chain commits its state.
+    let refreshTimer = null, refreshSeq = 0;
+    function scheduleRefresh() {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => { refreshTimer = null; refreshFromNodes(); }, 300);
+    }
+    async function refreshFromNodes() {                     // a new head means a new server — re-pull
+      const seq = ++refreshSeq;
+      setStatus("loading", "Re-ranking sources…");
+      state.liveNode = null;
+      const idx = await loadIndex(); if (!idx) await loadLedger();
+      if (seq !== refreshSeq) return;                       // superseded by a newer re-rank — drop this run
+      setStatus(state.liveNode ? "ready" : "offline", state.liveNode ? `Live · ${state.liveNode.label}` : "Embedded archive");
+      renderNodeRank();
+      await fetchIndex();
+      if (seq !== refreshSeq) return;
+      const date = isoFor(state.shownDay >= 0 ? state.shownDay : state.cursor);
+      state.catalogDate = null; loadDayCatalog(date);
+    }
+    (() => {
+      const ol = $("node-rank");
+      if (ol) {
+        let d = null;
+        ol.addEventListener("pointerdown", (e) => {
+          const li = e.target.closest(".node-row"); if (!li || e.target.closest(".node-mv, .node-rm")) return;
+          d = { li, from: [...ol.children].indexOf(li), y0: e.clientY, to: null };
+          li.setPointerCapture(e.pointerId); li.classList.add("dragging"); li.style.pointerEvents = "none";
+        });
+        ol.addEventListener("pointermove", (e) => {
+          if (!d) return;
+          d.li.style.transform = `translateY(${e.clientY - d.y0}px)`;
+          const el = document.elementFromPoint(e.clientX, e.clientY), row = el && el.closest(".node-row");
+          if (row && row !== d.li) d.to = [...ol.children].indexOf(row);
+        });
+        const end = () => {
+          if (!d) return;
+          d.li.style.transform = ""; d.li.style.pointerEvents = ""; d.li.classList.remove("dragging");
+          const { from, to } = d; d = null;
+          if (to != null && to !== from) moveNode(from, to);
+        };
+        ol.addEventListener("pointerup", end);
+        ol.addEventListener("pointercancel", end);
+        ol.addEventListener("click", (e) => {
+          const rm = e.target.closest(".node-rm");
+          if (rm) { removeCustomNode(rm.closest(".node-row").dataset.id); return; }
+          const b = e.target.closest(".node-mv"); if (!b || b.disabled) return;
+          const from = [...ol.children].indexOf(b.closest(".node-row"));
+          moveNode(from, from + (+b.dataset.d));
+        });
+      }
+      const addBtn = $("node-add-btn"), addInp = $("node-add"), resetBtn = $("node-rank-reset");
+      if (addBtn) addBtn.addEventListener("click", () => addCustomNode($("node-add").value));
+      if (addInp) addInp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addCustomNode(addInp.value); } });
+      if (resetBtn) resetBtn.addEventListener("click", resetNodeRank);
+    })();
+    // The network's published roster (indexer/generated/nodes.json) extends the visitor's list with
+    // every backing node. Every entry is re-validated (sanitizeNode) and the list is capped, so a
+    // hostile roster can only ever add more github.com/<owner>/<repo> fetch targets — nothing else.
+    async function loadRoster() {
+      const got = await jsonFromNodes(nodeUrl.roster);
+      const list = got && got.data && (Array.isArray(got.data) ? got.data : got.data.nodes);
+      if (!Array.isArray(list)) return;
+      const known = new Set(state.nodes.map((n) => n.id));
+      let added = false;
+      for (const r of list.slice(0, MAX_NODES)) {
+        if (state.nodes.length >= MAX_NODES) break;
+        const n = sanitizeNode(r);
+        if (!n || known.has(n.id)) continue;
+        state.nodes.push(n); known.add(n.id); added = true;
+      }
+      if (!added) { renderNodeRank(); return; }            // refresh TDH/live tags even with nothing new
+      if (nodeOrderManual) applyNodeOrder(loadNodeOrder()); else state.nodes = nodesByTdh();
+      renderNodeRank();
+    }
+    const loadNodeOrder = () => { try { return JSON.parse(localStorage.getItem("rso-node-order") || "null"); } catch (e) { return null; } };
+    function applyNodeOrder(order) {                        // known ids in saved order; unknown appended
+      if (!Array.isArray(order)) return;
+      const rank = (id) => { const i = order.indexOf(id); return i < 0 ? 1e9 : i; };
+      state.nodes.sort((a, b) => rank(a.id) - rank(b.id));
+    }
     function persistSettings() {
       if (!$("set-persist").checked) return;
-      try { localStorage.setItem("rso-settings", JSON.stringify({ ethRank: state.ethRank, opSource: state.opSource, lens: state.lens })); } catch (e) {}
+      try {
+        localStorage.setItem("rso-settings", JSON.stringify({ ethRank: state.ethRank, lens: state.lens }));
+        localStorage.setItem("rso-custom-nodes", JSON.stringify(
+          state.nodes.filter((n) => n.custom).map((n) => ({ repo: n.repo, node: n.node, idx: n.idx, label: n.label }))));
+        if (nodeOrderManual) localStorage.setItem("rso-node-order", JSON.stringify(state.nodes.map((n) => n.id)));
+        else localStorage.removeItem("rso-node-order");
+      } catch (e) {}
     }
     function loadSettings() {
       try {
         const s = JSON.parse(localStorage.getItem("rso-settings") || "null");
-        if (s) { state.ethRank = s.ethRank ?? 0; state.opSource = s.opSource ?? 0; state.lens = s.lens ?? 0;
-          $("set-eth").value = state.ethRank; $("set-op").value = state.opSource; }
+        if (s) { state.ethRank = s.ethRank ?? 0; state.lens = s.lens ?? 0; $("set-eth").value = state.ethRank; }
       } catch (e) {}
+      // Restore the visitor's pasted nodes — re-validated on load (never trust stored data either).
+      try {
+        const custom = JSON.parse(localStorage.getItem("rso-custom-nodes") || "null");
+        if (Array.isArray(custom)) {
+          const known = new Set(state.nodes.map((n) => n.id));
+          for (const c of custom.slice(0, MAX_NODES)) {
+            const n = sanitizeNode(c, { custom: true });
+            if (n && !known.has(n.id) && state.nodes.length < MAX_NODES) { state.nodes.push(n); known.add(n.id); }
+          }
+        }
+      } catch (e) {}
+      const order = loadNodeOrder();
+      if (Array.isArray(order)) { nodeOrderManual = true; applyNodeOrder(order); }
+      else { state.nodes = nodesByTdh(); }                  // TDH default (roster tdh until the live index lands)
     }
 
     // ── inspector vignette: the tapped object's generative 3D self, rendered in a
@@ -2265,6 +2692,15 @@
       mat.userData.dim = !!dim;
       return mat;
     }
+    // The ISS is the one hand-modelled, realistically-coloured craft (not lens-tinted): gold solar
+    // wings, white truss / radiators / modules, the Russian segment's bluish panels. Emissive keeps
+    // every face legible against black, the way the field solids are lit. Shared by inspector + cameo.
+    const ISS_MAT = {
+      gold:  new THREE.MeshPhongMaterial({ color: 0x86592a, emissive: 0x2a1c08, shininess: 22, flatShading: true }),
+      irosa: new THREE.MeshPhongMaterial({ color: 0x3a2810, emissive: 0x150d04, shininess: 18, flatShading: true }),
+      white: new THREE.MeshPhongMaterial({ color: 0xc9ced5, emissive: 0x12151b, shininess: 55, flatShading: true }),
+      blue:  new THREE.MeshPhongMaterial({ color: 0x2c4d8a, emissive: 0x0a1120, shininess: 26, flatShading: true }),
+    };
     function buildVigShape(o) {
       const nid = o.meta ? (parseInt(o.meta.id, 10) || 1) : 1;
       const R = (salt) => rand2(nid, salt);
@@ -2272,6 +2708,32 @@
       const add = (geom, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => {
         const m = new THREE.Mesh(geom, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); g.add(m); return m;
       };
+      if (o.meta && o.meta.id === "25544") {                 // the ISS — the ONE hand-modelled craft
+        // Modelled in the XY plane after the canonical broadside portrait, so a lookAt(camera)
+        // presents that same face: a long integrated truss (X), eight gold solar wings in four
+        // pairs (extending ±Y), darker iROSA over the outer arrays, white amidships radiators +
+        // pressurised modules, and the Russian segment with its bluish panels slung below (−Y).
+        const { gold, irosa, white, blue } = ISS_MAT;
+        add(new THREE.BoxGeometry(2.0, 0.05, 0.07), white);                              // integrated truss
+        const wing = new THREE.BoxGeometry(0.22, 0.72, 0.012);                           // one solar wing (long in Y)
+        for (const sx of [-0.92, -0.5, 0.5, 0.92])                                       // four truss stations…
+          for (const sy of [0.46, -0.46]) add(wing, gold, sx, sy, 0);                    // …a wing up + down → eight
+        const rosa = new THREE.BoxGeometry(0.14, 0.42, 0.014);                           // newer iROSA over the outer arrays
+        for (const sx of [-0.92, 0.92]) for (const sy of [0.42, -0.42]) add(rosa, irosa, sx, sy, 0.013);
+        // white thermal radiators amidships, set off the array plane so they read as the lighter
+        // perpendicular panels of the portrait
+        for (const sx of [0.26, -0.26]) add(new THREE.BoxGeometry(0.36, 0.2, 0.012), white, sx, 0, 0.12, 0, 0, 0.18 * (sx > 0 ? 1 : -1));
+        // pressurised module cluster across the truss centre, a stack toward the viewer (+Z)
+        add(new THREE.CylinderGeometry(0.085, 0.085, 0.6, 14), white, 0, 0, 0.17, Math.PI / 2, 0, 0);   // Destiny/Harmony/JEM run
+        add(new THREE.BoxGeometry(0.5, 0.17, 0.17), white, 0, 0, 0.13);                  // lateral modules (Columbus / JEM / airlock)
+        add(new THREE.CylinderGeometry(0.055, 0.055, 0.13, 10), white, 0, -0.1, 0.4, Math.PI / 2, 0, 0); // node + cupola, fore
+        // Russian segment slung below centre: module stack, small panels, and a docked ferry
+        add(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 10), white, 0, -0.42, 0.07);
+        for (const sx of [0.22, -0.22]) add(new THREE.BoxGeometry(0.24, 0.075, 0.01), blue, sx, -0.52, 0.07);
+        add(new THREE.CylinderGeometry(0.04, 0.05, 0.18, 8), white, 0, -0.74, 0.07);     // docked Soyuz / Progress
+        for (const sx of [0.13, -0.13]) add(new THREE.BoxGeometry(0.17, 0.055, 0.008), blue, sx, -0.74, 0.07);
+        return g;
+      }
       if (o.klass === 0) {                                   // payload: archetype-keyed, like the field
         const shape = o.shape || 0;
         if (shape === 4) {                                   // STARLINK v1 — flat bus + one LONG array, seeded sun-tracking fold
@@ -2792,7 +3254,7 @@ ${fmtNum(FIELD_N)} objects · ${PERF.solids} solids / ${PERF.candidates} approac
     }
     setupPrism("prism-obj", "Archive record"); setupPrism("prism-witness", "Public witness");
 
-    loadSettings(); applyEthRank(); applyOpSource(); document.body.classList.toggle("zen", state.zen); populateLegend();
+    loadSettings(); applyEthRank(); renderNodeRank(); document.body.classList.toggle("zen", state.zen); populateLegend();
     addEarth(); addStars(); renderer.setAnimationLoop(animate);
     // after boot, let an embedding host (gallery, marketplace, test harness) know the piece
     // is alive and on live data — fire-and-forget, never assumes a listener

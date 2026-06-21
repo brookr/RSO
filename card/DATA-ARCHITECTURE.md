@@ -83,9 +83,12 @@ is essentially free:
   "compressed_bytes": 11430000,
   "on_orbit_count": 34055,   // ADD — still up there (no decay date, or decay in the future)
   "reentered_count": 33860,  // ADD — already came down (decay date in the past)
-  "band_counts": { "leo": 61593, "meo": 4462, "geo": 1860 },          // ADD — of the on-orbit set
-  "type_counts": { "payload": 24805, "rocket": 6539, "debris": 34374, "unknown": 1900, "tba": 200 }, // ADD — on-orbit
-  "delta": { "updated": 29240, "new": 4, "decayed": 1, "carried": 67911 }  // ADD
+  "band_counts": { "leo": 61593, "meo": 4462, "geo": 1860 },          // of the on-orbit set
+  "type_counts": { "payload": 24805, "rocket": 6539, "debris": 34374, "unknown": 1900, "tba": 200 }, // on-orbit
+  "delta": { "updated": 29240, "new": 4, "decayed": 1 },
+  "anno_summary": { "directory_changes": 68, "tip_count": 4, "decay_notices": 4 }, // lens-4 legend, instant
+  "content_schema": "rso-core-v1",          // self-describing consensus-hash schema
+  "catalog_url": "https://…/catalog.json.gz", "catalog_url_kind": "catalog_gz"  // CORS bundle locator
 }
 ```
 
@@ -93,10 +96,12 @@ is essentially free:
 > in the catalog but counted separately as `reentered_count`). The viewer ghosts re-entered
 > objects in the field and headlines the on-orbit number, since that's what people care about.
 
-The viewer already consumes `band_counts`, `type_counts`, and `delta` from the index entry if
-present (forward-compatible) — the moment the pipeline emits them, every prism face is instant for
-the whole timeline with **zero** catalog downloads. Until then it falls back to catalog-computed
-(exact on stop) and a proportional estimate (while scrubbing).
+The viewer consumes `on_orbit_count`/`reentered_count`, `band_counts`, `type_counts`, `delta`, and
+`anno_summary` straight off the index entry — every prism face **and** the daily-changes
+decay/directory/forecast counts are instant for the whole timeline with **zero** catalog downloads.
+For any day the index hasn't backfilled yet it falls back to catalog-computed (exact on stop) and a
+proportional estimate (while scrubbing). `content_schema` is carried so a card booting from the
+index alone still labels the consensus-hash face correctly.
 
 ### Chunk it by year
 Put these entries in **year-chunk files** (`index/2026.json`, `index/2027.json`, …) on Arweave,
@@ -111,12 +116,32 @@ year(s) in view. ~150 bytes/day → ~55 KB/year → trivial for centuries; boot 
 3. Resolve the timeline from **Arweave / the contract first**; treat GitHub raw as a dev
    convenience only (it is not permanent and has CORS limits).
 
-## What the viewer does today
-- **Boot:** loads `ledger.json` (count + sha256 per day) + the doc-chain index (attestations) →
-  instant scrolling metadata for the whole timeline. *Yes — count + fingerprint come from this
-  initial load, not per-day fetches.*
-- **Band split:** now **real** when you stop on a day (computed from the loaded full catalog and
-  cached), and **forward-compatible** — if a ledger/index entry includes `band_counts`/`bands`,
-  the viewer uses it directly for every day with zero downloads. Until the pipeline emits that,
-  scrolling shows a proportional estimate that becomes exact on stop.
-- **Bundles:** Arweave-first (CORS-friendly, permanent); GitHub only if no Arweave mirror exists.
+## What the viewer does today (implemented)
+- **Boot:** fetches the lean Tier-1 index — `index/manifest.json` (whose `latestEntry` inlines the
+  newest day's full aggregate) + the current year-chunk `index/YYYY.json` — through a ranked,
+  fall-through list of backing **nodes**, then **boots to the latest witnessed day** with exact
+  numbers on the first frame. Year-chunks are cached in `localStorage`, validated by the manifest's
+  content hash, so a return trip is instant and offline. `ledger.json` remains only as a legacy
+  fallback for a node that hasn't published the lean index; the doc-chain index still layers on
+  attestations.
+- **Aggregates:** counts, on-orbit/re-entered split, `band_counts`, `type_counts`, `delta` and
+  `anno_summary` all come straight from the index entry — every prism face and the daily-changes
+  decay/directory/forecast counts are exact for the whole timeline with **zero** catalog downloads.
+  Un-backfilled days fall back to a proportional estimate that becomes exact on stop.
+- **Source rank:** the settings "index source priority" is a draggable stack-rank of nodes — the top
+  one serves every fetch, any failure falls through to the next. It is **ranked by on-chain TDH
+  backing by default** (derived from the attestation index's per-node `nodeBackingTdh`); the visitor
+  can drag to override (persisted), **paste their own node** (`owner/repo`) to take an arbitrary one,
+  or reset to TDH. The list is extended by the network's published roster
+  (`indexer/generated/nodes.json`, carrying each node's `tdh`, sorted by TDH).
+- **Source safety:** every node — from config, the roster, a paste, or `localStorage` — passes one
+  gate (`sanitizeNode`): `owner/repo` and branch names are regex-validated (no `..`, one slash), so
+  the only reachable host is `raw.githubusercontent.com`. All fetched payloads are read with
+  `JSON.parse` only (never `eval`/`Function`), labels are escaped before they touch the DOM, and the
+  list is capped — a hostile roster can at worst add more GitHub-raw fetch targets, nothing else.
+- **Status:** honest — *live · <node>* when the index is serving, *aggregates live · bundle offline*
+  when the per-object catalog can't be reached (the HUD numbers are still real), *embedded archive*
+  when every node is dark.
+- **Bundles (Tier 2, click-to-inspect only):** the index entry's `catalog_url` first (Arweave bundle
+  tar when permanent, else the node-branch `catalog.json.gz`), then any witness's signed Arweave
+  mirrors, then the ranked nodes' raw catalog — never the GitHub release asset (no CORS).

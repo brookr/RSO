@@ -277,6 +277,48 @@ For the same date, compare:
 
 Matching hashes across forks are the real success condition.
 
+### 8. Tier-1 index, aggregate backfill, and baseline re-cut
+
+The daily and publish-range workflows build the lean Tier-1 index automatically
+and commit `index/` to the `node` branch (see [snapshot-spec.md](snapshot-spec.md#tier-1-index)).
+To do it by hand, or to backfill the card-parity aggregates onto days archived
+before they existed (e.g. the existing genesis-to-date span), run from a `node`
+checkout that has the catalogs:
+
+```bash
+# 1. Make sure the catalogs are present locally (pull or hydrate from releases)
+python pipeline/snapshot.py hydrate-catalogs --start 2026-04-20 --end <latest>
+
+# 2. Backfill on_orbit/reentered/band/type/delta onto every manifest + ledger
+#    entry. No --force: published days take the annotation-preserving top-up
+#    path, so release bundle bytes stay byte-identical.
+python pipeline/snapshot.py rebuild-content --start 2026-04-20 --end <latest>
+
+# 3. Build the lean Tier-1 index (index/YYYY.json + index/manifest.json) with
+#    CORS catalog locators. Add --arweave (with ARWEAVE_JWK) for the permanence
+#    mirror; without it, the node branch is the GitHub-raw mirror.
+python pipeline/snapshot.py build-index --repo "<owner>/<repo>" --branch node
+
+# 4. Verify everything re-derives and the totals add up
+python pipeline/snapshot.py validate
+
+# 5. Commit to the node branch
+bash scripts/git-commit-paths.sh node "Backfill aggregates + Tier-1 index" data ledger.json index
+```
+
+To re-cut the card's embedded baseline (the offline floor) as the Tier-1 index
+inlined as-of-mint, run on the branch that holds `card/index.html` (normally
+`main`), after building the index:
+
+```bash
+python pipeline/snapshot.py build-baseline \
+  --index-dir index --start-date <mint-day> --inject card/index.html
+```
+
+This rewrites the `// BASELINE:BEGIN … // BASELINE:END` block in place, carrying
+the existing `attest`/`anno`/`chainMeta` forward. It refuses to write an empty
+baseline, so it never clobbers the permanent floor when the index is unavailable.
+
 ## Setting up a sweeper (optional)
 
 A sweeper is a funded courier. Most node operators do not need to run one. Run a

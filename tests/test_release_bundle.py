@@ -164,6 +164,55 @@ class ReleaseBundleTests(unittest.TestCase):
         with self.assertRaisesRegex(snapshot.SnapshotError, "HTTPS"):
             snapshot.validate_github_download_url("http://github.com/OMPub/RSO/releases/download/a/b")
 
+    def test_arweave_records_pending_receipt_before_chunk_upload(self):
+        # H1 double-spend guard: if the run dies during chunk upload (after the
+        # tx is broadcast and AR is spent), the tx id must already be on disk so
+        # the next run's skip-guard does not build and pay for a fresh tx.
+        bundle_path = self.root / "bundle.tar.gz"
+        bundle_path.write_bytes(b"bundle-bytes")
+        bundle = {
+            "date": "2026-04-18", "asset_name": "rso-archive-2026-04-18.tar.gz",
+            "bytes": bundle_path.stat().st_size, "bundle_sha256": "a" * 64,
+            "catalog_sha256": "b" * 64, "manifest_sha256": "c" * 64,
+            "path": str(bundle_path),
+        }
+        original_wallet = snapshot.arweave_wallet_jwk
+        original_build = snapshot.arweave_build_transaction
+        original_request = snapshot.arweave_request
+        try:
+            snapshot.arweave_wallet_jwk = lambda: {"kty": "RSA"}
+            snapshot.arweave_build_transaction = lambda b, jwk: {
+                "transaction": {"id": "txDIE", "reward": "99", "last_tx": "anchor",
+                                "data_root": "root", "data_size": "12"},
+                "bundle_bytes": b"bundle-bytes",
+                "chunk_plan": {"data_root": b"root",
+                               "chunks": [{"min_byte_range": 0, "max_byte_range": 12}],
+                               "proofs": [{"offset": 11, "proof": b"proof"}]},
+                "inline_data": False, "wallet_address": "addr",
+            }
+
+            def fake_request(method, path, payload=None, headers=None,
+                             allow_http_errors=False, allow_not_found=False):
+                if method == "POST" and path == "/tx":
+                    return 200, {}
+                if method == "POST" and path == "/chunk":
+                    raise snapshot.SnapshotError("runner died mid-upload")
+                raise AssertionError((method, path))
+
+            snapshot.arweave_request = fake_request
+            with self.assertRaises(snapshot.SnapshotError):
+                snapshot.publish_arweave_bundle(bundle, force=True)
+
+            # The receipt exists with the broadcast tx id -> a re-run skips it.
+            receipt = snapshot.load_storage_receipt("2026-04-18")
+            arw = receipt["destinations"]["arweave"]
+            self.assertEqual(arw["transaction_id"], "txDIE")
+            self.assertEqual(arw["status"], "pending")
+        finally:
+            snapshot.arweave_wallet_jwk = original_wallet
+            snapshot.arweave_build_transaction = original_build
+            snapshot.arweave_request = original_request
+
     def test_arweave_tx_confirmation_mapping(self):
         self.assertEqual(
             snapshot.arweave_tx_confirmation(200, {"block_height": 100, "number_of_confirmations": 5}),
@@ -174,7 +223,9 @@ class ReleaseBundleTests(unittest.TestCase):
         self.assertEqual(snapshot.arweave_tx_confirmation(200, {}), ("pending", None, None))
 
     def test_reconcile_promotes_pending_to_confirmed(self):
-        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"):
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"), patch.object(
+            snapshot, "LATEST_POINTER_PATH", self.root / "latest.json"
+        ):
             self.archive_day()
             bundle = {
                 "date": "2026-04-18",
@@ -203,7 +254,9 @@ class ReleaseBundleTests(unittest.TestCase):
             self.assertIn("last_checked_at", arw)
 
     def test_reconcile_leaves_still_pending_unconfirmed(self):
-        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"):
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"), patch.object(
+            snapshot, "LATEST_POINTER_PATH", self.root / "latest.json"
+        ):
             self.archive_day()
             bundle = {
                 "date": "2026-04-18", "asset_name": "x.tar.gz", "bytes": 1,
