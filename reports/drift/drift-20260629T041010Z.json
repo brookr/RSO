@@ -1,0 +1,422 @@
+{
+  "alert_window_count": 0,
+  "content_excluded_fields": [
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0"
+  ],
+  "feed_liveness": {
+    "alerts": [],
+    "conjunction_days": 7,
+    "days_checked": [
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-26",
+      "2026-06-27",
+      "2026-06-28",
+      "2026-06-29"
+    ],
+    "empty_conjunction_days": 0,
+    "sections_empty": {
+      "decay_messages": 0,
+      "satcat_changes": 2,
+      "tip_messages": 0
+    },
+    "sections_present": {
+      "decay_messages": 7,
+      "satcat_changes": 7,
+      "tip_messages": 7
+    }
+  },
+  "generated_at_utc": "2026-06-29T04:10:10Z",
+  "results": [
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-04-26T00:00:00--2026-04-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-04-26T00:00:00--2026-04-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-04-26T00:00:00--2026-04-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-04-26T00:00:00--2026-04-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-04-26T00:00:00--2026-04-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-04-27",
+      "fresh_selected": 28075,
+      "observation_drift_count": 5,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-04-26",
+          "gp_id": "320966129",
+          "norad_cat_id": "34464",
+          "recorded": null
+        },
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-04-26",
+          "gp_id": "320971697",
+          "norad_cat_id": "44315",
+          "recorded": null
+        },
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-04-25",
+          "gp_id": "320926358",
+          "norad_cat_id": "60483",
+          "recorded": null
+        },
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-04-24",
+          "gp_id": "320928665",
+          "norad_cat_id": "63490",
+          "recorded": null
+        },
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-04-26",
+          "gp_id": "320985092",
+          "norad_cat_id": "64496",
+          "recorded": null
+        }
+      ],
+      "raw_rows": 94845,
+      "recorded_updates": 28075,
+      "selection_drift": [],
+      "window_end_utc": "2026-04-27T00:00:00Z",
+      "window_start_utc": "2026-04-26T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-05-15T00:00:00--2026-05-16T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-05-15T00:00:00--2026-05-16T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-05-15T00:00:00--2026-05-16T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-05-15T00:00:00--2026-05-16T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-05-15T00:00:00--2026-05-16T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-05-16",
+      "fresh_selected": 26748,
+      "observation_drift_count": 2,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-05-14",
+          "gp_id": "323372814",
+          "norad_cat_id": "44724",
+          "recorded": null
+        },
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-05-14",
+          "gp_id": "323373748",
+          "norad_cat_id": "46691",
+          "recorded": null
+        }
+      ],
+      "raw_rows": 43266,
+      "recorded_updates": 26748,
+      "selection_drift": [],
+      "window_end_utc": "2026-05-16T00:00:00Z",
+      "window_start_utc": "2026-05-15T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-05-24T00:00:00--2026-05-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-05-24T00:00:00--2026-05-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-05-24T00:00:00--2026-05-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-05-24T00:00:00--2026-05-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-05-24T00:00:00--2026-05-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-05-25",
+      "fresh_selected": 24979,
+      "observation_drift_count": 1,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-05-24",
+          "gp_id": "324743253",
+          "norad_cat_id": "46168",
+          "recorded": null
+        }
+      ],
+      "raw_rows": 37762,
+      "recorded_updates": 24979,
+      "selection_drift": [],
+      "window_end_utc": "2026-05-25T00:00:00Z",
+      "window_start_utc": "2026-05-24T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-06-11T00:00:00--2026-06-12T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-06-11T00:00:00--2026-06-12T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-06-11T00:00:00--2026-06-12T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-06-11T00:00:00--2026-06-12T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-06-11T00:00:00--2026-06-12T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-06-12",
+      "fresh_selected": 26711,
+      "observation_drift_count": 3,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2025-11-23",
+          "gp_id": "328765296",
+          "norad_cat_id": "36223",
+          "recorded": null
+        },
+        {
+          "field": "OBJECT_NAME",
+          "fresh": "OBJECT A",
+          "gp_id": "328766571",
+          "norad_cat_id": "69474",
+          "recorded": "TBA - TO BE ASSIGNED"
+        },
+        {
+          "field": "TLE_LINE0",
+          "fresh": "0 OBJECT A",
+          "gp_id": "328766571",
+          "norad_cat_id": "69474",
+          "recorded": "0 TBA - TO BE ASSIGNED"
+        }
+      ],
+      "raw_rows": 68994,
+      "recorded_updates": 26711,
+      "selection_drift": [],
+      "window_end_utc": "2026-06-12T00:00:00Z",
+      "window_start_utc": "2026-06-11T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-06-14T00:00:00--2026-06-15T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-06-14T00:00:00--2026-06-15T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-06-14T00:00:00--2026-06-15T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-06-14T00:00:00--2026-06-15T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-06-14T00:00:00--2026-06-15T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-06-15",
+      "fresh_selected": 27065,
+      "observation_drift_count": 2,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-06-14",
+          "gp_id": "329441397",
+          "norad_cat_id": "61440",
+          "recorded": null
+        },
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-06-14",
+          "gp_id": "329502308",
+          "norad_cat_id": "61762",
+          "recorded": null
+        }
+      ],
+      "raw_rows": 113357,
+      "recorded_updates": 27065,
+      "selection_drift": [],
+      "window_end_utc": "2026-06-15T00:00:00Z",
+      "window_start_utc": "2026-06-14T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-06-22T00:00:00--2026-06-23T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-06-22T00:00:00--2026-06-23T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-06-22T00:00:00--2026-06-23T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-06-22T00:00:00--2026-06-23T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-06-22T00:00:00--2026-06-23T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-06-23",
+      "fresh_selected": 84,
+      "observation_drift_count": 1,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-06-22",
+          "gp_id": "330944713",
+          "norad_cat_id": "47559",
+          "recorded": null
+        }
+      ],
+      "raw_rows": 97,
+      "recorded_updates": 84,
+      "selection_drift": [],
+      "window_end_utc": "2026-06-23T00:00:00Z",
+      "window_start_utc": "2026-06-22T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-06-23T00:00:00--2026-06-24T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-06-23T00:00:00--2026-06-24T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-06-23T00:00:00--2026-06-24T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-06-23T00:00:00--2026-06-24T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-06-23T00:00:00--2026-06-24T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-06-24",
+      "fresh_selected": 31803,
+      "observation_drift_count": 2,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-06-20",
+          "gp_id": "330960867",
+          "norad_cat_id": "41370",
+          "recorded": null
+        },
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-06-17",
+          "gp_id": "330973495",
+          "norad_cat_id": "62393",
+          "recorded": null
+        }
+      ],
+      "raw_rows": 31889,
+      "recorded_updates": 31803,
+      "selection_drift": [],
+      "window_end_utc": "2026-06-24T00:00:00Z",
+      "window_start_utc": "2026-06-23T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-06-24T00:00:00--2026-06-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-06-24T00:00:00--2026-06-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-06-24T00:00:00--2026-06-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-06-24T00:00:00--2026-06-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-06-24T00:00:00--2026-06-25T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-06-25",
+      "fresh_selected": 30612,
+      "observation_drift_count": 1,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-06-20",
+          "gp_id": "331083337",
+          "norad_cat_id": "39472",
+          "recorded": null
+        }
+      ],
+      "raw_rows": 49299,
+      "recorded_updates": 30612,
+      "selection_drift": [],
+      "window_end_utc": "2026-06-25T00:00:00Z",
+      "window_start_utc": "2026-06-24T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-06-25T00:00:00--2026-06-26T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-06-25T00:00:00--2026-06-26T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-06-25T00:00:00--2026-06-26T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-06-25T00:00:00--2026-06-26T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-06-25T00:00:00--2026-06-26T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-06-26",
+      "fresh_selected": 28276,
+      "observation_drift_count": 2,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-06-25",
+          "gp_id": "331167105",
+          "norad_cat_id": "46758",
+          "recorded": null
+        },
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-06-25",
+          "gp_id": "331308123",
+          "norad_cat_id": "64326",
+          "recorded": null
+        }
+      ],
+      "raw_rows": 95740,
+      "recorded_updates": 28276,
+      "selection_drift": [],
+      "window_end_utc": "2026-06-26T00:00:00Z",
+      "window_start_utc": "2026-06-25T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-06-26T00:00:00--2026-06-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-06-26T00:00:00--2026-06-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-06-26T00:00:00--2026-06-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-06-26T00:00:00--2026-06-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-06-26T00:00:00--2026-06-27T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-06-27",
+      "fresh_selected": 28019,
+      "observation_drift_count": 0,
+      "observation_drift_sample": [],
+      "raw_rows": 85750,
+      "recorded_updates": 28019,
+      "selection_drift": [],
+      "window_end_utc": "2026-06-27T00:00:00Z",
+      "window_start_utc": "2026-06-26T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-06-27T00:00:00--2026-06-28T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-06-27T00:00:00--2026-06-28T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-06-27T00:00:00--2026-06-28T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-06-27T00:00:00--2026-06-28T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-06-27T00:00:00--2026-06-28T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-06-28",
+      "fresh_selected": 27662,
+      "observation_drift_count": 1,
+      "observation_drift_sample": [
+        {
+          "field": "DECAY_DATE",
+          "fresh": "2026-06-27",
+          "gp_id": "331729989",
+          "norad_cat_id": "46356",
+          "recorded": null
+        }
+      ],
+      "raw_rows": 85261,
+      "recorded_updates": 27662,
+      "selection_drift": [],
+      "window_end_utc": "2026-06-28T00:00:00Z",
+      "window_start_utc": "2026-06-27T00:00:00Z"
+    },
+    {
+      "api_query_paths": [
+        "/class/gp_history/NORAD_CAT_ID/0--19999/CREATION_DATE/2026-06-28T00:00:00--2026-06-29T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/20000--39999/CREATION_DATE/2026-06-28T00:00:00--2026-06-29T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/40000--59999/CREATION_DATE/2026-06-28T00:00:00--2026-06-29T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/60000--99999/CREATION_DATE/2026-06-28T00:00:00--2026-06-29T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json",
+        "/class/gp_history/NORAD_CAT_ID/270000--279999/CREATION_DATE/2026-06-28T00:00:00--2026-06-29T00:00:00/orderby/NORAD_CAT_ID%20asc,CREATION_DATE%20desc/format/json"
+      ],
+      "core_field_mutations": [],
+      "date": "2026-06-29",
+      "fresh_selected": 28862,
+      "observation_drift_count": 0,
+      "observation_drift_sample": [],
+      "raw_rows": 112551,
+      "recorded_updates": 28862,
+      "selection_drift": [],
+      "window_end_utc": "2026-06-29T00:00:00Z",
+      "window_start_utc": "2026-06-28T00:00:00Z"
+    }
+  ],
+  "schema": "rso-drift-audit-v1",
+  "windows_checked": 12,
+  "windows_skipped": []
+}
