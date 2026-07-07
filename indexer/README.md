@@ -9,8 +9,8 @@ The first profile is Sepolia:
 network: sepolia
 contract: 0x867FcC4f0339009043E9F6e554DD516Bcf1bcaa9
 profileURI: https://om.pub/rso/doc-chain
-docChainId: 0x8621c2851714436d60da45cf0e11253114a4f2002f73ddc159b4dc88fea5611d
-fromBlock: 11007365
+docChainId: 0x6011620b5a3faa23f8078c2af0bb1a87bb85a68f784abdf3dbae67939c399bea
+fromBlock: 11026268
 ```
 
 Run it with any Sepolia JSON-RPC endpoint:

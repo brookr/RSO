@@ -52,21 +52,35 @@ class LedgerTests(unittest.TestCase):
             finally:
                 snapshot.LEDGER_PATH = original_ledger_path
 
-    def test_empty_and_corrupt_ledger_files_are_handled(self):
+    def test_corrupt_ledger_raises_instead_of_restarting_from_empty(self):
+        # A truncated/corrupt ledger is a crash artifact, not a fresh start;
+        # silently resetting it would erase the published chain of entries.
         original_ledger_path = snapshot.LEDGER_PATH
         with tempfile.TemporaryDirectory() as tmp:
             try:
                 snapshot.LEDGER_PATH = Path(tmp) / "ledger.json"
                 snapshot.LEDGER_PATH.write_text("{not-json", encoding="utf-8")
-                snapshot.update_ledger(manifest("2026-04-12", "a" * 64))
+                with self.assertRaisesRegex(snapshot.SnapshotError, "corrupt"):
+                    snapshot.update_ledger(manifest("2026-04-12", "a" * 64))
+                # the corrupt bytes are left in place for the operator
+                self.assertEqual(snapshot.LEDGER_PATH.read_text(encoding="utf-8"), "{not-json")
 
-                with open(snapshot.LEDGER_PATH, encoding="utf-8") as f:
-                    ledger = json.load(f)
-
-                self.assertEqual(len(ledger), 1)
-                self.assertEqual(ledger[0]["date"], "2026-04-12")
+                snapshot.LEDGER_PATH.write_text("{}", encoding="utf-8")
+                with self.assertRaisesRegex(snapshot.SnapshotError, "JSON list"):
+                    snapshot.update_ledger(manifest("2026-04-12", "a" * 64))
             finally:
                 snapshot.LEDGER_PATH = original_ledger_path
+
+    def test_write_json_is_atomic_and_leaves_no_temp_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "nested" / "out.json"
+            snapshot.write_json(target, {"a": 1})
+            snapshot.write_json(target, {"a": 2})
+
+            self.assertEqual(json.loads(target.read_text(encoding="utf-8")), {"a": 2})
+            self.assertEqual(
+                [p.name for p in target.parent.iterdir()], ["out.json"]
+            )
 
 
 if __name__ == "__main__":

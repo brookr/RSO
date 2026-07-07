@@ -120,6 +120,31 @@ class BuildIndexTests(IndexBuildBase):
         # never the release asset
         self.assertNotIn("releases/download", entries["2026-01-02"]["catalog_url"])
 
+    def test_pruned_day_without_receipt_gets_no_locator(self):
+        # build-index runs inside the checked-out node branch, so a locally
+        # absent catalog.json.gz == pruned from the branch; a node-branch URL
+        # for it would be a dead 404 locator.
+        self.archive("2026-01-01", [gp_record("1")])
+        (snapshot.snapshot_dir("2026-01-01") / "catalog.json.gz").unlink()
+        snapshot.build_index("OMPub/RSO", "node")
+        entry = json.loads((snapshot.INDEX_DIR / "2026.json").read_text())[0]
+        self.assertNotIn("catalog_url", entry)
+        self.assertNotIn("catalog_url_kind", entry)
+
+    def test_unreadable_manifest_fails_loudly(self):
+        self.archive("2026-01-01", [gp_record("1")])
+        self.archive("2026-01-02", [gp_record("1")])
+        (snapshot.snapshot_dir("2026-01-02") / "manifest.json").write_text(
+            "{corrupt", encoding="utf-8"
+        )
+        # present-but-unreadable must raise (naming the day), never silently
+        # shrink the index; a genuinely missing manifest is still skipped
+        with self.assertRaisesRegex(snapshot.SnapshotError, "2026-01-02"):
+            snapshot.build_index("OMPub/RSO", "node")
+        (snapshot.snapshot_dir("2026-01-02") / "manifest.json").unlink()
+        manifest = snapshot.build_index("OMPub/RSO", "node")
+        self.assertEqual(manifest["day_count"], 1)
+
     def test_stale_year_chunk_removed(self):
         self.archive("2025-01-01", [gp_record("1")])
         self.archive("2026-01-01", [gp_record("1")])
@@ -161,6 +186,52 @@ class ArweaveMirrorTests(IndexBuildBase):
         on_disk = json.loads((snapshot.INDEX_DIR / "manifest.json").read_text())
         self.assertEqual(on_disk["arweave"]["chunks"]["index/2026.json"]["transaction_id"], "TX-2026")
 
+    def test_rebuild_carries_forward_matching_arweave_chunk_records(self):
+        self.archive("2026-01-01", [gp_record("1")])
+        snapshot.build_index("OMPub/RSO", "node")
+
+        def fake_upload(path, **kwargs):
+            stem = Path(path).stem
+            return {"status": "confirmed", "transaction_id": f"TX-{stem}",
+                    "transaction_url": f"https://arweave.net/TX-{stem}"}
+
+        snapshot.mirror_index_to_arweave(snapshot.INDEX_DIR, upload=fake_upload)
+
+        # rebuild with unchanged data: the paid-for chunk tx must survive
+        rebuilt = snapshot.build_index("OMPub/RSO", "node")
+        self.assertEqual(
+            rebuilt["arweave"]["chunks"]["index/2026.json"]["transaction_id"], "TX-2026"
+        )
+
+        # rebuild after the year's data changed: the stale record must NOT survive
+        self.archive("2026-01-02", [gp_record("1")])
+        rebuilt = snapshot.build_index("OMPub/RSO", "node")
+        self.assertNotIn("arweave", rebuilt)
+
+    def test_mirror_skips_chunks_already_uploaded_with_matching_sha(self):
+        self.archive("2025-06-01", [gp_record("1")])
+        self.archive("2026-01-01", [gp_record("1")])
+        snapshot.build_index("OMPub/RSO", "node")
+
+        uploaded = []
+
+        def fake_upload(path, **kwargs):
+            stem = Path(path).stem
+            uploaded.append(stem)
+            return {"status": "confirmed", "transaction_id": f"TX-{stem}",
+                    "transaction_url": f"https://arweave.net/TX-{stem}"}
+
+        snapshot.mirror_index_to_arweave(snapshot.INDEX_DIR, upload=fake_upload)
+        self.assertEqual(uploaded, ["2025", "2026", "manifest"])
+
+        # second mirror: recorded txs match the chunk shas -> pay-once, only the
+        # (always-changing) manifest is re-uploaded
+        uploaded.clear()
+        result = snapshot.mirror_index_to_arweave(snapshot.INDEX_DIR, upload=fake_upload)
+        self.assertEqual(uploaded, ["manifest"])
+        self.assertEqual(result["arweave"]["chunks"]["index/2025.json"]["transaction_id"], "TX-2025")
+        self.assertEqual(result["arweave"]["chunks"]["index/2026.json"]["transaction_id"], "TX-2026")
+
     def test_mirror_without_wallet_is_noop(self):
         self.archive("2026-01-01", [gp_record("1")])
         snapshot.build_index("OMPub/RSO", "node")
@@ -192,7 +263,7 @@ class ArweaveMirrorTests(IndexBuildBase):
             build=fake_build,
             submit_transaction=lambda upload: None,
             submit_chunks=lambda upload: None,
-            query_status=lambda tx_id: (200, {"block_height": 7}),
+            query_status=lambda tx_id: (200, {"block_height": 7, "number_of_confirmations": 20}),
         )
         self.assertEqual(result["status"], "confirmed")
         self.assertEqual(result["transaction_id"], "TXabc")

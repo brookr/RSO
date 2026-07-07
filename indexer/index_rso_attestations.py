@@ -24,7 +24,15 @@ from indexer.rso_profile import (  # noqa: E402
     normalize_verified_claims,
 )
 from vendor.docchain.indexer import EthereumRpc, RpcError  # noqa: E402
-from vendor.docchain.store import load_event_cache, update_event_cache, write_json_file  # noqa: E402
+from vendor.docchain.store import (  # noqa: E402
+    ScanContext,
+    event_cache_record,
+    event_key,
+    load_event_cache,
+    update_event_cache,
+    write_checkpoint,
+    write_json_file,
+)
 
 
 NETWORKS = {
@@ -51,7 +59,20 @@ def main() -> int:
         cache_path = args.cache or f"indexer/cache/{args.network}/doc-attested.jsonl"
         checkpoint_path = args.checkpoint or f"indexer/cache/{args.network}/checkpoint.json"
         out_path = args.out or f"indexer/generated/{args.network}/rso-docchain-index.json"
+        if args.confirmations < 6:
+            print(
+                f"WARNING: --confirmations {args.confirmations} is shallow; a modest reorg "
+                "can orphan indexed events (reconciliation will purge them next run, but "
+                "prefer >= 6)",
+                file=sys.stderr,
+            )
         support_path = args.tdh_support or args.backing
+        if args.backing and not args.tdh_support:
+            print(
+                "WARNING: --backing applies ONE undated snapshot to every date; "
+                "prefer --tdh-support (dated) for anything rank-relevant",
+                file=sys.stderr,
+            )
         operator_backing = load_operator_backing(support_path) if support_path and not args.tdh_support else None
         operator_backing_by_date = None
         direct_witnesses_by_date = None
@@ -60,7 +81,7 @@ def main() -> int:
                 args.tdh_support
             )
         verified_claims = load_verified_claims(args.sweeper_reports) if args.sweeper_reports else None
-        result = update_event_cache(
+        scan_kwargs = dict(
             rpc=rpc,
             address=config["address"],
             cache_path=cache_path,
@@ -73,11 +94,30 @@ def main() -> int:
             network=args.network,
             progress=progress_callback(args),
         )
+        result = update_event_cache(**scan_kwargs)
+        # Reorg defense: the cache is append-only and the checkpoint only moves
+        # forward, so an event mined in a block that later reorged would stay
+        # indexed forever. Reconcile recent cached events against the canonical
+        # chain; on a purge, rewind the checkpoint and rescan the gap.
+        context = ScanContext(
+            address=config["address"],
+            doc_chain_id=RSO_DOC_CHAIN_ID,
+            chain_id=config["chain_id"],
+            network=args.network,
+        )
+        purged = reconcile_reorged_events(rpc, cache_path, checkpoint_path, context, to_block)
+        if purged:
+            print(
+                f"reorg reconciliation: purged {purged} orphaned event(s); rescanning",
+                file=sys.stderr,
+            )
+            result = update_event_cache(**scan_kwargs)
         events = filter_rso_events(load_event_cache(cache_path))
         block_timestamps = fetch_block_timestamps(
             rpc,
             (event.block_number for event in events),
             Path(f"indexer/cache/{args.network}/block-timestamps.json"),
+            latest_block=latest_block,
         )
 
         index = build_static_index(
@@ -96,7 +136,23 @@ def main() -> int:
             direct_witnesses_by_date=direct_witnesses_by_date,
             block_timestamps=block_timestamps,
         )
-        write_json_file(Path(out_path), index)
+        # The event cache is append-only, so the published index can never
+        # legitimately SHRINK. A smaller index means cache loss or a
+        # misconfigured --cache/--network — refuse to clobber the good one.
+        out_file = Path(out_path)
+        if out_file.exists() and not args.allow_shrinking_index:
+            try:
+                prior = json.loads(out_file.read_text(encoding="utf-8"))
+                prior_count = int(prior.get("eventCount", 0)) if isinstance(prior, dict) else 0
+            except (OSError, ValueError):
+                prior_count = 0
+            if index["eventCount"] < prior_count:
+                raise ValueError(
+                    f"refusing to overwrite an index holding {prior_count} events with one "
+                    f"holding {index['eventCount']} (event cache is append-only — cache loss "
+                    f"or misconfig?); pass --allow-shrinking-index to override"
+                )
+        write_json_file(out_file, index)
         if not args.quiet:
             print(
                 f"scanned {result.chunk_count} chunks; cached "
@@ -110,29 +166,80 @@ def main() -> int:
         return 2
 
 
-def fetch_block_timestamps(rpc, block_numbers, cache_path: Path) -> dict[int, int]:
-    """Resolve block numbers to timestamps, with a persistent cache.
+# Only timestamps at least this many blocks below the tip are treated as
+# immutable and cached; shallower blocks can still reorg (the scan itself runs
+# at latest - confirmations, well short of true finality), so their timestamps
+# are fetched fresh each run and never persisted.
+TIMESTAMP_FINALITY_DEPTH = 64
 
-    Block timestamps are immutable once finalized, so the cache only ever
-    grows; a sweep run pays one eth_getBlockByNumber per previously unseen
-    block (attestations cluster in few blocks -- daily runs add ~2).
-    """
+
+def fetch_block_timestamps(rpc, block_numbers, cache_path: Path, *, latest_block: int) -> dict[int, int]:
+    """Resolve block numbers to timestamps, caching only finalized-depth blocks."""
     cached: dict[str, int] = {}
     if cache_path.exists():
         loaded = json.loads(cache_path.read_text(encoding="utf-8"))
         if not isinstance(loaded, dict):
             raise ValueError(f"{cache_path}: block timestamp cache must be a JSON object")
         cached = {str(key): int(value) for key, value in loaded.items()}
+    finality_ceiling = latest_block - TIMESTAMP_FINALITY_DEPTH
     wanted = sorted({int(number) for number in block_numbers})
-    missing = [number for number in wanted if str(number) not in cached]
+    # a cached entry for a still-shallow block is refetched (it may have been
+    # cached from a since-reorged chain view)
+    missing = [n for n in wanted if str(n) not in cached or n > finality_ceiling]
+    result = dict(cached)
+    persist = False
     for number in missing:
         block = rpc.call("eth_getBlockByNumber", [hex(number), False])
         if not isinstance(block, dict) or not isinstance(block.get("timestamp"), str):
             raise ValueError(f"eth_getBlockByNumber({number}) returned no timestamp")
-        cached[str(number)] = int(block["timestamp"], 16)
-    if missing:
+        result[str(number)] = int(block["timestamp"], 16)
+        if number <= finality_ceiling:
+            cached[str(number)] = result[str(number)]
+            persist = True
+    if persist:
         write_json_file(cache_path, cached)
-    return {int(key): value for key, value in cached.items()}
+    return {int(key): value for key, value in result.items()}
+
+
+def reconcile_reorged_events(rpc, cache_path, checkpoint_path, context, to_block, window: int = 200) -> int:
+    """Purge cached events whose recorded block hash no longer matches the
+    canonical chain (a reorg deeper than the confirmation lag), and rewind the
+    checkpoint below the shallowest purged block so the rescan refills the gap.
+
+    The event cache is append-only by design; a reorg is the one case where
+    history must be rewritten — done atomically via tmp + os.replace. Events
+    with no recorded block hash (legacy cache lines) are left untouched.
+    """
+    events = load_event_cache(cache_path)
+    recent = [
+        e for e in events
+        if e.block_number > to_block - window and e.ethereum_block_hash
+    ]
+    if not recent:
+        return 0
+    canonical: dict[int, str] = {}
+    for number in sorted({e.block_number for e in recent}):
+        block = rpc.call("eth_getBlockByNumber", [hex(number), False])
+        canonical[number] = (
+            str(block.get("hash", "")).lower() if isinstance(block, dict) else ""
+        )
+    orphaned = [
+        e for e in recent
+        if canonical.get(e.block_number, "") != e.ethereum_block_hash.lower()
+    ]
+    if not orphaned:
+        return 0
+    orphan_keys = {event_key(e) for e in orphaned}
+    kept = [e for e in events if event_key(e) not in orphan_keys]
+    tmp = Path(str(cache_path) + ".tmp")
+    with tmp.open("w", encoding="utf-8") as stream:
+        for e in kept:
+            stream.write(json.dumps(event_cache_record(e), sort_keys=True, separators=(",", ":")))
+            stream.write("\n")
+    os.replace(tmp, cache_path)
+    rewind = min(e.block_number for e in orphaned) - 1
+    write_checkpoint(checkpoint_path, context, rewind)
+    return len(orphaned)
 
 
 def parse_args() -> argparse.Namespace:
@@ -190,6 +297,15 @@ def parse_args() -> argparse.Namespace:
         help="Sweeper report JSON file or directory used to verify signed node claims.",
     )
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument(
+        "--allow-shrinking-index",
+        action="store_true",
+        help=(
+            "Permit overwriting an existing index with one holding FEWER events. "
+            "The event cache is append-only, so a shrink normally means cache "
+            "loss or a misconfigured --cache/--network — refused by default."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -286,7 +402,14 @@ def load_verified_claims(path: str) -> dict[str, dict[str, object]]:
                 continue
             fingerprint = record.get("claimFingerprint")
             if not isinstance(fingerprint, str) or not fingerprint:
-                raise ValueError("verified sweeper record requires claimFingerprint")
+                # a single malformed record must not block index regeneration —
+                # skip it loudly (it could never have contributed a verified
+                # claim anyway); CONFLICTING evidence below still hard-errors.
+                print(
+                    f"{report_path}: skipping verified record without claimFingerprint",
+                    file=sys.stderr,
+                )
+                continue
             evidence = {
                 key: record.get(key, "")
                 for key in (

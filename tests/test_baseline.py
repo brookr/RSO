@@ -139,6 +139,18 @@ class BaselineBuildTests(unittest.TestCase):
             snapshot.inject_baseline_into_card(card, "{}")
 
 
+class BaselineDayEntryTests(unittest.TestCase):
+    def test_pre_aggregate_entry_fails_with_named_date_and_remedy(self):
+        entry = {
+            "date": "2026-01-01", "object_count": 1, "sha256": "x",
+            "provenance": "genesis_from_gp", "compressed_bytes": 1,
+        }
+        with self.assertRaisesRegex(
+            snapshot.SnapshotError, r"2026-01-01.*content_sha256.*rebuild-content"
+        ):
+            snapshot.baseline_day_from_index_entry(entry)
+
+
 class RealCardMarkerTests(unittest.TestCase):
     def test_real_card_has_markers_and_extractable_baseline(self):
         baseline = snapshot.extract_baseline_from_card(REAL_CARD)

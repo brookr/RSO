@@ -1,3 +1,5 @@
+import contextlib
+import io
 import unittest
 
 from pipeline import snapshot
@@ -155,6 +157,20 @@ class RollingSnapshotTests(unittest.TestCase):
         self.assertEqual(summary["carried_forward_count"], 1)
         self.assertEqual(summary["new_norad_cat_ids"], [])
         self.assertEqual(summary["updated_norad_cat_ids"], [])
+
+    def test_empty_delta_window_warns_loudly(self):
+        # an HTTP-200-empty Space-Track outage is indistinguishable from a
+        # quiet day; the operator must see it immediately, not at consensus
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            snapshot.warn_if_empty_delta_window("2026-04-12", {"raw_row_count": 0})
+        self.assertIn("WARNING", buf.getvalue())
+        self.assertIn("0 rows", buf.getvalue())
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            snapshot.warn_if_empty_delta_window("2026-04-12", {"raw_row_count": 5})
+        self.assertEqual(buf.getvalue(), "")
 
     def test_visibility_audit_tracks_missing_and_reappeared_objects(self):
         archived = [

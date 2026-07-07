@@ -1,6 +1,8 @@
 import io
+import os
 import unittest
 import urllib.error
+from unittest.mock import patch
 
 from pipeline import snapshot
 
@@ -93,6 +95,32 @@ class RateLimiterTests(unittest.TestCase):
     def test_rejects_non_positive_limits(self):
         with self.assertRaises(snapshot.SnapshotError):
             snapshot.SpaceTrackRateLimiter(per_minute=0)
+
+
+class LoginTests(unittest.TestCase):
+    CREDS = {"SPACETRACK_USER": "user", "SPACETRACK_PASS": "pass"}
+
+    def test_non_json_login_response_is_a_failure(self):
+        # An HTML maintenance page (or any non-JSON body) is not a session;
+        # marking it authenticated would fail later with confusing errors.
+        client, _ = make_client([FakeResp(b"<html>maintenance</html>")])
+        with patch.dict(os.environ, self.CREDS):
+            with self.assertRaisesRegex(snapshot.SnapshotError, "non-JSON"):
+                client.login()
+        self.assertFalse(client.authenticated)
+
+    def test_json_login_response_authenticates(self):
+        client, _ = make_client([FakeResp(b'""')])
+        with patch.dict(os.environ, self.CREDS):
+            client.login()
+        self.assertTrue(client.authenticated)
+
+    def test_login_failed_payload_raises(self):
+        client, _ = make_client([FakeResp(b'{"Login": "Failed"}')])
+        with patch.dict(os.environ, self.CREDS):
+            with self.assertRaisesRegex(snapshot.SnapshotError, "Check credentials"):
+                client.login()
+        self.assertFalse(client.authenticated)
 
 
 class RequestRetryTests(unittest.TestCase):

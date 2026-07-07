@@ -37,11 +37,13 @@ for entry in (str(ROOT), str(ROOT / "pipeline")):
 
 import snapshot  # noqa: E402
 
-# Wide NORAD ranges covering the observed catalog (dense low ids, the 8xxxx
-# band, and the 27xxxx analyst band). Five requests per audited window keeps a
-# 20-day sample around 100 requests -- well under Space-Track's hourly limit
-# at the client's enforced pacing.
-AUDIT_RANGES = ((0, 19999), (20000, 39999), (40000, 59999), (60000, 99999), (270000, 279999))
+# Audit coverage MUST equal capture coverage: the snapshot pipeline queries
+# iter_catalog_ranges(0..MAX_NORAD_CAT_ID), and is_canonical_norad_cat_id accepts
+# every id in that span, so a recorded catalog can hold objects anywhere in it
+# (incl. the 100000-269999 Alpha-5 band and 280000-339999). Deriving the audit
+# ranges from the same generator keeps the guardrail from having a blind band
+# where drift on both the recorded and fresh state would be silently invisible.
+AUDIT_RANGES = tuple(snapshot.iter_catalog_ranges())
 
 # Feed liveness: an upstream feed that is silently broken or discontinued
 # looks exactly like a quiet sky, and nothing in the per-day machinery

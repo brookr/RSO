@@ -4,7 +4,9 @@ import json
 import tarfile
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from pipeline import snapshot
@@ -215,8 +217,24 @@ class ReleaseBundleTests(unittest.TestCase):
 
     def test_arweave_tx_confirmation_mapping(self):
         self.assertEqual(
+            snapshot.arweave_tx_confirmation(
+                200,
+                {
+                    "block_height": 100,
+                    "number_of_confirmations": snapshot.ARWEAVE_MIN_CONFIRMATIONS,
+                },
+            ),
+            ("confirmed", snapshot.ARWEAVE_MIN_CONFIRMATIONS, 100),
+        )
+        # mined but still shallow is pending: a fresh block can drop in a reorg
+        self.assertEqual(
             snapshot.arweave_tx_confirmation(200, {"block_height": 100, "number_of_confirmations": 5}),
-            ("confirmed", 5, 100),
+            ("pending", 5, 100),
+        )
+        # a block with no confirmation count cannot prove burial
+        self.assertEqual(
+            snapshot.arweave_tx_confirmation(200, {"block_height": 100}),
+            ("pending", None, 100),
         )
         self.assertEqual(snapshot.arweave_tx_confirmation(404, None), ("pending", None, None))
         # 200 with no block data yet is still pending, not confirmed
@@ -242,7 +260,7 @@ class ReleaseBundleTests(unittest.TestCase):
             )
             original = snapshot.arweave_request
             try:
-                snapshot.arweave_request = lambda *a, **k: (200, {"block_height": 7, "number_of_confirmations": 3})
+                snapshot.arweave_request = lambda *a, **k: (200, {"block_height": 7, "number_of_confirmations": 20})
                 settled = snapshot.reconcile_arweave_pending(["2026-04-18"])
             finally:
                 snapshot.arweave_request = original
@@ -250,7 +268,7 @@ class ReleaseBundleTests(unittest.TestCase):
             receipt = snapshot.load_storage_receipt("2026-04-18")
             arw = receipt["destinations"]["arweave"]
             self.assertEqual(arw["status"], "confirmed")
-            self.assertEqual(arw["confirmations"], 3)
+            self.assertEqual(arw["confirmations"], 20)
             self.assertIn("last_checked_at", arw)
 
     def test_reconcile_leaves_still_pending_unconfirmed(self):
@@ -755,6 +773,257 @@ class ReleaseBundleTests(unittest.TestCase):
         finally:
             snapshot.arweave_request = original_request
             snapshot.ARWEAVE_TRANSACTION_RETRY_DELAY = original_delay
+
+    def test_github_release_skip_path_preserves_receipt_on_bundle_drift(self):
+        # An already-published day whose freshly built bytes differ (e.g. after
+        # rebuild-content) must not have its recorded fingerprints overwritten:
+        # that would desync the receipt from the published asset and drop the
+        # sha-gated ar:// locator.
+        recorded = {
+            "date": "2026-04-18",
+            "asset_name": "rso-archive-2026-04-18.tar.gz",
+            "bundle_sha256": "0" * 64,
+            "destinations": {
+                "arweave": {
+                    "status": "confirmed",
+                    "transaction_id": "txOLD",
+                    "bundle_sha256": "0" * 64,
+                }
+            },
+        }
+        snapshot.write_json(snapshot.storage_receipt_path("2026-04-18"), recorded)
+        original_release_payload = snapshot.github_release_payload
+        original_resolve_repo = snapshot.resolve_github_repo
+        try:
+            snapshot.resolve_github_repo = lambda repo=None: "OMPub/RSO"
+            snapshot.github_release_payload = lambda tag, repo=None, allow_missing=False: {
+                "id": 1,
+                "assets": [{"id": 2, "name": "rso-archive-2026-04-18.tar.gz"}],
+            }
+            bundle = {
+                "date": "2026-04-18",
+                "tag": "rso-archive-2026-04-18",
+                "asset_name": "rso-archive-2026-04-18.tar.gz",
+                "bytes": 123,
+                "bundle_sha256": "a" * 64,
+                "catalog_sha256": "b" * 64,
+                "manifest_sha256": "c" * 64,
+            }
+
+            result = snapshot.publish_github_release(bundle, upload_policy="if_missing", force=False)
+
+            self.assertEqual(result["status"], "skipped")
+            self.assertEqual(result["reason"], "bundle_drift")
+            self.assertEqual(result["recorded_bundle_sha256"], "0" * 64)
+            receipt = json.loads(
+                snapshot.storage_receipt_path("2026-04-18").read_text(encoding="utf-8")
+            )
+            self.assertEqual(receipt, recorded)
+        finally:
+            snapshot.github_release_payload = original_release_payload
+            snapshot.resolve_github_repo = original_resolve_repo
+
+    def test_arweave_nonfatal_failure_preserves_broadcast_tx_receipt(self):
+        # AR is spent the instant a tx is broadcast; a later failure must not
+        # replace the pending receipt with "failed" or a rerun pays again.
+        bundle = {
+            "date": "2026-04-18",
+            "asset_name": "rso-archive-2026-04-18.tar.gz",
+            "bytes": 123,
+            "bundle_sha256": "a" * 64,
+            "catalog_sha256": "b" * 64,
+            "manifest_sha256": "c" * 64,
+            "path": str(self.root / "bundle.tar.gz"),
+        }
+        snapshot.record_storage_destination(
+            bundle,
+            "arweave",
+            {"status": "pending", "transaction_id": "txKEEP", "bundle_sha256": "a" * 64},
+        )
+        original_publish = snapshot.publish_arweave_bundle
+        try:
+            snapshot.publish_arweave_bundle = lambda *args, **kwargs: (_ for _ in ()).throw(
+                snapshot.SnapshotError("chunk upload died")
+            )
+            result = snapshot.publish_arweave_bundle_nonfatal(bundle)
+
+            self.assertEqual(result["status"], "pending")
+            self.assertEqual(result["reason"], "arweave_upload_failed")
+            self.assertEqual(result["transaction_id"], "txKEEP")
+            arw = snapshot.load_storage_receipt("2026-04-18")["destinations"]["arweave"]
+            self.assertEqual(arw["status"], "pending")
+            self.assertEqual(arw["transaction_id"], "txKEEP")
+            self.assertIn("chunk upload died", arw["last_error"])
+        finally:
+            snapshot.publish_arweave_bundle = original_publish
+
+    def test_arweave_nonfatal_catches_urlerror(self):
+        bundle = {
+            "date": "2026-04-18",
+            "asset_name": "rso-archive-2026-04-18.tar.gz",
+            "bytes": 123,
+            "bundle_sha256": "a" * 64,
+            "catalog_sha256": "b" * 64,
+            "manifest_sha256": "c" * 64,
+            "path": str(self.root / "bundle.tar.gz"),
+        }
+        original_publish = snapshot.publish_arweave_bundle
+        try:
+            snapshot.publish_arweave_bundle = lambda *args, **kwargs: (_ for _ in ()).throw(
+                urllib.error.URLError("dns down")
+            )
+            result = snapshot.publish_arweave_bundle_nonfatal(bundle)
+
+            self.assertEqual(result["status"], "failed")
+            self.assertIn("dns down", result["error"])
+            receipt = snapshot.load_storage_receipt("2026-04-18")
+            self.assertEqual(receipt["destinations"]["arweave"]["status"], "failed")
+        finally:
+            snapshot.publish_arweave_bundle = original_publish
+
+    def test_reconcile_rechecks_failed_receipt_with_tx_id(self):
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"), patch.object(
+            snapshot, "LATEST_POINTER_PATH", self.root / "latest.json"
+        ):
+            self.archive_day()
+            bundle = {
+                "date": "2026-04-18", "asset_name": "x.tar.gz", "bytes": 1,
+                "bundle_sha256": "a" * 64, "catalog_sha256": "b" * 64,
+                "manifest_sha256": "c" * 64, "path": str(self.root / "b.tar.gz"),
+            }
+            snapshot.record_storage_destination(
+                bundle, "arweave",
+                {
+                    "status": "failed",
+                    "transaction_id": "txMINED",
+                    "bundle_sha256": "a" * 64,
+                    "error": "chunk upload died",
+                },
+            )
+            original = snapshot.arweave_request
+            try:
+                snapshot.arweave_request = lambda *a, **k: (200, {"block_height": 7, "number_of_confirmations": 20})
+                settled = snapshot.reconcile_arweave_pending(["2026-04-18"])
+            finally:
+                snapshot.arweave_request = original
+            # the broadcast spent AR even though a later step errored; the tx
+            # mined anyway and must be recoverable, not permanently orphaned
+            self.assertEqual(settled, 1)
+            arw = snapshot.load_storage_receipt("2026-04-18")["destinations"]["arweave"]
+            self.assertEqual(arw["status"], "confirmed")
+
+    def test_ensure_release_bundle_before_prune_requires_published_destination(self):
+        self.archive_day()
+
+        with self.assertRaisesRegex(snapshot.SnapshotError, "published destination"):
+            snapshot.ensure_release_bundle_before_prune(
+                "2026-04-18", output_dir=self.root / "out"
+            )
+
+        bundle = snapshot.build_release_bundle(
+            "2026-04-18", output_dir=self.root / "out", min_count=1
+        )
+        snapshot.record_storage_destination(
+            bundle,
+            "github_release",
+            {
+                "status": "created",
+                "asset_url": "https://github.com/OMPub/RSO/releases/download/t/a.tar.gz",
+            },
+        )
+        result = snapshot.ensure_release_bundle_before_prune(
+            "2026-04-18", output_dir=self.root / "out"
+        )
+        self.assertEqual(result["bundle_sha256"], bundle["bundle_sha256"])
+
+    def publish_args(self):
+        return SimpleNamespace(
+            date="2026-04-18", start=None, end=None,
+            storage_backend="github_release", upload_policy="if_missing",
+            target_commitish=None, rebuild=False, use_existing_bundle=False,
+            output_dir=self.root / "out", min_objects=1, repo=None,
+            force=False, prerelease=False,
+        )
+
+    def fake_bundle(self):
+        return {
+            "date": "2026-04-18",
+            "path": str(self.root / "bundle.tar.gz"),
+            "asset_name": "rso-archive-2026-04-18.tar.gz",
+            "tag": "rso-archive-2026-04-18",
+            "bytes": 123,
+            "bundle_sha256": "a" * 64,
+            "catalog_sha256": "b" * 64,
+            "manifest_sha256": "c" * 64,
+        }
+
+    def test_publish_raises_when_arweave_upload_failed(self):
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"), patch.object(
+            snapshot, "LATEST_POINTER_PATH", self.root / "latest.json"
+        ), patch.object(
+            snapshot, "build_or_fetch_release_bundle", lambda *a, **k: self.fake_bundle()
+        ), patch.object(
+            snapshot,
+            "publish_github_release",
+            lambda bundle, **k: {"status": "skipped", "reason": "asset_exists", **bundle},
+        ):
+            with patch.object(
+                snapshot,
+                "publish_arweave_bundle_nonfatal",
+                lambda bundle, **k: {
+                    "status": "failed", "reason": "arweave_upload_failed", **bundle
+                },
+            ):
+                with self.assertRaisesRegex(snapshot.SnapshotError, "Arweave upload failed"):
+                    snapshot.process_publish(self.publish_args())
+
+            # no wallet configured stays a clean exit
+            with patch.object(
+                snapshot,
+                "publish_arweave_bundle_nonfatal",
+                lambda bundle, **k: {"status": "skipped", "reason": "missing_wallet", **bundle},
+            ):
+                snapshot.process_publish(self.publish_args())
+
+    def test_publish_skips_arweave_upload_after_bundle_drift(self):
+        arweave_calls = []
+        with patch.object(snapshot, "LEDGER_PATH", self.root / "ledger.json"), patch.object(
+            snapshot, "LATEST_POINTER_PATH", self.root / "latest.json"
+        ), patch.object(
+            snapshot, "build_or_fetch_release_bundle", lambda *a, **k: self.fake_bundle()
+        ), patch.object(
+            snapshot,
+            "publish_github_release",
+            lambda bundle, **k: {"status": "skipped", "reason": "bundle_drift", **bundle},
+        ), patch.object(
+            snapshot,
+            "publish_arweave_bundle_nonfatal",
+            lambda bundle, **k: arweave_calls.append(bundle),
+        ):
+            snapshot.process_publish(self.publish_args())
+
+        self.assertEqual(arweave_calls, [])
+
+    def test_hydrate_adopted_day_fetches_from_upstream_repo(self):
+        self.archive_day()
+        catalog_path = snapshot.catalog_gz_path("2026-04-18")
+        catalog_bytes = catalog_path.read_bytes()
+        catalog_path.unlink()
+        snapshot.write_json(
+            snapshot.storage_receipt_path("2026-04-18"),
+            {"date": "2026-04-18", "verified_from_upstream": "Upstream/RSO"},
+        )
+        seen = {}
+
+        def fake_fetch(current_date_str, repo=None):
+            seen["repo"] = repo
+            return catalog_bytes
+
+        with patch.object(snapshot, "catalog_gz_bytes_from_release_bundle", fake_fetch):
+            result = snapshot.hydrate_catalog("2026-04-18", repo=None)
+
+        self.assertEqual(result["status"], "hydrated")
+        self.assertEqual(seen["repo"], "Upstream/RSO")
 
     def test_arweave_nonfatal_failure_records_failed_receipt(self):
         bundle = {

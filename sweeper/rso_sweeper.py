@@ -75,6 +75,9 @@ class SweeperConfig:
     fetch_retry_delay: float = 5.0
     request_timeout: float = 30.0
     confirmations: int = 1
+    max_transactions: int = 50
+    treasury_address: str = ""
+    min_treasury_balance_wei: int = 0
 
 
 def config_from_env() -> SweeperConfig:
@@ -99,6 +102,13 @@ def config_from_env() -> SweeperConfig:
         fetch_retry_delay=float(os.environ.get("RSO_SWEEPER_FETCH_RETRY_DELAY", "5")),
         request_timeout=float(os.environ.get("RSO_SWEEPER_REQUEST_TIMEOUT", "30")),
         confirmations=int(os.environ.get("RSO_SWEEPER_CONFIRMATIONS", "1")),
+        max_transactions=int(os.environ.get("RSO_SWEEPER_MAX_TRANSACTIONS", "50")),
+        treasury_address=(
+            os.environ.get("RSO_SWEEPER_TREASURY_ADDRESS")
+            or os.environ.get("RSO_TREASURY_ADDRESS")
+            or ""
+        ),
+        min_treasury_balance_wei=int(os.environ.get("RSO_SWEEPER_MIN_TREASURY_BALANCE_WEI", "0")),
     )
 
 
@@ -1126,6 +1136,29 @@ def parse_attest_doc_return(result: str) -> dict[str, str]:
     }
 
 
+def treasury_balance_wei(rpc: EthereumRpc, address: str) -> int:
+    result = rpc.call("eth_getBalance", [normalize_address(address), "latest"])
+    if not isinstance(result, str):
+        raise SweeperError("eth_getBalance returned non-string result")
+    return int(result, 16)
+
+
+def check_treasury_floor(rpc: EthereumRpc, config: SweeperConfig) -> None:
+    """Abort submissions when the treasury balance is below the configured floor.
+
+    Skipped unless both a treasury address and a positive floor are configured,
+    so the guard is opt-in and never needs an RPC call in dry-run-only setups.
+    """
+    if not config.treasury_address or config.min_treasury_balance_wei <= 0:
+        return
+    balance = treasury_balance_wei(rpc, config.treasury_address)
+    if balance < config.min_treasury_balance_wei:
+        raise SweeperError(
+            f"treasury {normalize_address(config.treasury_address)} balance {balance} wei is "
+            f"below the floor {config.min_treasury_balance_wei} wei; skipping submissions"
+        )
+
+
 def submit_with_cast(*, config: SweeperConfig, calldata: str, run=subprocess.run) -> str:
     try:
         with cast_wallet_args_from_env(
@@ -1147,6 +1180,7 @@ def submit_with_cast(*, config: SweeperConfig, calldata: str, run=subprocess.run
                 config.rpc_url,
                 "--confirmations",
                 str(config.confirmations),
+                "--json",
                 *wallet_args,
             ]
             result = run(command, check=True, capture_output=True, text=True)
@@ -1154,17 +1188,43 @@ def submit_with_cast(*, config: SweeperConfig, calldata: str, run=subprocess.run
         raise SweeperError(str(exc)) from exc
     except subprocess.CalledProcessError as exc:
         raise SweeperError(subprocess_error_detail(exc)) from exc
-    return transaction_hash_from_cast_output(result.stdout)
+    return transaction_hash_from_cast_receipt(result.stdout)
 
 
-def transaction_hash_from_cast_output(output: str) -> str:
-    match = re.search(r"transactionHash\s+([0-9a-fA-Fx]{66})", output)
-    if match:
-        return "0x" + match.group(1)[2:].lower()
-    match = re.search(r"0x[0-9a-fA-F]{64}", output)
-    if match:
-        return "0x" + match.group(0)[2:].lower()
-    raise SweeperError("cast send did not return a transaction hash")
+def transaction_hash_from_cast_receipt(output: str) -> str:
+    """Return the tx hash only for a mined, successful (status 0x1) receipt.
+
+    cast can exit 0 for a mined-but-reverted transaction (deadline expiry, or a
+    competing sweeper landing the duplicate between simulation and mining), so
+    success must be read from receipt.status, not the process exit code. A
+    revert or a missing receipt raises SweeperError, which the caller records as
+    a non-completed status rather than "submitted".
+    """
+    receipt = cast_receipt_json(output)
+    status = receipt.get("status")
+    tx_hash = receipt.get("transactionHash")
+    if not isinstance(tx_hash, str) or not tx_hash:
+        raise SweeperError("cast send receipt has no transactionHash")
+    if status not in ("0x1", 1, "1"):
+        raise SweeperError(
+            f"cast send transaction {tx_hash} mined with status {status!r} (reverted); "
+            "nothing landed on-chain"
+        )
+    return "0x" + normalize_bytes32(tx_hash)[2:]
+
+
+def cast_receipt_json(output: str) -> dict[str, object]:
+    for line in reversed(output.strip().splitlines()):
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            receipt = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(receipt, dict):
+            return receipt
+    raise SweeperError("cast send did not return a JSON receipt")
 
 
 def env_bool(name: str, default: bool) -> bool:
@@ -1205,6 +1265,9 @@ def main() -> int:
             "operatorSource": args.operators,
             "dates": [],
         }
+        max_transactions = args.max_transactions if args.max_transactions is not None else config.max_transactions
+        submitted_count = 0
+        treasury_checked = False
         for snapshot_date in date_range(args.start, args.end):
             date_report = {"date": snapshot_date, "operators": []}
             report["dates"].append(date_report)
@@ -1250,7 +1313,27 @@ def main() -> int:
                 continue
             for operator in selected_operators:
                 payload = operator.pop("_payload")
+                # F10: enforce a per-run transaction ceiling and a treasury
+                # balance floor before spending gas. Only real (non-dry-run)
+                # broadcasts count against the ceiling; a duplicate that lands
+                # no transaction does not (submitted_count advances only after a
+                # confirmed submission below).
+                if not config.dry_run and max_transactions > 0 and submitted_count >= max_transactions:
+                    label = operator_label(operator)
+                    print(f"{snapshot_date} {label}: deferred (per-run transaction ceiling {max_transactions} reached)")
+                    date_report["operators"].append(
+                        {
+                            "operator": label,
+                            "nodeId": operator.get("nodeId", ""),
+                            "status": "deferred",
+                            "error": f"per-run transaction ceiling {max_transactions} reached",
+                        }
+                    )
+                    continue
                 try:
+                    if not config.dry_run and not treasury_checked:
+                        check_treasury_floor(rpc, config)
+                        treasury_checked = True
                     result = handle_signed_attestation(
                         payload,
                         operator=operator,
@@ -1258,6 +1341,8 @@ def main() -> int:
                         rpc=rpc,
                         expected_date=snapshot_date,
                     )
+                    if result.get("status") == "submitted":
+                        submitted_count += 1
                     label = operator_label(operator)
                     print(f"{snapshot_date} {label}: {result['status']}")
                     date_report["operators"].append(
@@ -1327,6 +1412,12 @@ def parse_args() -> argparse.Namespace:
         help="Minimum card-specific TDH required for treasury sponsorship.",
     )
     parser.add_argument(
+        "--max-transactions",
+        type=int,
+        default=int(os.environ.get("RSO_SWEEPER_MAX_TRANSACTIONS", "50")),
+        help="Maximum on-chain submissions this run may broadcast. Use 0 for no cap.",
+    )
+    parser.add_argument(
         "--report",
         default=os.environ.get("RSO_SWEEPER_REPORT", ""),
         help="Optional path for a structured sweeper report JSON file.",
@@ -1341,7 +1432,11 @@ def parse_args() -> argparse.Namespace:
 
 def write_json_report(path: Path, payload: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    # Write-then-rename: a torn report file wedges both the indexer (aborts its
+    # index build on json.loads) and the sweeper's own next merge_date_report.
+    tmp_path = path.with_name(path.name + ".tmp")
+    tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(tmp_path, path)
 
 
 def write_date_reports(report_dir: Path, report: Mapping[str, object]) -> None:
@@ -1371,6 +1466,55 @@ def write_date_reports(report_dir: Path, report: Mapping[str, object]) -> None:
         write_json_report(path, payload)
 
 
+# Per-run timestamps are noise for dedup: two identical verifications from
+# different runs differ only here, so keying the dedup on the full record would
+# grow "completed" history unbounded (F8). They are excluded from dedup and
+# collapse keys but stay in the retained record.
+VOLATILE_RECORD_FIELDS = ("observedAt", "checkedAt")
+# The on-chain evidence that must agree for two completed records sharing a
+# claimFingerprint to be the same claim; a disagreement here is a real conflict.
+COMPLETED_EVIDENCE_FIELDS = (
+    "blockHash",
+    "uriHash",
+    "attestationKey",
+    "contentHash",
+)
+
+
+def stable_record(record: Mapping[str, object]) -> dict[str, object]:
+    """Return a copy with volatile per-run timestamps removed (recursively)."""
+    stripped = {
+        key: value for key, value in record.items() if key not in VOLATILE_RECORD_FIELDS
+    }
+    sponsorship = stripped.get("sponsorship")
+    if isinstance(sponsorship, Mapping):
+        stripped["sponsorship"] = {
+            key: value
+            for key, value in sponsorship.items()
+            if key not in VOLATILE_RECORD_FIELDS
+        }
+    return stripped
+
+
+def record_dedup_key(record: Mapping[str, object]) -> str:
+    return json.dumps(stable_record(record), sort_keys=True, separators=(",", ":"))
+
+
+def completed_collapse_key(record: Mapping[str, object]) -> str | None:
+    """Collapse key for a completed record: its claimFingerprint plus the
+    on-chain evidence. Same fingerprint + same evidence = same claim (collapse);
+    same fingerprint + diverging evidence = a real conflict (keep both)."""
+    fingerprint = record.get("claimFingerprint")
+    if not isinstance(fingerprint, str) or not fingerprint:
+        return None
+    evidence = {field: record.get(field) for field in COMPLETED_EVIDENCE_FIELDS}
+    return json.dumps(
+        {"claimFingerprint": fingerprint, "evidence": evidence},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
 def merge_date_report(
     existing: Mapping[str, object],
     current: Mapping[str, object],
@@ -1384,7 +1528,7 @@ def merge_date_report(
     if existing.get("date") != current.get("date"):
         raise SweeperError("cannot merge sweeper reports for different dates")
     combined = []
-    seen = set()
+    seen: dict[str, int] = {}
     for source in (existing.get("operators", []), current.get("operators", [])):
         if not isinstance(source, list):
             raise SweeperError("sweeper date report operators must be an array")
@@ -1392,22 +1536,38 @@ def merge_date_report(
             if not isinstance(record, Mapping):
                 continue
             normalized = dict(record)
-            key = json.dumps(normalized, sort_keys=True, separators=(",", ":"))
-            if key not in seen:
-                seen.add(key)
+            # Dedup ignoring volatile timestamps so re-verifications collapse
+            # instead of accumulating a fresh record every run. The most recent
+            # copy (later in insertion order) wins so live timestamps advance.
+            key = record_dedup_key(normalized)
+            if key in seen:
+                combined[seen[key]] = normalized
+            else:
+                seen[key] = len(combined)
                 combined.append(normalized)
-    completed = [record for record in combined if is_completed_verification_record(record)]
+
+    completed = []
+    completed_seen = {}
+    remaining = []
+    for record in combined:
+        if not is_completed_verification_record(record):
+            remaining.append(record)
+            continue
+        collapse_key = completed_collapse_key(record)
+        if collapse_key is None:
+            completed.append(record)
+            continue
+        if collapse_key in completed_seen:
+            # Same claim (fingerprint + evidence) re-verified: keep the latest.
+            completed[completed_seen[collapse_key]] = record
+        else:
+            completed_seen[collapse_key] = len(completed)
+            completed.append(record)
+
+    # At the cap, trim the OLDEST records rather than raising (a raise after a
+    # landed submission would exit non-zero and leave report_dir half written).
     if len(completed) > max_records:
-        raise SweeperError("verified sweeper report history exceeds record limit")
-    completed_keys = {
-        json.dumps(record, sort_keys=True, separators=(",", ":"))
-        for record in completed
-    }
-    remaining = [
-        record
-        for record in combined
-        if json.dumps(record, sort_keys=True, separators=(",", ":")) not in completed_keys
-    ]
+        completed = completed[-max_records:]
     remaining_capacity = max_records - len(completed)
     retained = completed + (remaining[-remaining_capacity:] if remaining_capacity else [])
     return {

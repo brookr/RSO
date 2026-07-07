@@ -356,7 +356,11 @@ def doc_block_hash_payload(doc_block: Mapping[str, object]) -> str:
 
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    # Write-then-rename so a crash mid-write can never leave a truncated JSON
+    # file at the committed path (a torn state/artifact file wedges every reader).
+    tmp_path = path.with_name(path.name + ".tmp")
+    tmp_path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(tmp_path, path)
 
 
 def load_json(path: Path) -> dict[str, object]:
@@ -418,16 +422,27 @@ def subprocess_error_detail(exc: subprocess.CalledProcessError) -> str:
 
 def redact_secret_values(text: str) -> str:
     redacted = text
-    for name in (
-        "DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY",
-        "PRIVATE_KEY",
-        "RSO_SWEEPER_PRIVATE_KEY",
-        "SUBMITTER_PRIVATE_KEY",
-        "DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON",
-        "DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD",
-        "RSO_SWEEPER_KEYSTORE_JSON",
-        "RSO_SWEEPER_KEYSTORE_PASSWORD",
-    ):
+    # Redact both the well-known names and any runtime-selected signer env var
+    # (a custom --private-key-env value echoed in cast's stderr would otherwise
+    # reach logs unredacted): any env var whose NAME marks it as a key/secret.
+    names = set(
+        (
+            "DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY",
+            "PRIVATE_KEY",
+            "RSO_SWEEPER_PRIVATE_KEY",
+            "SUBMITTER_PRIVATE_KEY",
+            "DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_JSON",
+            "DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD",
+            "RSO_SWEEPER_KEYSTORE_JSON",
+            "RSO_SWEEPER_KEYSTORE_PASSWORD",
+        )
+    )
+    names.update(
+        name
+        for name in os.environ
+        if "PRIVATE_KEY" in name or "KEYSTORE_JSON" in name or "KEYSTORE_PASSWORD" in name
+    )
+    for name in names:
         value = os.environ.get(name)
         if value:
             redacted = redacted.replace(value, "<redacted>")

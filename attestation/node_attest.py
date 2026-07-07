@@ -16,8 +16,10 @@ if str(ROOT) not in sys.path:
 from attestation.rso_attestation import (  # noqa: E402
     DEFAULT_STATE_PATH,
     STATE_SCHEMA,
+    conflicting_content_state_attestation,
     content_hash_from_manifest,
     date_range,
+    doc_ref_for_date,
     load_manifest,
     load_attestation_state,
     parent_hash_for_date,
@@ -54,9 +56,28 @@ def main() -> int:
                 state,
                 bootstrap_parent_hash=args.bootstrap_parent_hash,
                 baseline_parent_hash=args.baseline_parent_hash,
+                chain_id=args.chain_id,
+                contract_address=args.contract_address,
             )
             content_hash = content_hash_from_manifest(load_manifest(snapshot_date))
             uri = release_uri(snapshot_date, mode=args.uri_mode, node_id=args.node_id)
+            if not args.allow_content_change:
+                conflict = conflicting_content_state_attestation(
+                    state,
+                    chain_id=args.chain_id,
+                    contract_address=args.contract_address,
+                    attester=args.attester,
+                    doc_ref=doc_ref_for_date(snapshot_date),
+                    content_hash=content_hash,
+                )
+                if conflict is not None:
+                    raise ValueError(
+                        f"{snapshot_date}: already signed docRef {conflict['docRef']} with "
+                        f"contentHash {conflict['contentHash']}, but this run derives "
+                        f"{content_hash}. Signing a second, contradictory attestation for the "
+                        "same docRef is on-chain equivocation. Pass --allow-content-change "
+                        "only if the content genuinely changed and re-attestation is intended."
+                    )
             existing = state_attestation_for_inputs(
                 state,
                 snapshot_date=snapshot_date,
@@ -181,6 +202,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY", ""))
     parser.add_argument("--workflow-run-id", default=os.environ.get("GITHUB_RUN_ID", ""))
     parser.add_argument("--cast", default=os.environ.get("CAST"))
+    parser.add_argument(
+        "--allow-content-change",
+        action="store_true",
+        default=env_bool("RSO_ATTESTATION_ALLOW_CONTENT_CHANGE", False),
+        help=(
+            "Permit signing a new attestation for a docRef already signed with a "
+            "different contentHash (deliberate re-attestation after a content change). "
+            "Refused by default because it produces on-chain equivocation."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -205,6 +236,13 @@ def should_skip(args: argparse.Namespace) -> bool:
 def default_node_id() -> str:
     repository = os.environ.get("GITHUB_REPOSITORY", "")
     return "github:" + repository if repository else ""
+
+
+def env_bool(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 if __name__ == "__main__":

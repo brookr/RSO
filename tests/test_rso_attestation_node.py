@@ -29,6 +29,18 @@ class RsoAttestationNodeTest(unittest.TestCase):
             args = node_cli.parse_args()
         self.assertEqual(args.on_behalf_of, node.ZERO_ADDRESS)
 
+    def test_node_cli_allow_content_change_flag(self):
+        with patch.dict("os.environ", {}, clear=True), patch(
+            "sys.argv",
+            ["node_attest.py", "--start", "2026-05-28", "--end", "2026-05-28"],
+        ):
+            self.assertFalse(node_cli.parse_args().allow_content_change)
+        with patch.dict("os.environ", {}, clear=True), patch(
+            "sys.argv",
+            ["node_attest.py", "--start", "2026-05-28", "--end", "2026-05-28", "--allow-content-change"],
+        ):
+            self.assertTrue(node_cli.parse_args().allow_content_change)
+
     def test_parent_hash_for_baseline_is_zero(self):
         self.assertEqual(
             node.parent_hash_for_date("2026-04-20", {"attestations": []}),
@@ -367,6 +379,115 @@ class RsoAttestationNodeTest(unittest.TestCase):
                     uri="ar://one",
                 )
             )
+
+
+    # F2: parentHash is re-derived from the prior entry's own DocBlock fields.
+    _GENESIS_ENTRY = {
+        "date": "2026-04-20",
+        "docRef": 20260420000000,
+        "chainId": 11155111,
+        "contractAddress": "0x" + "cc" * 20,
+        "attester": "0x" + "bb" * 20,
+        "parentHash": "0x" + "00" * 32,
+        "contentHash": "0x1838a06696902f7397d78d906c4bd9f5e9d9e372725ccbf4629bbd377231a740",
+        # Real on-chain Sepolia genesis (2026-04-20) blockHash.
+        "blockHash": "0xe651a58398fe906551be2f4d2ec39bace608e7aa60f3c8c30cd276aac96e103e",
+    }
+
+    def test_block_hash_recompute_matches_onchain_vector(self):
+        self.assertEqual(
+            node.recompute_state_entry_block_hash(self._GENESIS_ENTRY),
+            self._GENESIS_ENTRY["blockHash"],
+        )
+        self.assertEqual(
+            node.verified_state_entry_block_hash(self._GENESIS_ENTRY),
+            self._GENESIS_ENTRY["blockHash"],
+        )
+
+    def test_parent_hash_reverifies_prior_entry_block_hash(self):
+        state = {"attestations": [self._GENESIS_ENTRY]}
+        parent = node.parent_hash_for_date(
+            "2026-04-21",
+            state,
+            chain_id=11155111,
+            contract_address="0x" + "cc" * 20,
+        )
+        self.assertEqual(parent, self._GENESIS_ENTRY["blockHash"])
+
+    def test_parent_hash_fails_closed_on_tampered_content_hash(self):
+        tampered = dict(self._GENESIS_ENTRY)
+        tampered["contentHash"] = "0x" + "ff" * 32
+        state = {"attestations": [tampered]}
+        with self.assertRaisesRegex(ValueError, "does not match blockHash re-derived"):
+            node.parent_hash_for_date(
+                "2026-04-21",
+                state,
+                chain_id=11155111,
+                contract_address="0x" + "cc" * 20,
+            )
+
+    def test_parent_hash_does_not_cross_link_chains(self):
+        state = {"attestations": [self._GENESIS_ENTRY]}
+        # A different chainId must NOT follow the Sepolia entry as its parent.
+        with self.assertRaisesRegex(ValueError, "no prior DocChain blockHash"):
+            node.parent_hash_for_date(
+                "2026-04-21",
+                state,
+                chain_id=1,
+                contract_address="0x" + "cc" * 20,
+            )
+
+    def test_latest_state_attestation_filters_by_domain(self):
+        state = {
+            "attestations": [
+                {"date": "2026-04-20", "chainId": 1, "contractAddress": "0x" + "aa" * 20, "blockHash": "0x" + "11" * 32},
+                {"date": "2026-04-20", "chainId": 11155111, "contractAddress": "0x" + "cc" * 20, "blockHash": "0x" + "22" * 32},
+            ]
+        }
+        found = node.latest_state_attestation_for_date(
+            state, "2026-04-20", chain_id=1, contract_address="0x" + "aa" * 20
+        )
+        self.assertEqual(found["blockHash"], "0x" + "11" * 32)
+        self.assertIsNone(
+            node.latest_state_attestation_for_date(
+                state, "2026-04-20", chain_id=1, contract_address="0x" + "cc" * 20
+            )
+        )
+
+    # F3: refuse a second, contradictory attestation for a docRef already signed.
+    def test_conflicting_content_state_attestation_detects_equivocation(self):
+        state = {"attestations": [self._GENESIS_ENTRY]}
+        conflict = node.conflicting_content_state_attestation(
+            state,
+            chain_id=11155111,
+            contract_address="0x" + "cc" * 20,
+            attester="0x" + "bb" * 20,
+            doc_ref=20260420000000,
+            content_hash="0x" + "ff" * 32,
+        )
+        self.assertIsNotNone(conflict)
+        # Same contentHash is not a conflict.
+        self.assertIsNone(
+            node.conflicting_content_state_attestation(
+                state,
+                chain_id=11155111,
+                contract_address="0x" + "cc" * 20,
+                attester="0x" + "bb" * 20,
+                doc_ref=20260420000000,
+                content_hash=self._GENESIS_ENTRY["contentHash"],
+            )
+        )
+        # A different attester is a separate identity, not equivocation.
+        self.assertIsNone(
+            node.conflicting_content_state_attestation(
+                state,
+                chain_id=11155111,
+                contract_address="0x" + "cc" * 20,
+                attester="0x" + "dd" * 20,
+                doc_ref=20260420000000,
+                content_hash="0x" + "ff" * 32,
+            )
+        )
 
 
 if __name__ == "__main__":

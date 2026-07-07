@@ -85,6 +85,13 @@ def main() -> int:
         return 2
 
 
+def write_bytes_atomic(path: Path, payload: bytes) -> None:
+    # Write-then-rename so a crash mid-write can never leave a torn member file.
+    tmp_path = path.with_name(path.name + ".tmp")
+    tmp_path.write_bytes(payload)
+    os.replace(tmp_path, path)
+
+
 def keep_local_day(args: argparse.Namespace, snapshot_date: str) -> bool:
     """Decide whether a local archive day is the node's own.
 
@@ -101,6 +108,12 @@ def keep_local_day(args: argparse.Namespace, snapshot_date: str) -> bool:
         return snapshot_date >= args.keep_from
     manifest_file = snapshot_dir(snapshot_date) / "manifest.json"
     if not manifest_file.exists():
+        return False
+    # A half-written hydration (manifest present but storage receipt not yet
+    # committed) must NOT be treated as the node's own day, or it would never be
+    # re-hydrated. storage.json is written last, so its presence marks a day
+    # complete.
+    if not storage_receipt_path(snapshot_date).exists():
         return False
     try:
         manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
@@ -169,12 +182,16 @@ def hydrate_day(args: argparse.Namespace, snapshot_date: str) -> None:
                 f"{snapshot_date}: bundle has {member_name} but manifest has no {manifest_key}"
             )
 
+    # All members are written atomically (tmp + os.replace) so a crash mid-loop
+    # leaves no torn file, and storage.json is committed LAST as the day's
+    # completion marker (keep_local_day gates on it), so an interrupted
+    # hydration is re-hydrated rather than mistaken for the node's own day.
     day_dir = snapshot_dir(snapshot_date)
     day_dir.mkdir(parents=True, exist_ok=True)
     for name, payload in members.items():
         if name == "release-manifest.json":
             continue
-        (day_dir / name).write_bytes(payload)
+        write_bytes_atomic(day_dir / name, payload)
 
     # the ledger mirrors committed manifests; adopted days must be reflected
     update_ledger(manifest)

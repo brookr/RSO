@@ -9,6 +9,7 @@ import json
 import sys
 import tarfile
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -22,6 +23,46 @@ import snapshot  # noqa: E402
 from attestation import hydrate_from_upstream, submit_batch  # noqa: E402
 from sweeper import rso_sweeper  # noqa: E402
 from tests.test_core_projection import gp_record  # noqa: E402
+
+
+def write_signed_batch_artifact(
+    path,
+    *,
+    date,
+    doc_ref,
+    contract_address,
+    chain_id,
+    deadline,
+    signature="0x" + "ab" * 65,
+):
+    artifact = {
+        "schema": "rso-signed-attestation-v1",
+        "date": date,
+        "docRef": doc_ref,
+        "signed": {
+            "prepared": {
+                "chainId": chain_id,
+                "contractAddress": contract_address,
+                "attestation": {
+                    "docBlock": {"docRef": doc_ref},
+                    "deadline": deadline,
+                },
+            },
+            "signature": signature,
+        },
+    }
+    Path(path).write_text(json.dumps(artifact))
+
+
+def _batch_args(**overrides):
+    defaults = {
+        "start": "2026-04-20",
+        "end": "2026-04-20",
+        "require_all": True,
+        "contract_address": "0x" + "cc" * 20,
+    }
+    defaults.update(overrides)
+    return argparse.Namespace(**defaults)
 
 
 def build_v2_bundle_bytes(
@@ -189,6 +230,8 @@ class SweeperV2ValidationTest(unittest.TestCase):
 
 class SubmitBatchTest(unittest.TestCase):
     def test_collects_signed_artifacts_in_date_order(self):
+        contract = "0x" + "cc" * 20
+        future = int(time.time()) + 7 * 24 * 60 * 60
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             with patch.object(
@@ -196,18 +239,18 @@ class SubmitBatchTest(unittest.TestCase):
                 lambda date, artifact_id=None: tmp_path / f"{date}.json",
             ):
                 for day, ref in (("2026-04-20", 20260420000000), ("2026-04-21", 20260421000000)):
-                    artifact = {
-                        "schema": "rso-signed-attestation-v1",
-                        "date": day,
-                        "docRef": ref,
-                        "signed": {
-                            "prepared": {"attestation": {"docBlock": {"docRef": ref}}},
-                            "signature": "0x" + "ab" * 65,
-                        },
-                    }
-                    (tmp_path / f"{day}.json").write_text(json.dumps(artifact))
+                    write_signed_batch_artifact(
+                        tmp_path / f"{day}.json",
+                        date=day,
+                        doc_ref=ref,
+                        contract_address=contract,
+                        chain_id=11155111,
+                        deadline=future,
+                    )
 
-                args = argparse.Namespace(start="2026-04-20", end="2026-04-21", require_all=True)
+                args = _batch_args(
+                    start="2026-04-20", end="2026-04-21", require_all=True, contract_address=contract
+                )
                 items, dates = submit_batch.collect_signed_items(args)
 
         self.assertEqual(dates, ["2026-04-20", "2026-04-21"])
@@ -221,8 +264,55 @@ class SubmitBatchTest(unittest.TestCase):
                 submit_batch, "signed_attestation_path",
                 lambda date, artifact_id=None: tmp_path / f"{date}.json",
             ):
-                args = argparse.Namespace(start="2026-04-20", end="2026-04-20", require_all=True)
+                args = _batch_args(
+                    start="2026-04-20", end="2026-04-20", require_all=True, contract_address="0x" + "cc" * 20
+                )
                 with self.assertRaises(ValueError):
+                    submit_batch.collect_signed_items(args)
+
+    def test_rejects_stale_deadline_before_submission(self):
+        contract = "0x" + "cc" * 20
+        stale = int(time.time()) - 60
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            with patch.object(
+                submit_batch, "signed_attestation_path",
+                lambda date, artifact_id=None: tmp_path / f"{date}.json",
+            ):
+                write_signed_batch_artifact(
+                    tmp_path / "2026-04-20.json",
+                    date="2026-04-20",
+                    doc_ref=20260420000000,
+                    contract_address=contract,
+                    chain_id=11155111,
+                    deadline=stale,
+                )
+                args = _batch_args(
+                    start="2026-04-20", end="2026-04-20", require_all=True, contract_address=contract
+                )
+                with self.assertRaisesRegex(ValueError, "deadline"):
+                    submit_batch.collect_signed_items(args)
+
+    def test_rejects_contract_domain_mismatch(self):
+        future = int(time.time()) + 7 * 24 * 60 * 60
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            with patch.object(
+                submit_batch, "signed_attestation_path",
+                lambda date, artifact_id=None: tmp_path / f"{date}.json",
+            ):
+                write_signed_batch_artifact(
+                    tmp_path / "2026-04-20.json",
+                    date="2026-04-20",
+                    doc_ref=20260420000000,
+                    contract_address="0x" + "aa" * 20,
+                    chain_id=11155111,
+                    deadline=future,
+                )
+                args = _batch_args(
+                    start="2026-04-20", end="2026-04-20", require_all=True, contract_address="0x" + "cc" * 20
+                )
+                with self.assertRaisesRegex(ValueError, "does not match --contract-address"):
                     submit_batch.collect_signed_items(args)
 
     def test_decode_batch_result(self):
@@ -303,6 +393,30 @@ class HydrateFromUpstreamTest(unittest.TestCase):
             self.assertEqual(adopted["bundle_sha256"], receipt["bundle_sha256"])
             self.assertEqual(adopted["verified_from_upstream"], "OMPub/RSO")
             self.assertIn("arweave", adopted["destinations"])
+
+    def test_keep_local_day_requires_storage_receipt(self):
+        # F13: a half-written hydration (manifest present, storage.json absent)
+        # must be re-hydrated, not treated as the node's own day.
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            day_dir = tmp_path / "2026-04-20"
+            day_dir.mkdir(parents=True)
+            (day_dir / "manifest.json").write_text(
+                json.dumps({"content_schema": snapshot.CONTENT_SCHEMA})
+            )
+            args = argparse.Namespace(overwrite=False, keep_from="")
+            with patch.object(
+                hydrate_from_upstream, "snapshot_dir", lambda d: tmp_path / d
+            ), patch.object(
+                hydrate_from_upstream,
+                "storage_receipt_path",
+                lambda d: tmp_path / d / "storage.json",
+            ):
+                # No storage.json yet -> not kept (will be re-hydrated).
+                self.assertFalse(hydrate_from_upstream.keep_local_day(args, "2026-04-20"))
+                (day_dir / "storage.json").write_text(json.dumps({"date": "2026-04-20"}))
+                # Complete day (manifest + storage.json) -> kept.
+                self.assertTrue(hydrate_from_upstream.keep_local_day(args, "2026-04-20"))
 
     def test_hydrate_day_adopts_conjunctions(self):
         records = [gp_record()]

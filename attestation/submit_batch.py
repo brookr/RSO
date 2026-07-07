@@ -15,6 +15,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,9 +29,15 @@ from attestation.rso_attestation import (  # noqa: E402
 from vendor.docchain.attestation import (  # noqa: E402
     attest_batch_calldata,
     cast_path,
+    cast_wallet_args_from_env,
     normalize_address,
     subprocess_error_detail,
 )
+
+# Artifacts carry a signing deadline (~7 days). Refuse a batch if any item is
+# within this margin of expiry: a stale item reverts the WHOLE attestBatch with
+# an opaque contract error.
+DEADLINE_MARGIN_SECONDS = 600
 
 
 def main() -> int:
@@ -61,22 +68,30 @@ def main() -> int:
             print(f"dry run: would store {stored}, skip {skipped}")
             return 0
 
-        command = [
-            "send",
-            contract_address,
-            "--data",
-            calldata,
-            "--rpc-url",
-            args.rpc_url,
-            "--confirmations",
-            str(args.confirmations),
-            "--json",
-        ]
-        private_key = os.environ.get(args.private_key_env)
-        if not private_key:
-            raise ValueError(f"set {args.private_key_env} with the courier private key")
-        command.extend(["--private-key", private_key])
-        receipt = json.loads(run_cast(args, command).strip().splitlines()[-1])
+        # F6: the courier key is funded, so keep it off the process command line.
+        # Route signing through the keystore-capable path (SUBMITTER_KEYSTORE_JSON /
+        # SUBMITTER_KEYSTORE / SUBMITTER_ACCOUNT / SUBMITTER_KEYSTORE_PASSWORD*),
+        # allowing a raw --private-key only when explicitly permitted.
+        # The default env SUBMITTER_PRIVATE_KEY contains "PRIVATE_KEY", so the
+        # helper derives SUBMITTER_KEYSTORE_JSON / SUBMITTER_KEYSTORE /
+        # SUBMITTER_ACCOUNT / SUBMITTER_KEYSTORE_PASSWORD* automatically.
+        with cast_wallet_args_from_env(
+            private_key_env=args.private_key_env,
+            allow_raw_private_key=args.allow_raw_private_key,
+        ) as wallet_args:
+            command = [
+                "send",
+                contract_address,
+                "--data",
+                calldata,
+                "--rpc-url",
+                args.rpc_url,
+                "--confirmations",
+                str(args.confirmations),
+                "--json",
+                *wallet_args,
+            ]
+            receipt = json.loads(run_cast(args, command).strip().splitlines()[-1])
         print(f"tx: {receipt['transactionHash']}")
         print(f"status: {receipt['status']}")
         print(f"gasUsed: {int(receipt['gasUsed'], 16)}")
@@ -95,6 +110,10 @@ def main() -> int:
 def collect_signed_items(args: argparse.Namespace):
     items = []
     dates = []
+    stale = []
+    domains = {}
+    now = int(time.time())
+    submit_contract = normalize_address(args.contract_address)
     for snapshot_date in date_range(args.start, args.end):
         path = signed_attestation_path(snapshot_date)
         if not path.exists():
@@ -106,9 +125,53 @@ def collect_signed_items(args: argparse.Namespace):
             raise ValueError(f"{path} has unsupported schema")
         signed = artifact["signed"]
         prepared = signed["prepared"]
-        items.append((prepared["attestation"], str(signed["signature"])))
+        attestation = prepared["attestation"]
+
+        # F5: every artifact must target the same domain we are submitting to.
+        # chainId is not knowable here without an RPC round-trip, so enforce
+        # that all artifacts agree with each other and with --contract-address.
+        artifact_contract = normalize_address(str(prepared["contractAddress"]))
+        if artifact_contract != submit_contract:
+            raise ValueError(
+                f"{snapshot_date}: artifact contract {artifact_contract} does not match "
+                f"--contract-address {submit_contract}"
+            )
+        artifact_chain_id = int(prepared["chainId"])
+        domains.setdefault(artifact_chain_id, snapshot_date)
+
+        # F4: refuse a batch containing an artifact at or past its deadline; a
+        # stale item reverts the whole attestBatch with an opaque error.
+        deadline = int(attestation["deadline"])
+        if deadline <= now + DEADLINE_MARGIN_SECONDS:
+            stale.append((snapshot_date, deadline))
+
+        items.append((attestation, str(signed["signature"])))
         dates.append(snapshot_date)
+
+    if len(domains) > 1:
+        detail = ", ".join(
+            f"chainId {chain_id} (first at {sample})" for chain_id, sample in sorted(domains.items())
+        )
+        raise ValueError(
+            f"signed artifacts disagree on chainId: {detail}. Re-sign the range for a "
+            "single submission domain before batching."
+        )
+    if stale:
+        detail = ", ".join(
+            f"{snapshot_date} (deadline {deadline}, now {now})" for snapshot_date, deadline in stale
+        )
+        raise ValueError(
+            f"refusing to submit: {len(stale)} artifact(s) are at or past their signing "
+            f"deadline and would revert the whole batch: {detail}. Re-sign these dates."
+        )
     return items, dates
+
+
+def env_bool(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def run_cast(args: argparse.Namespace, command: list[str]) -> str:
@@ -147,7 +210,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--private-key-env",
         default="SUBMITTER_PRIVATE_KEY",
-        help="Environment variable holding the courier (gas payer) private key.",
+        help=(
+            "Base name for the courier (gas payer) signer env. Prefer a keystore "
+            "(SUBMITTER_KEYSTORE_JSON / SUBMITTER_ACCOUNT); a raw private key in this "
+            "env is only used with --allow-raw-private-key."
+        ),
+    )
+    parser.add_argument(
+        "--allow-raw-private-key",
+        action="store_true",
+        default=env_bool("SUBMITTER_ALLOW_RAW_PRIVATE_KEY", False),
+        help=(
+            "Permit passing the funded courier key as a raw --private-key argv "
+            "(visible in process listings). Off by default; prefer a keystore."
+        ),
     )
     parser.add_argument(
         "--require-all",

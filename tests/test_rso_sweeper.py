@@ -19,6 +19,7 @@ from sweeper.rso_sweeper import (
     eligible_operators,
     fetch_url_bytes_with_redirects,
     github_fork_operator_registry,
+    check_treasury_floor,
     handle_signed_attestation,
     host_allowed,
     is_duplicate_error,
@@ -26,7 +27,8 @@ from sweeper.rso_sweeper import (
     normalize_backing_snapshot,
     parse_attest_doc_return,
     signed_attestation_url,
-    transaction_hash_from_cast_output,
+    transaction_hash_from_cast_receipt,
+    cast_receipt_json,
     validate_bundle_sha256,
     validate_fetch_url,
     validate_node_artifact_url,
@@ -643,6 +645,106 @@ class RsoSweeperTest(unittest.TestCase):
 
         self.assertEqual(merged["operators"], [verified, {"status": "deferred", "attempt": 3}])
 
+    def test_merge_date_report_collapses_reverifications_by_claim_fingerprint(self):
+        # Two runs verify the SAME claim; they differ only in volatile
+        # timestamps and evidence agrees, so they must collapse to one record.
+        first = {
+            "status": "submitted",
+            "authorizationStatus": "verified",
+            "publicationStatus": "verified",
+            "claimFingerprint": "11" * 32,
+            "blockHash": "0x" + "aa" * 32,
+            "contentHash": "0x" + "bb" * 32,
+            "observedAt": "2026-06-05T00:00:00Z",
+            "sponsorship": {"nodeId": "n", "checkedAt": "2026-06-05T00:00:00Z"},
+        }
+        second = dict(first)
+        second["status"] = "duplicate"
+        second["observedAt"] = "2026-06-06T00:00:00Z"
+        second["sponsorship"] = {"nodeId": "n", "checkedAt": "2026-06-06T00:00:00Z"}
+        merged = merge_date_report(
+            {"schema": "rso-sweeper-date-report-v1", "date": "2026-06-04", "operators": [first]},
+            {"schema": "rso-sweeper-date-report-v1", "date": "2026-06-04", "operators": [second]},
+        )
+        completed = [r for r in merged["operators"] if r.get("claimFingerprint") == "11" * 32]
+        self.assertEqual(len(completed), 1)
+        self.assertEqual(completed[0]["status"], "duplicate")
+
+    def test_merge_date_report_surfaces_conflicting_evidence(self):
+        # Same claimFingerprint but DIVERGING on-chain evidence is a real
+        # conflict and both records must be retained.
+        base = {
+            "status": "submitted",
+            "authorizationStatus": "verified",
+            "publicationStatus": "verified",
+            "claimFingerprint": "11" * 32,
+            "blockHash": "0x" + "aa" * 32,
+        }
+        conflicting = dict(base)
+        conflicting["blockHash"] = "0x" + "cc" * 32
+        merged = merge_date_report(
+            {"schema": "rso-sweeper-date-report-v1", "date": "2026-06-04", "operators": [base]},
+            {"schema": "rso-sweeper-date-report-v1", "date": "2026-06-04", "operators": [conflicting]},
+        )
+        block_hashes = {r["blockHash"] for r in merged["operators"] if r.get("claimFingerprint") == "11" * 32}
+        self.assertEqual(block_hashes, {"0x" + "aa" * 32, "0x" + "cc" * 32})
+
+    def test_merge_date_report_trims_oldest_completed_at_cap(self):
+        def completed(fingerprint, block):
+            return {
+                "status": "submitted",
+                "authorizationStatus": "verified",
+                "publicationStatus": "verified",
+                "claimFingerprint": fingerprint,
+                "blockHash": block,
+            }
+
+        merged = merge_date_report(
+            {
+                "schema": "rso-sweeper-date-report-v1",
+                "date": "2026-06-04",
+                "operators": [completed("11" * 32, "0x" + "a1" * 32)],
+            },
+            {
+                "schema": "rso-sweeper-date-report-v1",
+                "date": "2026-06-04",
+                "operators": [
+                    completed("22" * 32, "0x" + "a2" * 32),
+                    completed("33" * 32, "0x" + "a3" * 32),
+                ],
+            },
+            max_records=2,
+        )
+        # The oldest completed record is trimmed rather than raising.
+        fingerprints = [r["claimFingerprint"] for r in merged["operators"]]
+        self.assertEqual(fingerprints, ["22" * 32, "33" * 32])
+
+    def test_check_treasury_floor_aborts_below_floor(self):
+        class BalanceRpc:
+            def call(self, method, params):
+                assert method == "eth_getBalance"
+                return hex(5)
+
+        config = config_for_test(
+            dry_run=False,
+            treasury_address="0x" + "ab" * 20,
+            min_treasury_balance_wei=10,
+        )
+        with self.assertRaisesRegex(SweeperError, "below the floor"):
+            check_treasury_floor(BalanceRpc(), config)
+
+    def test_check_treasury_floor_skipped_when_unconfigured(self):
+        class ExplodingRpc:
+            def call(self, method, params):
+                raise AssertionError("balance must not be queried when unconfigured")
+
+        # No treasury address / no floor -> guard is a no-op (no RPC call).
+        check_treasury_floor(ExplodingRpc(), config_for_test(dry_run=False))
+        check_treasury_floor(
+            ExplodingRpc(),
+            config_for_test(dry_run=False, treasury_address="0x" + "ab" * 20, min_treasury_balance_wei=0),
+        )
+
     def test_handle_signed_attestation_rejects_direct_uri_for_backed_node(self):
         catalog = b'{"catalog":true}\n'
         content_hash = "0x" + __import__("hashlib").sha256(catalog).hexdigest()
@@ -740,9 +842,11 @@ class RsoSweeperTest(unittest.TestCase):
             command_text = " ".join(command)
             self.assertIn("--keystore", command)
             self.assertIn("--password-file", command)
+            self.assertIn("--json", command)
             self.assertNotIn("treasury-keystore-json", command_text)
             self.assertNotIn("treasury-keystore-password", command_text)
-            return subprocess.CompletedProcess(command, 0, stdout=f"transactionHash {tx}\n", stderr="")
+            receipt = json.dumps({"transactionHash": tx, "status": "0x1"})
+            return subprocess.CompletedProcess(command, 0, stdout=f"pending...\n{receipt}\n", stderr="")
 
         with patch.dict(
             "os.environ",
@@ -764,10 +868,43 @@ class RsoSweeperTest(unittest.TestCase):
         self.assertEqual(response["status"], "submitted")
         self.assertEqual(response["transactionHash"], tx)
 
-    def test_transaction_hash_from_cast_output(self):
+    def test_submit_raises_on_mined_but_reverted_receipt(self):
+        # F9: a mined-but-reverted tx (cast exits 0) must not be recorded as
+        # submitted; submit_with_cast raises so the caller records "deferred".
+        from sweeper.rso_sweeper import submit_with_cast
+
+        tx = "0x" + "55" * 32
+
+        def fake_run(command, check, capture_output, text):
+            receipt = json.dumps({"transactionHash": tx, "status": "0x0"})
+            return subprocess.CompletedProcess(command, 0, stdout=f"{receipt}\n", stderr="")
+
+        with patch.dict(
+            "os.environ",
+            {"RSO_SWEEPER_KEYSTORE_JSON": "ks", "RSO_SWEEPER_KEYSTORE_PASSWORD": "pw"},
+            clear=False,
+        ):
+            with self.assertRaisesRegex(SweeperError, "reverted"):
+                submit_with_cast(config=config_for_test(dry_run=False), calldata="0x1234", run=fake_run)
+
+    def test_transaction_hash_from_cast_receipt_requires_success_status(self):
         tx = "0x" + "aa" * 32
-        self.assertEqual(transaction_hash_from_cast_output(f"transactionHash {tx}\n"), tx)
-        self.assertEqual(transaction_hash_from_cast_output(f"sent {tx}\n"), tx)
+        success = json.dumps({"transactionHash": tx, "status": "0x1"})
+        self.assertEqual(transaction_hash_from_cast_receipt(f"broadcasting\n{success}\n"), tx)
+
+    def test_transaction_hash_from_cast_receipt_rejects_reverted_tx(self):
+        tx = "0x" + "aa" * 32
+        reverted = json.dumps({"transactionHash": tx, "status": "0x0"})
+        with self.assertRaisesRegex(SweeperError, "reverted"):
+            transaction_hash_from_cast_receipt(reverted)
+
+    def test_transaction_hash_from_cast_receipt_requires_json_receipt(self):
+        with self.assertRaisesRegex(SweeperError, "JSON receipt"):
+            transaction_hash_from_cast_receipt(f"transactionHash {'0x' + 'aa' * 32}\n")
+        self.assertEqual(
+            cast_receipt_json(json.dumps({"transactionHash": "0x" + "bb" * 32, "status": "0x1"}))["status"],
+            "0x1",
+        )
 
     def test_handle_signed_attestation_reports_contract_duplicate(self):
         rpc = FakeRpc(error=RpcError("execution reverted: 0xdd65d744" + "33" * 32))

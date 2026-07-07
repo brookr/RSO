@@ -111,6 +111,22 @@ class DocchainAttestationHelpersTest(unittest.TestCase):
                 "x <redacted> y <redacted> z <redacted>",
             )
 
+    def test_redaction_includes_runtime_selected_private_key_env(self):
+        # A custom --private-key-env value (not in the hard-coded list) must
+        # still be redacted by name pattern.
+        with patch.dict(
+            "os.environ",
+            {
+                "MY_CUSTOM_PRIVATE_KEY": "0xcustomsecret",
+                "COURIER_KEYSTORE_PASSWORD": "courier-pass",
+            },
+            clear=False,
+        ):
+            self.assertEqual(
+                redact_secret_values("a 0xcustomsecret b courier-pass"),
+                "a <redacted> b <redacted>",
+            )
+
     def test_subprocess_error_detail_redacts(self):
         from vendor.docchain.attestation import subprocess_error_detail
 

@@ -17,6 +17,7 @@ from indexer.rso_profile import (
     normalize_node_id,
 )
 from vendor.docchain.attestation import (
+    doc_block_hash_payload,
     doc_block_hash_with_cast,
     normalize_address,
     normalize_bytes32,
@@ -26,6 +27,9 @@ from vendor.docchain.attestation import (
     write_json,
 )
 from vendor.docchain.model import ZERO_ADDRESS
+
+# In-process Keccak-256 so parentHash re-derivation needs no `cast` subprocess.
+from attestation.keccak256 import keccak256
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -177,13 +181,27 @@ def latest_state_attestation(state: Mapping[str, object]) -> dict[str, object] |
 def latest_state_attestation_for_date(
     state: Mapping[str, object],
     snapshot_date: str,
+    *,
+    chain_id: int | None = None,
+    contract_address: str | None = None,
 ) -> dict[str, object] | None:
     raw = state.get("attestations", [])
     if not isinstance(raw, list):
         raise ValueError("state attestations must be an array")
+    want_contract = normalize_address(contract_address) if contract_address else None
     for item in reversed(raw):
-        if isinstance(item, dict) and item.get("date") == snapshot_date:
-            return item
+        if not isinstance(item, dict) or item.get("date") != snapshot_date:
+            continue
+        # When a submission domain is supplied, only follow an entry from the
+        # same chain and contract so testnet and mainnet entries cannot
+        # cross-link into one parentHash chain.
+        if chain_id is not None and int(item.get("chainId", 0)) != int(chain_id):
+            continue
+        if want_contract is not None:
+            entry_contract = item.get("contractAddress")
+            if not entry_contract or normalize_address(str(entry_contract)) != want_contract:
+                continue
+        return item
     return None
 
 
@@ -227,6 +245,96 @@ def state_attestation_for_inputs(
     return None
 
 
+def recompute_state_entry_block_hash(
+    entry: Mapping[str, object],
+    *,
+    doc_chain_id: str = RSO_DOC_CHAIN_ID,
+) -> str:
+    """Recompute an entry's blockHash from its OWN recorded DocBlock fields.
+
+    blockHash = keccak256(TYPEHASH || docChainId || uint64(docRef) as 32-byte BE
+    || parentHash || contentHash). The state file never stores docChainId (it is
+    fixed per profile), so it is supplied from the profile constant.
+    """
+    doc_block = {
+        "docChainId": normalize_bytes32(doc_chain_id),
+        "docRef": int(entry["docRef"]),
+        "parentHash": normalize_bytes32(str(entry["parentHash"])),
+        "contentHash": normalize_bytes32(str(entry["contentHash"])),
+    }
+    # doc_block_hash_payload returns the hashStruct input as a 0x-prefixed hex
+    # string (TYPEHASH || docChainId || docRef || parentHash || contentHash).
+    payload_hex = doc_block_hash_payload(doc_block)
+    payload = bytes.fromhex(payload_hex[2:] if payload_hex.startswith("0x") else payload_hex)
+    return normalize_bytes32("0x" + keccak256(payload).hex())
+
+
+def verified_state_entry_block_hash(
+    entry: Mapping[str, object],
+    *,
+    doc_chain_id: str = RSO_DOC_CHAIN_ID,
+) -> str:
+    """Return the entry's blockHash after re-deriving it from its own fields.
+
+    A tampered blockHash/contentHash/parentHash/docRef in the committed state
+    file fails closed here (at sign time) rather than silently parenting a new
+    day off a forged hash.
+    """
+    recorded = normalize_bytes32(str(entry["blockHash"]))
+    recomputed = recompute_state_entry_block_hash(entry, doc_chain_id=doc_chain_id)
+    if recomputed != recorded:
+        raise ValueError(
+            f"{entry.get('date', '?')}: recorded blockHash {recorded} does not match "
+            f"blockHash re-derived from its own DocBlock fields {recomputed}; "
+            "the committed attestation state file may be corrupt or tampered"
+        )
+    return recorded
+
+
+def conflicting_content_state_attestation(
+    state: Mapping[str, object],
+    *,
+    chain_id: int,
+    contract_address: str,
+    attester: str,
+    doc_ref: int,
+    content_hash: str,
+) -> dict[str, object] | None:
+    """Find an already-signed entry for the same (chain, contract, attester,
+    docRef) that recorded a DIFFERENT contentHash.
+
+    Signing a second attestation over the same docRef with a different
+    contentHash is on-chain equivocation (one attester, two contentHashes for
+    one document ref), so callers must refuse it unless the operator explicitly
+    opts into a content change.
+    """
+    raw = state.get("attestations", [])
+    if not isinstance(raw, list):
+        raise ValueError("state attestations must be an array")
+    want = {
+        "chainId": int(chain_id),
+        "contractAddress": normalize_address(contract_address),
+        "attester": normalize_address(attester),
+        "docRef": int(doc_ref),
+    }
+    want_content = normalize_bytes32(content_hash)
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        if int(item.get("chainId", 0)) != want["chainId"]:
+            continue
+        entry_contract = item.get("contractAddress")
+        if not entry_contract or normalize_address(str(entry_contract)) != want["contractAddress"]:
+            continue
+        if normalize_address(str(item.get("attester", ZERO_ADDRESS))) != want["attester"]:
+            continue
+        if int(item.get("docRef", 0)) != want["docRef"]:
+            continue
+        if normalize_bytes32(str(item.get("contentHash", ZERO_BYTES32))) != want_content:
+            return item
+    return None
+
+
 def parent_hash_for_date(
     snapshot_date: str,
     state: Mapping[str, object],
@@ -234,6 +342,9 @@ def parent_hash_for_date(
     bootstrap_parent_hash: str | None = None,
     baseline_date: str = OFFICIAL_BASELINE_DATE,
     baseline_parent_hash: str | None = None,
+    chain_id: int | None = None,
+    contract_address: str | None = None,
+    doc_chain_id: str = RSO_DOC_CHAIN_ID,
 ) -> str:
     """Derive the parentHash for a day from the node's attestation state.
 
@@ -245,7 +356,12 @@ def parent_hash_for_date(
             return normalize_bytes32(baseline_parent_hash)
         return ZERO_BYTES32
     expected_previous = previous_date(snapshot_date)
-    previous = latest_state_attestation_for_date(state, expected_previous)
+    previous = latest_state_attestation_for_date(
+        state,
+        expected_previous,
+        chain_id=chain_id,
+        contract_address=contract_address,
+    )
     if previous is None:
         if bootstrap_parent_hash:
             return normalize_bytes32(bootstrap_parent_hash)
@@ -253,7 +369,14 @@ def parent_hash_for_date(
             f"{snapshot_date}: no prior DocChain blockHash in state. "
             "Set RSO_ATTESTATION_BOOTSTRAP_PARENT_HASH for a deliberate bootstrap."
         )
-    return normalize_bytes32(str(previous["blockHash"]))
+    # The lookup already pins date == previous_date(snapshot_date); guard the
+    # entry's own recorded date as well so a mislabeled entry cannot slip in.
+    if str(previous.get("date")) != expected_previous:
+        raise ValueError(
+            f"{snapshot_date}: prior state entry date {previous.get('date')!r} "
+            f"is not the expected previous day {expected_previous}"
+        )
+    return verified_state_entry_block_hash(previous, doc_chain_id=doc_chain_id)
 
 
 def release_uri(snapshot_date: str, *, mode: str = "auto", node_id: str = "") -> str:
@@ -573,6 +696,9 @@ def prepare_sign_one(
             state,
             bootstrap_parent_hash=bootstrap_parent_hash,
             baseline_parent_hash=baseline_parent_hash,
+            chain_id=chain_id,
+            contract_address=contract_address,
+            doc_chain_id=doc_chain_id,
         )
     else:
         parent_hash = normalize_bytes32(parent_hash)

@@ -166,6 +166,9 @@ def block_ranges(from_block: int, to_block: int, chunk_size: int) -> Iterator[tu
     """Split an inclusive block range into provider-friendly chunks."""
     if from_block < 0 or to_block < 0:
         raise ValueError("block numbers must not be negative")
+    if from_block > to_block:
+        # fail-closed on an inverted range rather than silently scanning nothing
+        raise ValueError(f"from_block {from_block} is after to_block {to_block}")
     if chunk_size < 1:
         raise ValueError("chunk_size must be at least 1")
     start = from_block

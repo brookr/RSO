@@ -62,6 +62,19 @@ class NodeRosterTests(unittest.TestCase):
             self.assertEqual(tdh["github:pub/rso"], 4)
             self.assertEqual(snapshot.node_tdh_from_attestations(Path(tmp) / "missing.json"), {})
 
+    def test_malformed_backing_tdh_counts_as_zero(self):
+        # the card coerces a malformed nodeBackingTdh to 0; the roster builder
+        # must not crash where the card would shrug
+        with tempfile.TemporaryDirectory() as tmp:
+            idx = Path(tmp) / "index.json"
+            idx.write_text(json.dumps({"events": [
+                {"nodeId": "github:bad/rso", "nodeBackingTdh": "not-a-number"},
+                {"nodeId": "github:worse/rso", "nodeBackingTdh": {"nested": 1}},
+                {"nodeId": "github:good/rso", "nodeBackingTdh": 6},
+            ]}))
+            tdh = snapshot.node_tdh_from_attestations(idx)
+            self.assertEqual(tdh, {"github:good/rso": 6})
+
     def test_published_roster_core_fields_match_the_default(self):
         # the committed indexer/generated/nodes.json must carry the same nodes as NODE_ROSTER
         # (ignoring tdh + order, which are derived), so the published roster never drifts

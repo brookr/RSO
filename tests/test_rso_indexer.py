@@ -159,13 +159,39 @@ class RsoIndexerTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             cache_path = Path(tmp) / "block-timestamps.json"
-            first = cli.fetch_block_timestamps(FakeRpc(), [100, 200, 100], cache_path)
+            # latest_block far above the queries: all blocks are finality-deep,
+            # so caching behaves as before
+            first = cli.fetch_block_timestamps(FakeRpc(), [100, 200, 100], cache_path, latest_block=10_000)
             self.assertEqual(first, {100: 1200, 200: 2400})
             self.assertEqual(len(calls), 2)
 
-            second = cli.fetch_block_timestamps(FakeRpc(), [100, 200, 300], cache_path)
+            second = cli.fetch_block_timestamps(FakeRpc(), [100, 200, 300], cache_path, latest_block=10_000)
             self.assertEqual(second[300], 3600)
             self.assertEqual(len(calls), 3)  # only the new block was fetched
+
+    def test_fetch_block_timestamps_does_not_persist_shallow_blocks(self):
+        calls = []
+
+        class FakeRpc:
+            def call(self, method, params):
+                calls.append((method, params))
+                number = int(params[0], 16)
+                return {"timestamp": hex(number * 12)}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_path = Path(tmp) / "block-timestamps.json"
+            # block 200 is within TIMESTAMP_FINALITY_DEPTH of the tip: it must be
+            # resolved but NOT persisted (it could still reorg)
+            out = cli.fetch_block_timestamps(FakeRpc(), [100, 200], cache_path, latest_block=220)
+            self.assertEqual(out, {100: 1200, 200: 2400})
+            import json as _json
+            cached = _json.loads(cache_path.read_text()) if cache_path.exists() else {}
+            self.assertIn("100", cached)
+            self.assertNotIn("200", cached)
+            # a second run refetches the shallow block, reuses the deep one
+            cli.fetch_block_timestamps(FakeRpc(), [100, 200], cache_path, latest_block=220)
+            shallow_fetches = [c for c in calls if int(c[1][0], 16) == 200]
+            self.assertEqual(len(shallow_fetches), 2)
 
     def test_build_static_index_exposes_identity_claims(self):
         event = make_event(
@@ -840,7 +866,9 @@ class RsoIndexerTest(unittest.TestCase):
 
             def call(self, method, params):
                 assert method == "eth_getBlockByNumber"
-                return {"timestamp": hex(1750000000)}
+                # canonical hash matches make_event's ethereum_block_hash, so
+                # reorg reconciliation sees a healthy chain and purges nothing
+                return {"timestamp": hex(1750000000), "hash": "0x" + "9" * 64}
 
         def fake_write_json(path, payload):
             captured_index["path"] = path

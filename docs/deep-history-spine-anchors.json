@@ -1,0 +1,31 @@
+{
+  "schema": "rso-core-omm-v1",
+  "docChainId": "0x6011620b5a3faa23f8078c2af0bb1a87bb85a68f784abdf3dbae67939c399bea",
+  "days": 24926,
+  "months": 819,
+  "genesis_day": "1957-10-04",
+  "genesis_blockHash": "0xac994f034640eb73c4367346b9a47c1a599458b840dec599d38a288595936fc0",
+  "weld_value_2025_12_31": "0x1bc2b0f3495fd3ecdc3e8ae271a33c2cc0ea6ac0d1c682adc2825638e0a5596b",
+  "spine_head_blockHash": "0x9e41f7c2c549770465885a46b26fa1140a52bc6b76ad84674915bfea4769e4c5",
+  "blockhash_self_check": "passed (vs on-chain Sepolia genesis)",
+  "proof_round_trips": [
+    {
+      "day": "1957-10-04",
+      "leafIndex": 0,
+      "proofLen": 5,
+      "verified": true
+    },
+    {
+      "day": "1985-06-15",
+      "leafIndex": 14,
+      "proofLen": 5,
+      "verified": true
+    },
+    {
+      "day": "2025-12-31",
+      "leafIndex": 30,
+      "proofLen": 4,
+      "verified": true
+    }
+  ]
+}

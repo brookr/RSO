@@ -151,6 +151,41 @@ class ArchiveValidationTests(unittest.TestCase):
         self.assertTrue((snapshot.snapshot_dir("2026-04-13") / "catalog.json.gz").exists())
         self.assertTrue((snapshot.snapshot_dir("2026-04-14") / "catalog.json.gz").exists())
 
+    def test_prune_require_bundle_refuses_unpublished_day(self):
+        self.archive_genesis("2026-04-12")
+        self.archive_genesis("2026-04-13")
+
+        with self.assertRaisesRegex(snapshot.SnapshotError, "published destination"):
+            snapshot.process_prune_catalogs(
+                SimpleNamespace(
+                    all=True,
+                    date=None,
+                    start=None,
+                    end=None,
+                    require_bundle=True,
+                    output_dir=Path(self.tmp.name) / ".release",
+                    keep_latest=1,
+                )
+            )
+        # nothing was pruned before the gate fired
+        self.assertTrue((snapshot.snapshot_dir("2026-04-12") / "catalog.json.gz").exists())
+
+    def test_update_pointers_ignores_stray_non_date_dirs(self):
+        self.archive_genesis("2026-04-12")
+        stray = snapshot.DATA_DIR / "2026" / "04" / "notes"
+        stray.mkdir(parents=True)
+        (stray / "manifest.json").write_text("{}", encoding="utf-8")
+
+        original_latest = snapshot.LATEST_POINTER_PATH
+        try:
+            snapshot.LATEST_POINTER_PATH = Path(self.tmp.name) / "latest.json"
+            snapshot.process_update_pointers(SimpleNamespace(start=None, end=None))
+        finally:
+            snapshot.LATEST_POINTER_PATH = original_latest
+
+        ledger = json.loads(Path(snapshot.LEDGER_PATH).read_text(encoding="utf-8"))
+        self.assertEqual([entry["date"] for entry in ledger], ["2026-04-12"])
+
     def test_next_unarchived_date_returns_day_after_latest(self):
         self.archive_genesis("2026-04-12")
 
