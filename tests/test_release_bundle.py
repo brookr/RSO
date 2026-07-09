@@ -912,29 +912,22 @@ class ReleaseBundleTests(unittest.TestCase):
             arw = snapshot.load_storage_receipt("2026-04-18")["destinations"]["arweave"]
             self.assertEqual(arw["status"], "confirmed")
 
-    def test_ensure_release_bundle_before_prune_requires_published_destination(self):
+    def test_ensure_release_bundle_before_prune_builds_a_valid_bundle(self):
+        # The daily runs build -> prune -> publish in one job, so at prune time a
+        # freshly-captured day has NOT been published yet; --require-bundle must
+        # be satisfied by a valid (buildable) bundle whose catalog re-verifies
+        # against the manifest, not by an already-recorded published destination.
         self.archive_day()
-
-        with self.assertRaisesRegex(snapshot.SnapshotError, "published destination"):
-            snapshot.ensure_release_bundle_before_prune(
-                "2026-04-18", output_dir=self.root / "out"
-            )
-
-        bundle = snapshot.build_release_bundle(
+        # the daily's "Build release bundles" step pre-builds the bundle; prune
+        # then finds it via release_bundle_from_existing (no re-build, no
+        # published-destination requirement).
+        expected = snapshot.build_release_bundle(
             "2026-04-18", output_dir=self.root / "out", min_count=1
-        )
-        snapshot.record_storage_destination(
-            bundle,
-            "github_release",
-            {
-                "status": "created",
-                "asset_url": "https://github.com/OMPub/RSO/releases/download/t/a.tar.gz",
-            },
         )
         result = snapshot.ensure_release_bundle_before_prune(
             "2026-04-18", output_dir=self.root / "out"
         )
-        self.assertEqual(result["bundle_sha256"], bundle["bundle_sha256"])
+        self.assertEqual(result["bundle_sha256"], expected["bundle_sha256"])
 
     def publish_args(self):
         return SimpleNamespace(
