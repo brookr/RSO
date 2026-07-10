@@ -4088,12 +4088,21 @@ def process_publish(args):
         if result.get("destination") == "arweave" and result.get("status") == "failed"
     ]
     if failed_arweave:
-        # "failed" only arises when a wallet was configured (missing-wallet is
-        # a skip); succeeding silently here would hide a durability gap.
-        raise SnapshotError(
-            f"Arweave upload failed for {len(failed_arweave)} day(s); rerun publish "
-            "(receipts keep any broadcast tx) or reconcile-arweave"
+        # github_release is the durable daily mirror; Arweave is opt-in
+        # permanence whose wallet may be intentionally unfunded (funded later),
+        # so a failed Arweave upload is NOT fatal by default -- the day is still
+        # published to github_release, the receipt keeps any broadcast tx, and
+        # reconcile-arweave retries it. Only --require-arweave makes it fatal
+        # (for operators who treat Arweave as mandatory). A loud warning either
+        # way so the durability gap is never silent.
+        detail = (
+            f"Arweave upload failed for {len(failed_arweave)} day(s); the day(s) are "
+            "published to github_release, receipts keep any broadcast tx, and "
+            "reconcile-arweave will retry"
         )
+        if getattr(args, "require_arweave", False):
+            raise SnapshotError(detail + " -- --require-arweave set, failing")
+        print(f"  WARNING: {detail}")
 
 
 def latest_dates(dates, count):
@@ -4122,18 +4131,23 @@ def resolve_prune_dates(args):
     return resolve_publish_dates(args)
 
 
-def ensure_release_bundle_before_prune(current_date_str, output_dir=None):
-    # Verify a valid release bundle for this day exists (or can be built) before
-    # its raw catalog is pruned. release_bundle_from_existing re-checks the
-    # catalog bytes against the committed manifest, so a bundle here proves the
-    # day's bytes are captured. The daily runs build -> prune -> publish in one
-    # job, so the bundle produced here is uploaded to github_release in the same
-    # run; a stricter "already published" gate is impossible under that ordering
-    # (publish is the step AFTER prune) and would break the daily.
-    try:
-        return release_bundle_from_existing(current_date_str, output_dir=output_dir)
-    except SnapshotError:
-        return build_release_bundle(current_date_str, output_dir=output_dir)
+def day_has_published_destination(current_date_str):
+    """True iff the day's bytes are durably published elsewhere — a github_release
+    asset or a confirmed Arweave tx — so pruning its raw catalog from git loses
+    nothing. The daily publishes to github_release BEFORE pruning, so a freshly
+    captured day satisfies this by the time prune runs."""
+    destinations = load_storage_receipt(current_date_str).get("destinations")
+    destinations = destinations if isinstance(destinations, dict) else {}
+    github = destinations.get("github_release")
+    arweave = destinations.get("arweave")
+    return bool(
+        (isinstance(github, dict) and github.get("asset_url"))
+        or (
+            isinstance(arweave, dict)
+            and arweave.get("status") == "confirmed"
+            and arweave.get("transaction_id")
+        )
+    )
 
 
 def process_prune_catalogs(args):
@@ -4146,6 +4160,7 @@ def process_prune_catalogs(args):
     pruned = 0
     retained = 0
     skipped = 0
+    kept_unpublished = 0
     for current_date_str in dates:
         if current_date_str in retained_dates:
             retained += 1
@@ -4155,8 +4170,15 @@ def process_prune_catalogs(args):
         if not path.exists():
             skipped += 1
             continue
-        if args.require_bundle:
-            ensure_release_bundle_before_prune(current_date_str, output_dir=args.output_dir)
+        if args.require_bundle and not day_has_published_destination(current_date_str):
+            # Never prune a catalog whose bytes are not yet durably published:
+            # KEEP it in git (do NOT delete, do NOT fail the run) until it is.
+            # The daily publishes to github_release before pruning, so this only
+            # trips for a legacy day whose earlier publish never completed — its
+            # catalog is preserved and gets published/pruned on a later run.
+            kept_unpublished += 1
+            print(f"  KEPT (not yet published; catalog retained): {path}")
+            continue
         path.unlink()
         pruned += 1
         print(f"  PRUNED: {path}")
@@ -4165,6 +4187,8 @@ def process_prune_catalogs(args):
     print(f"  pruned:  {pruned}")
     print(f"  retained:{retained}")
     print(f"  skipped: {skipped}")
+    if kept_unpublished:
+        print(f"  kept (unpublished): {kept_unpublished}")
 
 
 def validate_catalog_payload(current_date_str, catalog_gz_bytes, manifest):
@@ -5302,6 +5326,16 @@ def main():
         "--prerelease",
         action="store_true",
         help="Create or update GitHub releases as prereleases",
+    )
+    publish_parser.add_argument(
+        "--require-arweave",
+        action="store_true",
+        help=(
+            "Treat a failed Arweave upload as fatal. Off by default: github_release "
+            "is the durable daily mirror and Arweave is opt-in permanence (its wallet "
+            "may be intentionally unfunded), so a failed upload only warns and is "
+            "retried by reconcile-arweave."
+        ),
     )
     publish_parser.add_argument(
         "--target-commitish",

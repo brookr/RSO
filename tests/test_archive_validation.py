@@ -151,17 +151,24 @@ class ArchiveValidationTests(unittest.TestCase):
         self.assertTrue((snapshot.snapshot_dir("2026-04-13") / "catalog.json.gz").exists())
         self.assertTrue((snapshot.snapshot_dir("2026-04-14") / "catalog.json.gz").exists())
 
-    def test_prune_require_bundle_prunes_when_bundle_is_buildable(self):
-        # --require-bundle prunes a day whose release bundle can be built (its
-        # catalog re-verifies against the manifest) — this is the build -> prune
-        # -> publish daily flow, where prune precedes the same run's publish.
-        self.archive_genesis("2026-04-12")
-        self.archive_genesis("2026-04-13")
+    def test_prune_require_bundle_prunes_published_keeps_unpublished(self):
+        # The daily publishes BEFORE pruning, so --require-bundle prunes a day's
+        # catalog only once its bytes are durably published; an unpublished day's
+        # catalog is KEPT (not deleted) and the run does NOT fail.
+        self.archive_genesis("2026-04-12")  # published -> pruned
+        self.archive_genesis("2026-04-13")  # NOT published -> kept
+        self.archive_genesis("2026-04-14")  # newest -> retained by keep_latest=1
 
-        # the daily pre-builds bundles before pruning; only 2026-04-12 is pruned
-        # (keep_latest=1 retains 2026-04-13).
         out = Path(self.tmp.name) / ".release"
-        snapshot.build_release_bundle("2026-04-12", output_dir=out, min_count=1)
+        bundle = snapshot.build_release_bundle("2026-04-12", output_dir=out, min_count=1)
+        snapshot.record_storage_destination(
+            bundle,
+            "github_release",
+            {
+                "status": "created",
+                "asset_url": "https://github.com/OMPub/RSO/releases/download/t/a.tar.gz",
+            },
+        )
 
         snapshot.process_prune_catalogs(
             SimpleNamespace(
@@ -174,9 +181,12 @@ class ArchiveValidationTests(unittest.TestCase):
                 keep_latest=1,
             )
         )
-        # the older day's catalog was pruned; the retained (latest) day kept
+        # published + old -> pruned
         self.assertFalse((snapshot.snapshot_dir("2026-04-12") / "catalog.json.gz").exists())
+        # unpublished + old -> KEPT (never lose unpublished bytes)
         self.assertTrue((snapshot.snapshot_dir("2026-04-13") / "catalog.json.gz").exists())
+        # newest -> retained by keep_latest
+        self.assertTrue((snapshot.snapshot_dir("2026-04-14") / "catalog.json.gz").exists())
 
     def test_update_pointers_ignores_stray_non_date_dirs(self):
         self.archive_genesis("2026-04-12")
