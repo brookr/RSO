@@ -25,51 +25,75 @@ ROOT = Path(__file__).resolve().parents[1]
 DAILY_WORKFLOW = ROOT / ".github/workflows/daily-snapshot.yml"
 
 
+# The whole-.github/workflows-tree freeze marker is present ONLY in the current
+# (default-branch) workflow design that GitHub Actions actually executes. The
+# node branch's frozen copy uses the older per-file selective freeze and is
+# NEVER executed on a schedule — so asserting its step ordering is meaningless.
+# This matters because the daily's OWN "Run tests" step runs after "Prepare node
+# branch" has frozen .github/workflows back to the node's copy, so the workflow
+# file in the working tree there is the node's legacy copy, not the executable
+# one. (A version of this test that asserted ordering unconditionally read that
+# frozen copy and blocked the daily for days — the very bug it was meant to
+# prevent, inverted.)
+_WHOLE_TREE_FREEZE_MARKER = "git rm -r --cached --quiet --ignore-unmatch -- .github/workflows"
+
+
+def assert_daily_step_ordering(test, wf):
+    """Assert the daily's step-ordering invariants against a workflow string."""
+    pos = {}
+    for label, needle in (
+        ("build_bundles", "--storage-backend none"),
+        ("commit_archive", '"Archive RSO snapshot"'),
+        ("publish", "--use-existing-bundle"),
+        ("prune", "prune-catalogs"),
+        ("build_index", "snapshot.py build-index"),
+        ("commit_receipts", '"Record archive publish destinations"'),
+    ):
+        i = wf.find(needle)
+        test.assertNotEqual(i, -1, f"daily workflow no longer contains the {label} operation ({needle!r})")
+        test.assertEqual(
+            wf.find(needle, i + 1), -1,
+            f"{label} operation ({needle!r}) appears more than once; ordering assertions are ambiguous",
+        )
+        pos[label] = i
+    # A captured day must be committed to git AND uploaded to github_release
+    # BEFORE its raw catalog is eligible for pruning; prune's deletions are
+    # committed afterward. Any order that lets prune run before publish
+    # reintroduces the data-loss window that took the daily down.
+    test.assertLess(pos["build_bundles"], pos["publish"], "bundles must be built before publish")
+    test.assertLess(
+        pos["commit_archive"], pos["publish"],
+        "the captured catalog must be committed to git before publish (so it survives even if publish fails)",
+    )
+    test.assertLess(
+        pos["publish"], pos["prune"],
+        "PUBLISH must precede PRUNE — never delete a raw catalog before its bytes are durably published",
+    )
+    test.assertLess(pos["prune"], pos["commit_receipts"], "prune deletions must be committed after prune")
+    test.assertLess(pos["publish"], pos["build_index"], "build-index needs the storage receipts that publish records")
+    test.assertLess(pos["prune"], pos["build_index"], "build-index must run after prune so a pruned day gets no dead locator")
+
+
 class DailyWorkflowOrderingTest(unittest.TestCase):
     """The daily broke when steps were reordered so `prune-catalogs` ran before
     `publish`, letting a day's raw catalog be deleted + committed before its
-    bytes were durably published. Read the ACTUAL workflow and assert the
-    ordering invariants, so a reorder fails here instead of in production."""
+    bytes were durably published. Assert the ordering invariants on the workflow
+    that ACTUALLY executes (the default-branch, whole-tree-freeze design), so a
+    reorder fails here instead of in production — while never false-failing
+    against the node branch's never-executed frozen copy."""
 
     def setUp(self):
         self.wf = DAILY_WORKFLOW.read_text(encoding="utf-8")
 
-    def _pos(self, needle, label):
-        i = self.wf.find(needle)
-        self.assertNotEqual(
-            i, -1, f"daily workflow no longer contains the {label} operation ({needle!r})"
-        )
-        # a second occurrence would make ordering ambiguous
-        self.assertEqual(
-            self.wf.find(needle, i + 1), -1,
-            f"{label} operation ({needle!r}) appears more than once; ordering assertions are ambiguous",
-        )
-        return i
-
     def test_publish_precedes_prune(self):
-        build_bundles = self._pos("--storage-backend none", "build-bundles")
-        commit_archive = self._pos('"Archive RSO snapshot"', "commit-archive")
-        publish = self._pos("--use-existing-bundle", "publish")
-        prune = self._pos("prune-catalogs", "prune")
-        build_index = self._pos("snapshot.py build-index", "build-index")
-        commit_receipts = self._pos('"Record archive publish destinations"', "commit-receipts")
-
-        # A captured day must be committed to git AND uploaded to github_release
-        # BEFORE its raw catalog is eligible for pruning; prune's deletions are
-        # committed afterward. Any order that lets prune run before publish
-        # reintroduces the data-loss window that took the daily down.
-        self.assertLess(build_bundles, publish, "bundles must be built before publish")
-        self.assertLess(
-            commit_archive, publish,
-            "the captured catalog must be committed to git before publish (so it survives even if publish fails)",
-        )
-        self.assertLess(
-            publish, prune,
-            "PUBLISH must precede PRUNE — never delete a raw catalog before its bytes are durably published",
-        )
-        self.assertLess(prune, commit_receipts, "prune deletions must be committed (in Commit publish receipts) after prune")
-        self.assertLess(publish, build_index, "build-index needs the storage receipts that publish records")
-        self.assertLess(prune, build_index, "build-index must run after prune so a pruned day gets no dead catalog locator")
+        if _WHOLE_TREE_FREEZE_MARKER not in self.wf:
+            self.skipTest(
+                "the daily-snapshot.yml in the working tree is the node branch's "
+                "frozen legacy copy (per-file selective freeze), which GitHub "
+                "Actions never executes; step ordering is only asserted on the "
+                "current whole-tree-freeze design that runs from the default branch"
+            )
+        assert_daily_step_ordering(self, self.wf)
 
 
 def _gp_record(cat_id, date):
