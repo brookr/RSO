@@ -1,0 +1,26 @@
+{
+  "api_class": "gp",
+  "api_query_base": "https://www.space-track.org/basicspacedata/query",
+  "api_query_paths": [
+    "/class/gp/orderby/NORAD_CAT_ID%20asc/format/json"
+  ],
+  "archive_object_count": 68587,
+  "current_gp_object_count": 68587,
+  "date": "2026-07-21",
+  "missing_from_current_gp": [],
+  "missing_from_current_gp_count": 0,
+  "observed_at_utc": "2026-07-21T00:56:11Z",
+  "present_ids_sha256": "af0853f9bb50abdc79f053ad263edb281b046b925f5061d7eba523955b855eb7",
+  "present_in_current_gp_not_in_archive": [],
+  "present_in_current_gp_not_in_archive_count": 0,
+  "reappeared_in_current_gp": [
+    {
+      "norad_cat_id": "62377",
+      "object_name": "KORSAT-2",
+      "previously_missing_since": "2026-07-16T00:53:43Z",
+      "reappeared_at_utc": "2026-07-21T00:56:11Z"
+    }
+  ],
+  "reappeared_in_current_gp_count": 1,
+  "source": "space-track.org"
+}
