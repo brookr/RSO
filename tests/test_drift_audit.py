@@ -87,7 +87,13 @@ class DriftAuditTest(unittest.TestCase):
 
         self.assertEqual(result["selection_drift"][0]["kind"], "selection_superseded")
 
-    def test_new_window_selection_is_selection_drift(self):
+    def test_late_publication_is_recorded_but_never_alerts(self):
+        # An elset that became visible AFTER our capture is expected upstream
+        # behaviour for an observation-plane archive: nothing we already
+        # committed to changed. It must be COUNTED (so a change in rate stays
+        # analysable) but must NOT land in selection_drift, because every
+        # consumer of that key -- the alert filter, alert_window_count, the
+        # issue body -- treats it as a consensus emergency.
         previous, recorded, update = self.base_day()
         extra = gp_record(
             NORAD_CAT_ID="55555", GP_ID="300", CREATION_DATE="2026-06-07T10:00:00"
@@ -95,8 +101,38 @@ class DriftAuditTest(unittest.TestCase):
 
         result = run_audit([dict(update), extra], recorded, previous)
 
-        kinds = [item["kind"] for item in result["selection_drift"]]
-        self.assertEqual(kinds, ["selection_appeared"])
+        self.assertEqual(result["late_publication_count"], 1)
+        self.assertEqual(
+            [item["kind"] for item in result["late_publication_sample"]],
+            ["selection_appeared"],
+        )
+        self.assertEqual(result["selection_drift"], [], "late publication must not alert")
+        self.assertEqual(result["core_field_mutations"], [])
+        self.assertFalse(
+            result["core_field_mutations"] or result["selection_drift"],
+            "a late-publication-only window must not be counted as an alert window",
+        )
+
+    def test_alerting_kinds_are_exactly_the_consensus_affecting_ones(self):
+        # Pin the classification so a future edit cannot silently reclassify a
+        # genuine consensus risk (an elset we recorded going missing or being
+        # superseded) as expected noise.
+        previous, recorded, update = self.base_day()
+
+        absent = run_audit([], recorded, previous)
+        superseded = run_audit([dict(update, GP_ID="999")], recorded, previous)
+
+        for label, result, kind in (
+            ("absent", absent, "recorded_elset_absent"),
+            ("superseded", superseded, "selection_superseded"),
+        ):
+            with self.subTest(label):
+                self.assertEqual([i["kind"] for i in result["selection_drift"]], [kind])
+                self.assertEqual(result["late_publication_count"], 0)
+                self.assertTrue(
+                    result["core_field_mutations"] or result["selection_drift"],
+                    f"{kind} must still alert",
+                )
 
     def test_identical_window_is_clean(self):
         previous, recorded, update = self.base_day()
@@ -112,6 +148,18 @@ class DriftAuditTest(unittest.TestCase):
         sample = drift_audit.pick_sample_days(days, recent=3, older=4, seed="x")
         self.assertEqual(len(sample), 7)
         self.assertTrue(set(days[-3:]).issubset(sample))
+
+    def test_sample_picker_is_reproducible_for_a_given_seed(self):
+        # Same seed -> same older-day sample, so a re-run within the week is
+        # directly comparable ("is this new, or just different days?"). A
+        # different seed rotates the sample so coverage keeps widening.
+        days = [f"2026-05-{day:02d}" for day in range(1, 21)]
+        first = drift_audit.pick_sample_days(days, recent=3, older=4, seed="2026-W30")
+        again = drift_audit.pick_sample_days(days, recent=3, older=4, seed="2026-W30")
+        later = drift_audit.pick_sample_days(days, recent=3, older=4, seed="2026-W31")
+
+        self.assertEqual(first, again)
+        self.assertNotEqual(first, later)
 
 
 class FeedLivenessTest(unittest.TestCase):

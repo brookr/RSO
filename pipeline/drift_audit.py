@@ -9,11 +9,24 @@ sliding sample of archived days and classifies every difference:
   expected_observation_drift  - excluded-field mutation (DECAY_DATE, naming,
                                 ...). Normal Space-Track back-patching; logged,
                                 never alerting.
+  late_publication            - an elset became visible in the window AFTER our
+                                capture ran (kind `selection_appeared`). This is
+                                the defining behaviour of an observation-plane
+                                archive that records "what we knew, when":
+                                upstream publishes late, and nothing we already
+                                committed to has changed. Counted and reported,
+                                NEVER alerting. (A rebuild-from-scratch of such
+                                a day would legitimately hold more elsets than
+                                the attested capture -- see the spec's
+                                set-selection note.)
   CORE_FIELD_MUTATION         - a non-excluded field changed on the same GP_ID.
                                 Consensus risk: the field partition needs
                                 widening. ALERT.
-  SELECTION_DRIFT             - the window's deduped selection changed (new,
-                                superseded, or retracted elsets). Consensus
+  SELECTION_DRIFT             - an elset we ALREADY RECORDED is gone upstream
+                                (`recorded_elset_absent`) or was replaced by a
+                                different GP_ID (`selection_superseded`). Unlike
+                                late publication, this means the sources a day
+                                was built from no longer reproduce it. Consensus
                                 risk in the capture rule itself. ALERT.
 
 Run weekly from CI; exits 1 when any alert class is non-empty so the workflow
@@ -153,7 +166,13 @@ def audit_window(client, day, recorded_records):
 
     observation_drift = []
     core_mutations = []
+    # selection_drift carries ONLY the consensus-affecting kinds (something we
+    # already recorded is gone or was superseded). Late upstream publication is
+    # tracked separately in late_publication so that every consumer of
+    # selection_drift -- the alert filter, alert_window_count, the issue body --
+    # is about genuine consensus risk and nothing else.
     selection_drift = []
+    late_publication = []
 
     for cat_id, recorded in recorded_updates.items():
         fresh = fresh_selected.get(cat_id)
@@ -186,7 +205,10 @@ def audit_window(client, day, recorded_records):
 
     for cat_id in fresh_selected:
         if cat_id not in recorded_updates:
-            selection_drift.append(
+            # Upstream published this row after our capture: expected for an
+            # observation-plane archive, and it leaves everything we already
+            # committed to intact. Recorded, never alerting.
+            late_publication.append(
                 {"norad_cat_id": cat_id, "kind": "selection_appeared",
                  "fresh_gp_id": fresh_selected[cat_id].get("GP_ID")}
             )
@@ -201,6 +223,8 @@ def audit_window(client, day, recorded_records):
         "observation_drift_count": len(observation_drift),
         "core_field_mutations": core_mutations,
         "selection_drift": selection_drift,
+        "late_publication_count": len(late_publication),
+        "late_publication_sample": late_publication[:25],
         "observation_drift_sample": observation_drift[:25],
         "api_query_paths": query_paths,
     }
@@ -229,10 +253,17 @@ def main() -> int:
     if not archived:
         print("drift-audit: no archived window days found", file=sys.stderr)
         return 2
+    # Default the older-day sample seed to the ISO year-week: re-runs within a
+    # week audit the SAME days (so a re-run after a fix is directly comparable,
+    # and "is this new?" is answerable), while the sample still rotates weekly
+    # so coverage of the archive keeps widening. An unseeded sample made
+    # week-to-week results incomparable and could make a stable condition look
+    # like a spreading trend.
+    seed = args.seed if args.seed is not None else datetime.now(timezone.utc).strftime("%G-W%V")
     sample = (
         snapshot.date_range(args.start, args.end)
         if args.start and args.end
-        else pick_sample_days(archived, recent=args.recent, older=args.older, seed=args.seed)
+        else pick_sample_days(archived, recent=args.recent, older=args.older, seed=seed)
     )
     sample = [day for day in sample if day in archived]
     print(f"drift-audit: checking {len(sample)} windows: {', '.join(sample)}")
@@ -258,7 +289,8 @@ def main() -> int:
                 f"  {day}: raw={result['raw_rows']:,} "
                 f"observation_drift={result['observation_drift_count']} "
                 f"CORE_MUTATIONS={len(result['core_field_mutations'])} "
-                f"SELECTION_DRIFT={len(result['selection_drift'])}"
+                f"SELECTION_DRIFT={len(result['selection_drift'])} "
+                f"late_publication={result['late_publication_count']}"
             )
     finally:
         client.close()
@@ -270,12 +302,17 @@ def main() -> int:
     for message in liveness["alerts"]:
         print(f"  FEED LIVENESS: {message}")
     report = {
-        "schema": "rso-drift-audit-v1",
+        # v2: `selection_drift` narrowed to the consensus-affecting kinds
+        # (recorded_elset_absent / selection_superseded). Late upstream
+        # publication moved to `late_publication_*`, which never alerts.
+        "schema": "rso-drift-audit-v2",
         "generated_at_utc": snapshot.utc_stamp(),
+        "sample_seed": seed,
         "content_excluded_fields": list(snapshot.CONTENT_EXCLUDED_FIELDS),
         "windows_checked": len(results),
         "windows_skipped": skipped,
         "alert_window_count": len(alerts),
+        "late_publication_total": sum(r["late_publication_count"] for r in results),
         "feed_liveness": liveness,
         "results": results,
     }
