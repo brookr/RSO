@@ -63,14 +63,14 @@ class NodeRosterTests(unittest.TestCase):
             self.assertEqual(snapshot.node_tdh_from_attestations(Path(tmp) / "missing.json"), {})
 
     def test_malformed_backing_tdh_counts_as_zero(self):
-        # the card coerces a malformed nodeBackingTdh to 0; the roster builder
-        # must not crash where the card would shrug
+        # the card coerces a malformed nodeUsableBackingTdh to 0; the roster
+        # builder must not crash where the card would shrug
         with tempfile.TemporaryDirectory() as tmp:
             idx = Path(tmp) / "index.json"
             idx.write_text(json.dumps({"events": [
-                {"nodeId": "github:bad/rso", "nodeBackingTdh": "not-a-number"},
-                {"nodeId": "github:worse/rso", "nodeBackingTdh": {"nested": 1}},
-                {"nodeId": "github:good/rso", "nodeBackingTdh": 6},
+                {"nodeId": "github:bad/rso", "nodeUsableBackingTdh": "not-a-number"},
+                {"nodeId": "github:worse/rso", "nodeUsableBackingTdh": {"nested": 1}},
+                {"nodeId": "github:good/rso", "nodeUsableBackingTdh": 6},
             ]}))
             tdh = snapshot.node_tdh_from_attestations(idx)
             self.assertEqual(tdh, {"github:good/rso": 6})
