@@ -638,14 +638,24 @@ class HashOnlyTierProfileTest(unittest.TestCase):
         ):
             rso_profile.decorate_tdh_support(
                 event,
-                {"github:owner/repo": 7},
+                {
+                    "github:owner/repo": {
+                        "positiveBackingTdh": 10,
+                        "negativeBackingTdh": 3,
+                        "netBackingTdh": 7,
+                        "usableBackingTdh": 7,
+                    }
+                },
                 {fingerprint: verification},
                 {},
             )
         self.assertEqual(event["nodeId"], "github:owner/repo")
         self.assertEqual(event["nodeAuthorizationStatus"], "verified")
         self.assertEqual(event["publicationVerification"], "hash_only")
-        self.assertEqual(event["nodeBackingTdh"], 7)
+        self.assertEqual(event["nodePositiveBackingTdh"], 10)
+        self.assertEqual(event["nodeNegativeBackingTdh"], 3)
+        self.assertEqual(event["nodeNetBackingTdh"], 7)
+        self.assertEqual(event["nodeUsableBackingTdh"], 7)
         self.assertEqual(event["combinedSupportTdh"], 7)
 
 if __name__ == "__main__":

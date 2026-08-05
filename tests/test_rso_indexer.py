@@ -32,6 +32,16 @@ from vendor.docchain.model import DocAttested
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def support_record(positive=0, negative=0):
+    net = positive - negative
+    return {
+        "positiveBackingTdh": positive,
+        "negativeBackingTdh": negative,
+        "netBackingTdh": net,
+        "usableBackingTdh": max(net, 0),
+    }
+
+
 class RsoIndexerTest(unittest.TestCase):
     def test_doc_ref_to_date_accepts_midnight_utc(self):
         self.assertEqual(doc_ref_to_date("20260519000000"), "2026-05-19")
@@ -152,10 +162,9 @@ class RsoIndexerTest(unittest.TestCase):
         calls = []
 
         class FakeRpc:
-            def call(self, method, params):
-                calls.append((method, params))
-                number = int(params[0], 16)
-                return {"timestamp": hex(number * 12)}
+            def block_timestamp(self, number):
+                calls.append(number)
+                return number * 12
 
         with tempfile.TemporaryDirectory() as tmp:
             cache_path = Path(tmp) / "block-timestamps.json"
@@ -173,15 +182,14 @@ class RsoIndexerTest(unittest.TestCase):
         calls = []
 
         class FakeRpc:
-            def call(self, method, params):
-                calls.append((method, params))
-                number = int(params[0], 16)
-                return {"timestamp": hex(number * 12)}
+            def block_timestamp(self, number):
+                calls.append(number)
+                return number * 12
 
         with tempfile.TemporaryDirectory() as tmp:
             cache_path = Path(tmp) / "block-timestamps.json"
-            # block 200 is within TIMESTAMP_FINALITY_DEPTH of the tip: it must be
-            # resolved but NOT persisted (it could still reorg)
+            # block 200 is within the vendored finality depth (64) of the tip:
+            # it must be resolved but NOT persisted (it could still reorg)
             out = cli.fetch_block_timestamps(FakeRpc(), [100, 200], cache_path, latest_block=220)
             self.assertEqual(out, {100: 1200, 200: 2400})
             import json as _json
@@ -190,8 +198,8 @@ class RsoIndexerTest(unittest.TestCase):
             self.assertNotIn("200", cached)
             # a second run refetches the shallow block, reuses the deep one
             cli.fetch_block_timestamps(FakeRpc(), [100, 200], cache_path, latest_block=220)
-            shallow_fetches = [c for c in calls if int(c[1][0], 16) == 200]
-            self.assertEqual(len(shallow_fetches), 2)
+            self.assertEqual(calls.count(200), 2)
+            self.assertEqual(calls.count(100), 1)
 
     def test_build_static_index_exposes_identity_claims(self):
         event = make_event(
@@ -219,7 +227,7 @@ class RsoIndexerTest(unittest.TestCase):
         self.assertEqual(indexed_event["attester"], "0x" + "a" * 40)
         self.assertEqual(indexed_event["nodeId"], "")
         self.assertEqual(indexed_event["directWitnessTdh"], 0)
-        self.assertEqual(indexed_event["nodeBackingTdh"], 0)
+        self.assertEqual(indexed_event["nodeUsableBackingTdh"], 0)
         self.assertEqual(indexed_event["combinedSupportTdh"], 0)
 
     def test_build_static_index_reports_tdh_weighted_agreement_groups(self):
@@ -259,8 +267,8 @@ class RsoIndexerTest(unittest.TestCase):
             chunk_size=10,
             events=[first, second],
             operator_backing={
-                "github:owner/repo": 100,
-                "github:other/repo": 25,
+                "github:owner/repo": support_record(positive=120, negative=20),
+                "github:other/repo": support_record(positive=25),
             },
             indexed_at="2026-05-22T00:00:00Z",
         )
@@ -275,7 +283,9 @@ class RsoIndexerTest(unittest.TestCase):
             confirmations=0,
             chunk_size=10,
             events=[first, second],
-            operator_backing={"github:owner/repo": 100},
+            operator_backing={
+                "github:owner/repo": support_record(positive=120, negative=20)
+            },
             verified_claims={
                 first_claim: {
                     "authorizationStatus": "verified",
@@ -290,8 +300,15 @@ class RsoIndexerTest(unittest.TestCase):
         )
 
         groups = index["docRefs"]["20260519000000"]["agreementGroups"]
+        self.assertEqual(
+            index["nodeSupport"]["github:owner/repo"],
+            support_record(positive=120, negative=20),
+        )
         self.assertEqual(len(groups), 2)
-        self.assertEqual(groups[0]["nodeBackingTdh"], 100)
+        self.assertEqual(groups[0]["nodePositiveBackingTdh"], 120)
+        self.assertEqual(groups[0]["nodeNegativeBackingTdh"], 20)
+        self.assertEqual(groups[0]["nodeNetBackingTdh"], 100)
+        self.assertEqual(groups[0]["nodeUsableBackingTdh"], 100)
         self.assertEqual(groups[0]["combinedSupportTdh"], 100)
         self.assertEqual(groups[0]["backedNodeIds"], ["github:owner/repo"])
         self.assertEqual(groups[0]["bundleFingerprints"], ["11" * 32])
@@ -341,13 +358,15 @@ class RsoIndexerTest(unittest.TestCase):
 
     def test_normalize_operator_backing_accepts_schema_records(self):
         self.assertEqual(
-            normalize_operator_backing({"GitHub:Owner/Repo": {"cardSpecificTdh": "42"}}),
-            {"github:owner/repo": 42},
+            normalize_operator_backing(
+                {"GitHub:Owner/Repo": support_record(positive=50, negative=8)}
+            ),
+            {"github:owner/repo": support_record(positive=50, negative=8)},
         )
-        self.assertEqual(
-            normalize_operator_backing({"GitHub:Owner/Repo": {"cardSpecificTdhBacking": "43"}}),
-            {"github:owner/repo": 43},
-        )
+
+    def test_normalize_operator_backing_rejects_unsigned_scalar(self):
+        with self.assertRaisesRegex(ValueError, "JSON object"):
+            normalize_operator_backing({"github:owner/repo": 42})
 
     def test_normalize_node_id_accepts_github_short_form(self):
         self.assertEqual(normalize_node_id("Owner/Repo"), "github:owner/repo")
@@ -370,8 +389,8 @@ class RsoIndexerTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate normalized node"):
             normalize_operator_backing(
                 {
-                    "github:owner/repo": 100,
-                    "GitHub:Owner/Repo": 200,
+                    "github:owner/repo": support_record(positive=100),
+                    "GitHub:Owner/Repo": support_record(positive=200),
                 }
             )
         with self.assertRaisesRegex(ValueError, "duplicate normalized fingerprints"):
@@ -418,20 +437,20 @@ class RsoIndexerTest(unittest.TestCase):
             path.write_text(
                 json.dumps(
                     {
-                        "schema": "rso-operator-backing-snapshot-v1",
+                        "schema": "rso-tdh-support-snapshot-v1",
                         "date": "2026-06-01",
                         "operators": {
-                            "github:owner/repo": {
-                                "cardSpecificTdhBacking": 99,
-                                "backerCount": 3,
-                            }
+                            "github:owner/repo": support_record(positive=120, negative=21)
                         },
                     }
                 ),
                 encoding="utf-8",
             )
 
-            self.assertEqual(cli.load_operator_backing(str(path)), {"github:owner/repo": 99})
+            self.assertEqual(
+                cli.load_operator_backing(str(path)),
+                {"github:owner/repo": support_record(positive=120, negative=21)},
+            )
 
     def test_github_looking_location_never_establishes_node_identity(self):
         locator = encode_publication_locator_uri(
@@ -440,13 +459,13 @@ class RsoIndexerTest(unittest.TestCase):
         )
         index = build_test_index(
             [make_event(uri=locator)],
-            operator_backing={"github:victim/repo": 999},
+            operator_backing={"github:victim/repo": support_record(positive=999)},
         )
 
         event = index["events"][0]
         self.assertEqual(event["claimedNodeId"], "")
         self.assertEqual(event["nodeId"], "")
-        self.assertEqual(event["nodeBackingTdh"], 0)
+        self.assertEqual(event["nodeUsableBackingTdh"], 0)
 
     def test_verified_arweave_only_node_claim_receives_backing(self):
         locator = encode_publication_locator_uri(
@@ -459,7 +478,9 @@ class RsoIndexerTest(unittest.TestCase):
         fingerprint = unverified["events"][0]["claimFingerprint"]
         index = build_test_index(
             [event],
-            operator_backing={"github:owner/repo": 250},
+            operator_backing={
+                "github:owner/repo": support_record(positive=300, negative=50)
+            },
             verified_claims={
                 fingerprint: verified_claim(
                     node_id="github:owner/repo",
@@ -470,7 +491,10 @@ class RsoIndexerTest(unittest.TestCase):
 
         indexed = index["events"][0]
         self.assertEqual(indexed["nodeId"], "github:owner/repo")
-        self.assertEqual(indexed["nodeBackingTdh"], 250)
+        self.assertEqual(indexed["nodePositiveBackingTdh"], 300)
+        self.assertEqual(indexed["nodeNegativeBackingTdh"], 50)
+        self.assertEqual(indexed["nodeNetBackingTdh"], 250)
+        self.assertEqual(indexed["nodeUsableBackingTdh"], 250)
 
     def test_unverified_signed_node_claim_receives_no_backing(self):
         event = make_event(
@@ -482,12 +506,12 @@ class RsoIndexerTest(unittest.TestCase):
         )
         index = build_test_index(
             [event],
-            operator_backing={"github:owner/repo": 250},
+            operator_backing={"github:owner/repo": support_record(positive=250)},
         )
 
         self.assertEqual(index["events"][0]["claimedNodeId"], "github:owner/repo")
         self.assertEqual(index["events"][0]["nodeAuthorizationStatus"], "unverified")
-        self.assertEqual(index["events"][0]["nodeBackingTdh"], 0)
+        self.assertEqual(index["events"][0]["nodeUsableBackingTdh"], 0)
 
     def test_direct_witness_and_node_backing_are_separate_and_additive(self):
         locator = encode_publication_locator_uri(
@@ -499,7 +523,9 @@ class RsoIndexerTest(unittest.TestCase):
         fingerprint = build_test_index([event])["events"][0]["claimFingerprint"]
         index = build_test_index(
             [event],
-            operator_backing={"github:owner/repo": 200},
+            operator_backing={
+                "github:owner/repo": support_record(positive=240, negative=40)
+            },
             verified_claims={
                 fingerprint: verified_claim(
                     node_id="github:owner/repo",
@@ -518,8 +544,45 @@ class RsoIndexerTest(unittest.TestCase):
         group = index["docRefs"]["20260519000000"]["agreementGroups"][0]
         self.assertEqual(indexed["directWitnessIdentity"], "alice")
         self.assertEqual(indexed["directWitnessTdh"], 100)
-        self.assertEqual(indexed["nodeBackingTdh"], 200)
+        self.assertEqual(indexed["nodeUsableBackingTdh"], 200)
         self.assertEqual(group["combinedSupportTdh"], 300)
+
+    def test_negative_node_balance_is_visible_but_never_subtracts_from_branch(self):
+        locator = encode_publication_locator_uri(
+            bundle_sha256="11" * 32,
+            locations=["ar://abc123"],
+            node_id="github:owner/repo",
+        )
+        event = make_event(uri=locator, attester="0x" + "a" * 40)
+        fingerprint = build_test_index([event])["events"][0]["claimFingerprint"]
+        index = build_test_index(
+            [event],
+            operator_backing={
+                "github:owner/repo": support_record(positive=20, negative=75)
+            },
+            verified_claims={
+                fingerprint: verified_claim(
+                    node_id="github:owner/repo",
+                    attester=event.attester,
+                )
+            },
+            direct_witnesses={
+                "alice": {
+                    "cardSpecificTdh": 100,
+                    "accounts": [event.attester],
+                }
+            },
+        )
+
+        indexed = index["events"][0]
+        group = index["docRefs"]["20260519000000"]["agreementGroups"][0]
+        self.assertEqual(indexed["nodeNetBackingTdh"], -55)
+        self.assertEqual(indexed["nodeUsableBackingTdh"], 0)
+        self.assertEqual(group["nodePositiveBackingTdh"], 20)
+        self.assertEqual(group["nodeNegativeBackingTdh"], 75)
+        self.assertEqual(group["nodeNetBackingTdh"], -55)
+        self.assertEqual(group["nodeUsableBackingTdh"], 0)
+        self.assertEqual(group["combinedSupportTdh"], 100)
 
     def test_raw_attestation_count_cannot_break_a_support_tie(self):
         first = make_event(
@@ -569,7 +632,7 @@ class RsoIndexerTest(unittest.TestCase):
         }
         index = build_test_index(
             [first, second],
-            operator_backing={"github:owner/repo": 200},
+            operator_backing={"github:owner/repo": support_record(positive=200)},
             verified_claims=verified,
             direct_witnesses={
                 "alice": {
@@ -584,7 +647,7 @@ class RsoIndexerTest(unittest.TestCase):
         self.assertEqual(group["directWitnessIdentities"], ["alice"])
         self.assertEqual(group["backedNodeIds"], ["github:owner/repo"])
         self.assertEqual(group["directWitnessTdh"], 100)
-        self.assertEqual(group["nodeBackingTdh"], 200)
+        self.assertEqual(group["nodeUsableBackingTdh"], 200)
         self.assertEqual(group["combinedSupportTdh"], 300)
 
     def test_equivocating_identity_and_node_do_not_multiply_or_count(self):
@@ -610,7 +673,7 @@ class RsoIndexerTest(unittest.TestCase):
         }
         index = build_test_index(
             [first, second],
-            operator_backing={"github:owner/repo": 200},
+            operator_backing={"github:owner/repo": support_record(positive=200)},
             verified_claims=verified,
             direct_witnesses={
                 "alice": {
@@ -622,7 +685,7 @@ class RsoIndexerTest(unittest.TestCase):
 
         for group in index["docRefs"]["20260519000000"]["agreementGroups"]:
             self.assertEqual(group["directWitnessTdh"], 0)
-            self.assertEqual(group["nodeBackingTdh"], 0)
+            self.assertEqual(group["nodeUsableBackingTdh"], 0)
             self.assertEqual(group["equivocatingDirectWitnessIdentities"], ["alice"])
             self.assertEqual(group["equivocatingNodes"], ["github:owner/repo"])
 
@@ -634,6 +697,7 @@ class RsoIndexerTest(unittest.TestCase):
                 json.dumps(
                     {
                         "schema": "rso-tdh-support-snapshot-v1",
+                        "date": "2026-06-01",
                         "identities": {
                             "alice": {
                                 "cardSpecificTdh": 100,
@@ -641,7 +705,7 @@ class RsoIndexerTest(unittest.TestCase):
                             }
                         },
                         "operators": {
-                            "github:owner/repo": {"cardSpecificTdhBacking": 200}
+                            "github:owner/repo": support_record(positive=250, negative=50)
                         },
                     }
                 ),
@@ -674,7 +738,10 @@ class RsoIndexerTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            self.assertEqual(cli.load_operator_backing(str(support_path)), {"github:owner/repo": 200})
+            self.assertEqual(
+                cli.load_operator_backing(str(support_path)),
+                {"github:owner/repo": support_record(positive=250, negative=50)},
+            )
             self.assertIn("alice", cli.load_direct_witnesses(str(support_path)))
             self.assertEqual(list(cli.load_verified_claims(str(report_path))), ["11" * 32])
 
@@ -863,6 +930,10 @@ class RsoIndexerTest(unittest.TestCase):
 
             def block_number(self):
                 return 10861440
+
+            def block_timestamp(self, number):
+                # the vendored fetch_block_timestamps resolves timestamps here
+                return 1750000000
 
             def call(self, method, params):
                 assert method == "eth_getBlockByNumber"

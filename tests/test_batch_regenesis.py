@@ -317,7 +317,10 @@ class SubmitBatchTest(unittest.TestCase):
 
     def test_decode_batch_result(self):
         body = format(3, "064x") + format(2, "064x")
-        self.assertEqual(submit_batch.decode_batch_result("0x" + body), (3, 2))
+        self.assertEqual(
+            submit_batch.parse_attest_batch_return("0x" + body),
+            {"storedCount": 3, "skippedCount": 2},
+        )
 
 
 class HydrateFromUpstreamTest(unittest.TestCase):

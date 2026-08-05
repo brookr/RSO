@@ -29,8 +29,9 @@ from attestation.rso_attestation import (  # noqa: E402
 from vendor.docchain.attestation import (  # noqa: E402
     attest_batch_calldata,
     cast_path,
-    cast_wallet_args_from_env,
     normalize_address,
+    parse_attest_batch_return,
+    send_calldata_with_cast,
     subprocess_error_detail,
 )
 
@@ -64,40 +65,32 @@ def main() -> int:
                 args,
                 ["call", contract_address, "--data", calldata, "--rpc-url", args.rpc_url],
             )
-            stored, skipped = decode_batch_result(output)
-            print(f"dry run: would store {stored}, skip {skipped}")
+            decoded = parse_attest_batch_return(output.strip().splitlines()[-1].strip())
+            print(
+                f"dry run: would store {decoded['storedCount']}, "
+                f"skip {decoded['skippedCount']}"
+            )
             return 0
 
         # F6: the courier key is funded, so keep it off the process command line.
-        # Route signing through the keystore-capable path (SUBMITTER_KEYSTORE_JSON /
-        # SUBMITTER_KEYSTORE / SUBMITTER_ACCOUNT / SUBMITTER_KEYSTORE_PASSWORD*),
-        # allowing a raw --private-key only when explicitly permitted.
-        # The default env SUBMITTER_PRIVATE_KEY contains "PRIVATE_KEY", so the
-        # helper derives SUBMITTER_KEYSTORE_JSON / SUBMITTER_KEYSTORE /
-        # SUBMITTER_ACCOUNT / SUBMITTER_KEYSTORE_PASSWORD* automatically.
-        with cast_wallet_args_from_env(
+        # The vendored sender routes signing through the keystore-capable path
+        # (SUBMITTER_KEYSTORE_JSON / SUBMITTER_KEYSTORE / SUBMITTER_ACCOUNT /
+        # SUBMITTER_KEYSTORE_PASSWORD*), allows a raw --private-key only when
+        # explicitly permitted, and verifies the receipt status (cast can exit
+        # 0 on a mined-but-reverted transaction).
+        receipt = send_calldata_with_cast(
+            contract_address=contract_address,
+            calldata=calldata,
+            rpc_url=args.rpc_url,
+            confirmations=args.confirmations,
+            cast=args.cast,
             private_key_env=args.private_key_env,
             allow_raw_private_key=args.allow_raw_private_key,
-        ) as wallet_args:
-            command = [
-                "send",
-                contract_address,
-                "--data",
-                calldata,
-                "--rpc-url",
-                args.rpc_url,
-                "--confirmations",
-                str(args.confirmations),
-                "--json",
-                *wallet_args,
-            ]
-            receipt = json.loads(run_cast(args, command).strip().splitlines()[-1])
+        )
         print(f"tx: {receipt['transactionHash']}")
         print(f"status: {receipt['status']}")
-        print(f"gasUsed: {int(receipt['gasUsed'], 16)}")
+        print(f"gasUsed: {int(str(receipt['gasUsed']), 16)}")
         print(f"DocAttested events: {len(receipt.get('logs', []))}")
-        if receipt.get("status") not in ("0x1", 1, "1"):
-            raise ValueError("attestBatch transaction reverted")
         return 0
     except subprocess.CalledProcessError as exc:
         print(f"submit_batch.py: {subprocess_error_detail(exc)}", file=sys.stderr)
@@ -179,14 +172,6 @@ def run_cast(args: argparse.Namespace, command: list[str]) -> str:
         [cast_path(args.cast), *command], check=True, capture_output=True, text=True
     )
     return result.stdout
-
-
-def decode_batch_result(output: str) -> tuple[int, int]:
-    raw = output.strip().splitlines()[-1].strip()
-    body = raw[2:] if raw.startswith("0x") else raw
-    if len(body) < 128:
-        raise ValueError(f"unexpected attestBatch return data: {raw!r}")
-    return int(body[0:64], 16), int(body[64:128], 16)
 
 
 def parse_args() -> argparse.Namespace:

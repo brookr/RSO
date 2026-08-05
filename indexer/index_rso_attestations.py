@@ -28,11 +28,13 @@ from vendor.docchain.store import (  # noqa: E402
     ScanContext,
     event_cache_record,
     event_key,
+    fetch_block_timestamps,
     load_event_cache,
     update_event_cache,
     write_checkpoint,
     write_json_file,
 )
+from support.tdh import TDH_SUPPORT_SCHEMA  # noqa: E402
 
 
 NETWORKS = {
@@ -166,39 +168,10 @@ def main() -> int:
         return 2
 
 
-# Only timestamps at least this many blocks below the tip are treated as
-# immutable and cached; shallower blocks can still reorg (the scan itself runs
-# at latest - confirmations, well short of true finality), so their timestamps
-# are fetched fresh each run and never persisted.
-TIMESTAMP_FINALITY_DEPTH = 64
-
-
-def fetch_block_timestamps(rpc, block_numbers, cache_path: Path, *, latest_block: int) -> dict[int, int]:
-    """Resolve block numbers to timestamps, caching only finalized-depth blocks."""
-    cached: dict[str, int] = {}
-    if cache_path.exists():
-        loaded = json.loads(cache_path.read_text(encoding="utf-8"))
-        if not isinstance(loaded, dict):
-            raise ValueError(f"{cache_path}: block timestamp cache must be a JSON object")
-        cached = {str(key): int(value) for key, value in loaded.items()}
-    finality_ceiling = latest_block - TIMESTAMP_FINALITY_DEPTH
-    wanted = sorted({int(number) for number in block_numbers})
-    # a cached entry for a still-shallow block is refetched (it may have been
-    # cached from a since-reorged chain view)
-    missing = [n for n in wanted if str(n) not in cached or n > finality_ceiling]
-    result = dict(cached)
-    persist = False
-    for number in missing:
-        block = rpc.call("eth_getBlockByNumber", [hex(number), False])
-        if not isinstance(block, dict) or not isinstance(block.get("timestamp"), str):
-            raise ValueError(f"eth_getBlockByNumber({number}) returned no timestamp")
-        result[str(number)] = int(block["timestamp"], 16)
-        if number <= finality_ceiling:
-            cached[str(number)] = result[str(number)]
-            persist = True
-    if persist:
-        write_json_file(cache_path, cached)
-    return {int(key): value for key, value in result.items()}
+# fetch_block_timestamps is the vendored finality-aware version
+# (vendor.docchain.store): with latest_block passed, only timestamps at least
+# 64 blocks below the tip are persisted; shallower blocks are refetched each
+# run since a cached entry may have come from a since-reorged chain view.
 
 
 def reconcile_reorged_events(rpc, cache_path, checkpoint_path, context, to_block, window: int = 200) -> int:
@@ -286,7 +259,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--deployment-block", type=int, help="First block for --network custom.")
     parser.add_argument(
         "--backing",
-        help="Legacy operator-backing snapshot. Node backing still requires --sweeper-reports.",
+        help="One signed v1 TDH support snapshot. Node backing still requires --sweeper-reports.",
     )
     parser.add_argument(
         "--tdh-support",
@@ -309,44 +282,24 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_operator_backing(path: str) -> dict[str, int]:
+def load_operator_backing(path: str) -> dict[str, object]:
     raw = load_json_object(Path(path), "backing snapshot")
-    if not isinstance(raw, dict):
-        raise ValueError("backing snapshot must be a JSON object")
-    if raw.get("schema") in ("rso-operator-backing-snapshot-v1", "rso-tdh-support-snapshot-v1"):
-        operators = raw.get("operators", {})
-        if not isinstance(operators, dict):
-            raise ValueError("backing snapshot operators must be a JSON object")
-        return {
-            str(operator): int(
-                value.get("cardSpecificTdhBacking", value.get("cardSpecificTdh", 0))
-                if isinstance(value, dict)
-                else value
-            )
-            for operator, value in operators.items()
-        }
-    if raw.get("schema") == "rso-operator-backing-v1":
-        operators = raw.get("operators", raw.get("identities", {}))
-        if not isinstance(operators, dict):
-            raise ValueError("backing snapshot operators must be a JSON object")
-        return {
-            str(operator): int(value.get("cardSpecificTdh", 0) if isinstance(value, dict) else value)
-            for operator, value in operators.items()
-        }
-    return {
-        str(operator): int(
-            value.get("cardSpecificTdhBacking", value.get("cardSpecificTdh", 0))
-            if isinstance(value, dict)
-            else value
-        )
-        for operator, value in raw.items()
-    }
+    if raw.get("schema") != TDH_SUPPORT_SCHEMA:
+        raise ValueError(f"backing snapshot requires {TDH_SUPPORT_SCHEMA}")
+    if not isinstance(raw.get("date"), str) or not raw["date"]:
+        raise ValueError("TDH support snapshot requires date")
+    operators = raw.get("operators", {})
+    if not isinstance(operators, dict):
+        raise ValueError("backing snapshot operators must be a JSON object")
+    return dict(operators)
 
 
 def load_direct_witnesses(path: str) -> dict[str, object]:
     raw = load_json_object(Path(path), "TDH support snapshot")
-    if raw.get("schema") != "rso-tdh-support-snapshot-v1":
-        raise ValueError("direct witness TDH requires rso-tdh-support-snapshot-v1")
+    if raw.get("schema") != TDH_SUPPORT_SCHEMA:
+        raise ValueError(f"direct witness TDH requires {TDH_SUPPORT_SCHEMA}")
+    if not isinstance(raw.get("date"), str) or not raw["date"]:
+        raise ValueError("TDH support snapshot requires date")
     identities = raw.get("identities", {})
     if not isinstance(identities, dict):
         raise ValueError("TDH support snapshot identities must be a JSON object")
@@ -355,15 +308,15 @@ def load_direct_witnesses(path: str) -> dict[str, object]:
 
 def load_tdh_support_snapshots(
     path: str,
-) -> tuple[dict[str, dict[str, int]], dict[str, dict[str, object]]]:
+) -> tuple[dict[str, dict[str, object]], dict[str, dict[str, object]]]:
     source = Path(path)
     paths = sorted(source.glob("*.json")) if source.is_dir() else [source]
-    backing_by_date: dict[str, dict[str, int]] = {}
+    backing_by_date: dict[str, dict[str, object]] = {}
     witnesses_by_date: dict[str, dict[str, object]] = {}
     for snapshot_path in paths:
         raw = load_json_object(snapshot_path, "TDH support snapshot")
-        if raw.get("schema") != "rso-tdh-support-snapshot-v1":
-            raise ValueError("TDH support snapshots require rso-tdh-support-snapshot-v1")
+        if raw.get("schema") != TDH_SUPPORT_SCHEMA:
+            raise ValueError(f"TDH support snapshots require {TDH_SUPPORT_SCHEMA}")
         snapshot_date = raw.get("date")
         if not isinstance(snapshot_date, str) or not snapshot_date:
             raise ValueError("TDH support snapshot requires date")
@@ -375,14 +328,7 @@ def load_tdh_support_snapshots(
             raise ValueError("TDH support snapshot operators must be a JSON object")
         if not isinstance(identities, dict):
             raise ValueError("TDH support snapshot identities must be a JSON object")
-        backing_by_date[snapshot_date] = {
-            str(operator): int(
-                value.get("cardSpecificTdhBacking", value.get("cardSpecificTdh", 0))
-                if isinstance(value, dict)
-                else value
-            )
-            for operator, value in operators.items()
-        }
+        backing_by_date[snapshot_date] = dict(operators)
         witnesses_by_date[snapshot_date] = dict(identities)
     return backing_by_date, witnesses_by_date
 

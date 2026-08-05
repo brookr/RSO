@@ -28,7 +28,7 @@ class SweeperReportCheckTest(unittest.TestCase):
         )
 
     def test_report_url_validation_rejects_non_raw_github_hosts(self):
-        with patch("sweeper.check_sweeper_report.socket.getaddrinfo", return_value=[(None, None, None, None, ("140.82.112.133", 443))]):
+        with patch("vendor.docchain.fetch.socket.getaddrinfo", return_value=[(None, None, None, None, ("140.82.112.133", 443))]):
             validate_report_url("https://raw.githubusercontent.com/OMPub/RSO/main/report.json")
             with self.assertRaisesRegex(ReportCheckError, "raw.githubusercontent.com"):
                 validate_report_url("https://example.com/report.json")
@@ -174,7 +174,9 @@ class SweeperReportCheckTest(unittest.TestCase):
         self.assertIn("bad ``` fence", body)
 
     def test_read_limited_rejects_non_positive_limit(self):
-        with self.assertRaisesRegex(ReportCheckError, "positive"):
+        # bounded reads live in the vendored fetch layer and raise its
+        # FetchError (a ValueError)
+        with self.assertRaisesRegex(ValueError, "positive"):
             read_limited(io.BytesIO(b"x"), 0, label="report")
 
 

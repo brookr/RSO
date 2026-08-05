@@ -46,14 +46,14 @@ class NodeRosterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             idx = Path(tmp) / "index.json"
             idx.write_text(json.dumps({"events": [
-                {"nodeId": "github:OMPub/RSO", "nodeBackingTdh": 3},
-                {"nodeId": "github:ompub/rso", "nodeBackingTdh": 7},          # case-folded, strongest wins
-                {"claimedNodeId": "github:brookr/rso", "nodeBackingTdh": 2},
+                {"nodeId": "github:OMPub/RSO", "nodeUsableBackingTdh": 3},
+                {"nodeId": "github:ompub/rso", "nodeUsableBackingTdh": 7},   # case-folded, strongest wins
+                {"claimedNodeId": "github:brookr/rso", "nodeUsableBackingTdh": 2},
                 # combinedSupportTdh is the GROUP aggregate, not per-node backing -> ignored
-                {"nodeId": "github:weak/rso", "nodeBackingTdh": 1, "combinedSupportTdh": 999999},
+                {"nodeId": "github:weak/rso", "nodeUsableBackingTdh": 1, "combinedSupportTdh": 999999},
                 # only publication.nodeId carries the identity (mirrors the card's fallback)
-                {"publication": {"nodeId": "github:pub/rso"}, "nodeBackingTdh": 4},
-                {"nodeBackingTdh": 99},                                       # no nodeId -> ignored
+                {"publication": {"nodeId": "github:pub/rso"}, "nodeUsableBackingTdh": 4},
+                {"nodeUsableBackingTdh": 99},                                 # no nodeId -> ignored
             ]}))
             tdh = snapshot.node_tdh_from_attestations(idx)
             self.assertEqual(tdh["github:ompub/rso"], 7)
