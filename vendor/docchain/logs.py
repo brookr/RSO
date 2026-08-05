@@ -10,6 +10,8 @@ from collections.abc import Mapping, Sequence
 from .abi import DOC_ATTESTED_EVENT_TOPIC0, DOC_ATTESTED_EVENT_LEGACY_TOPIC0
 from .model import ZERO_ADDRESS, DocAttested
 
+_HEX_DIGITS = frozenset("0123456789abcdef")
+
 
 def decode_doc_attested_log(log: Mapping[str, object]) -> DocAttested:
     """Decode a raw JSON-RPC log object into a neutral `DocAttested` record."""
@@ -86,10 +88,11 @@ def _hex(value: object, field: str) -> str:
     if not isinstance(value, str) or not value.lower().startswith("0x"):
         raise ValueError(f"{field} must be a 0x-prefixed hex string")
     body = value[2:].lower()
-    try:
-        int(body or "0", 16)
-    except ValueError as exc:
-        raise ValueError(f"{field} contains non-hex characters") from exc
+    # Validate the digits directly. int(body, 16) would silently accept "_",
+    # a leading "+/-", and surrounding whitespace, letting malformed hex through
+    # to calldata/topic encoding instead of failing loudly here.
+    if body and not _HEX_DIGITS.issuperset(body):
+        raise ValueError(f"{field} contains non-hex characters")
     return body
 
 
@@ -166,4 +169,9 @@ def _string_from_data(data: str, offset: int) -> str:
     payload_end = payload_start + byte_length * 2
     if len(data) < payload_end:
         raise ValueError("data is too short for ABI string payload")
-    return bytes.fromhex(data[payload_start:payload_end]).decode("utf-8")
+    # A Solidity `string` is arbitrary bytes: the contract length-caps the URI
+    # but never charset-checks it, so a valid attestation can carry non-UTF-8
+    # bytes. Decode leniently -- a strict decode would raise here and one such
+    # event would halt the whole scan. `uriHash` is emitted separately and stays
+    # the authoritative identity/dedupe value.
+    return bytes.fromhex(data[payload_start:payload_end]).decode("utf-8", errors="replace")

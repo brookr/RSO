@@ -31,3 +31,35 @@ DOC_ATTESTED_EVENT_TOPIC0S = (
     DOC_ATTESTED_EVENT_TOPIC0,
     DOC_ATTESTED_EVENT_LEGACY_TOPIC0,
 )
+
+# Custom error selectors: bytes4(keccak256(signature)). Couriers need these to
+# classify reverts surfaced through eth_call / eth_estimateGas error messages.
+DOCCHAIN_ERROR_SELECTORS = {
+    "InvalidAttester()": "0xb8daf542",
+    "DeadlineExpired(uint256,uint256)": "0x1503f5f8",
+    "UriTooLong(uint256,uint256)": "0xa99e90bb",
+    "DuplicateAttestation(bytes32)": "0xdd65d744",
+    "InvalidSignature(address)": "0xd855c4f4",
+    "InvalidSignatureLength(uint256)": "0x2c33b568",
+    "EmptyBatch()": "0xc2e5347d",
+    "BatchLengthMismatch(uint256,uint256)": "0x81b5b207",
+}
+
+DUPLICATE_ATTESTATION_ERROR_SELECTOR = DOCCHAIN_ERROR_SELECTORS[
+    "DuplicateAttestation(bytes32)"
+]
+
+
+def is_duplicate_attestation_error(message: str) -> bool:
+    """Return True when an RPC error message reports `DuplicateAttestation`.
+
+    Providers surface custom errors inconsistently: some echo the raw selector
+    data, others a decoded name. A duplicate revert means the claim is already
+    witnessed on chain, so couriers should treat it as success, not failure.
+    """
+    normalized = message.lower()
+    return (
+        DUPLICATE_ATTESTATION_ERROR_SELECTOR in normalized
+        or "duplicateattestation" in normalized
+        or "duplicate attestation" in normalized
+    )
