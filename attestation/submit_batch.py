@@ -29,6 +29,8 @@ from vendor.docchain.attestation import (  # noqa: E402
     attest_batch_calldata,
     cast_path,
     normalize_address,
+    parse_attest_batch_return,
+    send_calldata_with_cast,
     subprocess_error_detail,
 )
 
@@ -57,32 +59,28 @@ def main() -> int:
                 args,
                 ["call", contract_address, "--data", calldata, "--rpc-url", args.rpc_url],
             )
-            stored, skipped = decode_batch_result(output)
-            print(f"dry run: would store {stored}, skip {skipped}")
+            decoded = parse_attest_batch_return(output.strip().splitlines()[-1].strip())
+            print(
+                f"dry run: would store {decoded['storedCount']}, "
+                f"skip {decoded['skippedCount']}"
+            )
             return 0
 
-        command = [
-            "send",
-            contract_address,
-            "--data",
-            calldata,
-            "--rpc-url",
-            args.rpc_url,
-            "--confirmations",
-            str(args.confirmations),
-            "--json",
-        ]
-        private_key = os.environ.get(args.private_key_env)
-        if not private_key:
-            raise ValueError(f"set {args.private_key_env} with the courier private key")
-        command.extend(["--private-key", private_key])
-        receipt = json.loads(run_cast(args, command).strip().splitlines()[-1])
+        # Keystore-first submission with receipt-status verification; the
+        # courier key may also come from SUBMITTER_KEYSTORE_JSON /
+        # SUBMITTER_KEYSTORE / SUBMITTER_ACCOUNT companions of --private-key-env.
+        receipt = send_calldata_with_cast(
+            contract_address=contract_address,
+            calldata=calldata,
+            rpc_url=args.rpc_url,
+            confirmations=args.confirmations,
+            cast=args.cast,
+            private_key_env=args.private_key_env,
+        )
         print(f"tx: {receipt['transactionHash']}")
         print(f"status: {receipt['status']}")
-        print(f"gasUsed: {int(receipt['gasUsed'], 16)}")
+        print(f"gasUsed: {int(str(receipt['gasUsed']), 16)}")
         print(f"DocAttested events: {len(receipt.get('logs', []))}")
-        if receipt.get("status") not in ("0x1", 1, "1"):
-            raise ValueError("attestBatch transaction reverted")
         return 0
     except subprocess.CalledProcessError as exc:
         print(f"submit_batch.py: {subprocess_error_detail(exc)}", file=sys.stderr)
@@ -116,14 +114,6 @@ def run_cast(args: argparse.Namespace, command: list[str]) -> str:
         [cast_path(args.cast), *command], check=True, capture_output=True, text=True
     )
     return result.stdout
-
-
-def decode_batch_result(output: str) -> tuple[int, int]:
-    raw = output.strip().splitlines()[-1].strip()
-    body = raw[2:] if raw.startswith("0x") else raw
-    if len(body) < 128:
-        raise ValueError(f"unexpected attestBatch return data: {raw!r}")
-    return int(body[0:64], 16), int(body[64:128], 16)
 
 
 def parse_args() -> argparse.Namespace:

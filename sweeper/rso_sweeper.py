@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 import argparse
-import gzip
 import hashlib
-import ipaddress
 import io
 import json
 import os
 import re
-import socket
 import subprocess
 import sys
 import tarfile
@@ -34,25 +31,44 @@ from indexer.rso_profile import (  # noqa: E402
     doc_ref_to_date,
     normalize_node_id as normalize_profile_node_id,
 )
+from vendor.docchain.abi import (  # noqa: E402
+    DUPLICATE_ATTESTATION_ERROR_SELECTOR as DUPLICATE_ATTESTATION_SELECTOR,
+    MAX_URI_BYTES as MAX_ATTESTATION_URI_BYTES,
+    is_duplicate_attestation_error as is_duplicate_error,
+)
 from vendor.docchain.attestation import (  # noqa: E402
     attest_doc_calldata,
-    cast_wallet_args_from_env,
-    cast_path,
     normalize_address,
     normalize_bytes32,
     normalize_hex_bytes,
+    parse_attest_doc_return,
+    preflight_prepared_attestation,
+    send_calldata_with_cast,
+    simulate_attest_doc,
     subprocess_error_detail,
+)
+from vendor.docchain.fetch import (  # noqa: E402
+    FetchError,
+    fetch_url_bytes,
+    fetch_url_bytes_with_redirects,
+    gzip_decompress_limited,
+    http_error_retryable,
+    read_limited,
+    validate_fetch_url as docchain_validate_fetch_url,
 )
 from vendor.docchain.indexer import EthereumRpc, RpcError  # noqa: E402
 from pipeline.snapshot import CONTENT_PROJECTIONS, core_content_sha256  # noqa: E402
+from support.tdh import (  # noqa: E402
+    SUPPORT_FIELDS,
+    TDH_SUPPORT_SCHEMA,
+    normalize_support_record,
+)
 
 
 ARWEAVE_GATEWAY = "https://arweave.net"
 DEFAULT_SPONSORSHIP_LIMIT = 5
 DEFAULT_MAX_BACKED_NODE_DISCOVERY = 100
 DEFAULT_MAX_REPORT_RECORDS_PER_DATE = 1000
-MAX_ATTESTATION_URI_BYTES = 8192
-DUPLICATE_ATTESTATION_SELECTOR = "0xdd65d744"
 
 
 class SweeperError(ValueError):
@@ -217,6 +233,7 @@ def fetch_github_json_array(url: str, timeout: float) -> list[object]:
         max_bytes=int(os.environ.get("RSO_SWEEPER_MAX_JSON_BYTES", str(2 * 1024 * 1024))),
         headers=headers,
         label="GitHub fork graph",
+        validate_url=validate_fetch_url,
         allow_authorized_redirects=False,
     )
     raw = json.loads(body.decode("utf-8"))
@@ -257,23 +274,14 @@ def normalize_backing_snapshot(
     expected_date: str | None = None,
 ) -> dict[str, dict[str, object]]:
     schema = raw.get("schema")
-    if schema not in (
-        None,
-        "rso-operator-backing-snapshot-v1",
-        "rso-operator-backing-v1",
-        "rso-tdh-support-snapshot-v1",
-    ):
-        raise SweeperError("unsupported backing snapshot schema")
+    if schema != TDH_SUPPORT_SCHEMA:
+        raise SweeperError(f"backing snapshot requires {TDH_SUPPORT_SCHEMA}")
     snapshot_date = str(raw.get("date", ""))
-    if schema == "rso-tdh-support-snapshot-v1" and not snapshot_date:
+    if not snapshot_date:
         raise SweeperError("TDH support snapshot requires date")
     if expected_date is not None and snapshot_date and snapshot_date != expected_date:
         raise SweeperError("backing snapshot date does not match swept date")
     operators = raw.get("operators")
-    if operators is None and schema == "rso-operator-backing-v1":
-        operators = raw.get("identities")
-    if operators is None and schema is None:
-        operators = raw
     normalized: dict[str, dict[str, object]] = {}
     if isinstance(operators, Mapping):
         for node_id, record in operators.items():
@@ -285,23 +293,8 @@ def normalize_backing_snapshot(
                 record=record,
                 snapshot_date=snapshot_date,
             )
-    elif isinstance(operators, list):
-        for record in operators:
-            if not isinstance(record, Mapping):
-                raise SweeperError("operator backing records must be JSON objects")
-            node_id = record.get("nodeId") or record.get("node") or record.get("operator") or record.get("repository")
-            if not isinstance(node_id, str):
-                raise SweeperError("operator backing record requires nodeId")
-            normalized_node_id = normalize_node_id(node_id)
-            if normalized_node_id in normalized:
-                raise SweeperError("backing snapshot contains duplicate normalized node ids")
-            normalized[normalized_node_id] = normalize_backing_record(
-                node_id=normalized_node_id,
-                record=record,
-                snapshot_date=snapshot_date,
-            )
     else:
-        raise SweeperError("backing snapshot requires operators")
+        raise SweeperError("backing snapshot operators must be a JSON object")
     return normalized
 
 
@@ -311,27 +304,31 @@ def normalize_backing_record(
     record: object,
     snapshot_date: str = "",
 ) -> dict[str, object]:
-    if isinstance(record, Mapping):
-        card_specific_tdh_backing = int(
-            record.get("cardSpecificTdhBacking", record.get("cardSpecificTdh", 0))
-        )
-        backer_count = int(record.get("backerCount", 0))
-        rank_raw = record.get("rank")
-    else:
-        card_specific_tdh_backing = int(record)
-        backer_count = 0
-        rank_raw = None
-    if card_specific_tdh_backing < 0:
-        raise SweeperError("cardSpecificTdhBacking must not be negative")
+    if not isinstance(record, Mapping):
+        raise SweeperError("node support must be a JSON object")
+    try:
+        support = normalize_support_record(record)
+    except (TypeError, ValueError) as exc:
+        raise SweeperError(str(exc)) from exc
+    backer_count = int(record.get("backerCount", 0))
+    positive_backer_count = int(record.get("positiveBackerCount", 0))
+    negative_backer_count = int(record.get("negativeBackerCount", 0))
+    rank_raw = record.get("rank")
     if backer_count < 0:
         raise SweeperError("backerCount must not be negative")
+    if positive_backer_count < 0 or negative_backer_count < 0:
+        raise SweeperError("signed backer counts must not be negative")
+    if positive_backer_count > backer_count or negative_backer_count > backer_count:
+        raise SweeperError("signed backer counts must not exceed backerCount")
     rank = int(rank_raw) if rank_raw is not None else 0
     if rank < 0:
         raise SweeperError("rank must not be negative")
     return {
         "nodeId": normalize_node_id(node_id),
-        "cardSpecificTdhBacking": card_specific_tdh_backing,
+        **support,
         "backerCount": backer_count,
+        "positiveBackerCount": positive_backer_count,
+        "negativeBackerCount": negative_backer_count,
         "rank": rank,
         "snapshotDate": snapshot_date,
     }
@@ -354,7 +351,7 @@ def eligible_operators(
         backing_record = backing.get(node_id)
         if not backing_record:
             continue
-        if int(backing_record["cardSpecificTdhBacking"]) < min_card_specific_tdh:
+        if int(backing_record["usableBackingTdh"]) < min_card_specific_tdh:
             continue
         enriched = dict(operator)
         enriched["nodeId"] = node_id
@@ -375,9 +372,14 @@ def augment_operators_with_backed_github_nodes(
     augmented = [dict(operator) for operator in operators]
     seen = {operator_node_id(operator) for operator in augmented}
     ranked = sorted(
-        backing.values(),
+        (
+            record
+            for record in backing.values()
+            if int(record.get("usableBackingTdh", 0)) > 0
+        ),
         key=lambda record: (
-            -int(record.get("cardSpecificTdhBacking", 0)),
+            -int(record.get("usableBackingTdh", 0)),
+            -int(record.get("netBackingTdh", 0)),
             int(record.get("rank", 0)) or 1_000_000_000,
             str(record.get("nodeId", "")),
         ),
@@ -404,14 +406,15 @@ def augment_operators_with_backed_github_nodes(
     return augmented
 
 
-def operator_sponsorship_sort_key(operator: Mapping[str, object]) -> tuple[int, int, str]:
+def operator_sponsorship_sort_key(operator: Mapping[str, object]) -> tuple[int, int, int, str]:
     backing = operator.get("_backing")
     if not isinstance(backing, Mapping):
         raise SweeperError("eligible operator is missing backing")
     rank = int(backing.get("rank", 0))
     rank_sort = rank if rank > 0 else 1_000_000_000
     return (
-        -int(backing.get("cardSpecificTdhBacking", 0)),
+        -int(backing.get("usableBackingTdh", 0)),
+        -int(backing.get("netBackingTdh", 0)),
         rank_sort,
         str(operator.get("name", operator.get("attester", ""))),
     )
@@ -610,6 +613,7 @@ def fetch_json_url(
                 max_bytes=max_bytes,
                 headers={"user-agent": "rso-sweeper/1"},
                 label="signed attestation",
+                validate_url=validate_fetch_url,
                 allow_authorized_redirects=False,
             )
             raw = json.loads(body.decode("utf-8"))
@@ -639,21 +643,21 @@ def extract_signed(payload: Mapping[str, object]) -> Mapping[str, object]:
 
 
 def validate_prepared_context(prepared: Mapping[str, object], config: SweeperConfig) -> None:
-    if prepared.get("schema") != "doc-chain-prepared-attestation-v1":
-        raise SweeperError("unsupported prepared attestation schema")
-    if normalize_address(prepared.get("contractAddress")) != config.docchain_address:
-        raise SweeperError("prepared contractAddress does not match sweeper contract")
+    # schema/target/deadline checks are the vendored courier preflight; the RSO
+    # profile adds only the docRef date-shape rule on top
+    try:
+        preflight_prepared_attestation(
+            prepared,
+            expected_contract_address=config.docchain_address,
+            expected_doc_chain_id=RSO_DOC_CHAIN_ID,
+        )
+    except ValueError as exc:
+        raise SweeperError(str(exc)) from exc
     attestation = prepared["attestation"]
-    if not isinstance(attestation, Mapping):
-        raise SweeperError("prepared.attestation must be an object")
+    assert isinstance(attestation, Mapping)
     doc_block = attestation["docBlock"]
-    if not isinstance(doc_block, Mapping):
-        raise SweeperError("docBlock must be an object")
-    if normalize_bytes32(doc_block["docChainId"]) != RSO_DOC_CHAIN_ID:
-        raise SweeperError("attestation is not for the RSO DocChain profile")
+    assert isinstance(doc_block, Mapping)
     doc_ref_to_date(str(doc_block["docRef"]))
-    if int(attestation["deadline"]) < int(time.time()):
-        raise SweeperError("attestation deadline has expired")
 
 
 def sponsorship_record(operator: Mapping[str, object]) -> dict[str, object]:
@@ -666,19 +670,22 @@ def sponsorship_record(operator: Mapping[str, object]) -> dict[str, object]:
         record=backing,
         snapshot_date=str(backing.get("snapshotDate", "")),
     )
-    if int(normalized["cardSpecificTdhBacking"]) <= 0:
-        raise SweeperError("operator has no card-specific TDH backing")
-    return {
+    if int(normalized["usableBackingTdh"]) <= 0:
+        raise SweeperError("operator has no usable card-specific TDH backing")
+    sponsorship = {
         "status": "eligible",
-        "scheme": "rso-tdh-support-snapshot",
+        "scheme": TDH_SUPPORT_SCHEMA,
         "tdhBoundary": "daily",
         "snapshotDate": normalized["snapshotDate"],
         "nodeId": node_id,
-        "cardSpecificTdhBacking": normalized["cardSpecificTdhBacking"],
         "backerCount": normalized["backerCount"],
+        "positiveBackerCount": normalized["positiveBackerCount"],
+        "negativeBackerCount": normalized["negativeBackerCount"],
         "rank": normalized["rank"],
         "checkedAt": utc_now(),
     }
+    sponsorship.update({field: normalized[field] for field in SUPPORT_FIELDS})
+    return sponsorship
 
 
 def publication_from_attestation(attestation: Mapping[str, object]) -> dict[str, object]:
@@ -758,77 +765,25 @@ def validate_bundle_sha256(bundle_bytes: bytes, expected_bundle_sha256: str) -> 
 
 
 def fetch_uri_bytes(uri: str, config: SweeperConfig) -> bytes:
-    for attempt in range(config.fetch_retries + 1):
-        try:
-            return fetch_uri_bytes_once(uri, config)
-        except urllib.error.HTTPError as exc:
-            if not http_error_retryable(exc) or attempt == config.fetch_retries:
-                raise SweeperError(f"publication URI fetch failed for {uri}: HTTP {exc.code}") from exc
-        except (TimeoutError, urllib.error.URLError) as exc:
-            if attempt == config.fetch_retries:
-                raise SweeperError(f"publication URI fetch did not settle for {uri}: {exc}") from exc
-        time.sleep(config.fetch_retry_delay)
-    raise SweeperError(f"publication URI fetch did not settle for {uri}")
-
-
-def fetch_uri_bytes_once(uri: str, config: SweeperConfig) -> bytes:
+    # SSRF hardening (HTTPS-only, private-host rejection, re-validated
+    # redirects, bounded reads) is the vendored fetch layer; this wrapper adds
+    # only the sweeper policy: the ar:// gateway mapping, the host allowlist,
+    # and the SweeperError error domain.
     url = publication_url(uri)
-    return fetch_url_bytes_with_redirects(
-        url,
-        timeout=config.request_timeout,
-        max_bytes=config.max_bundle_bytes,
-        headers={"user-agent": "rso-sweeper/1"},
-        label="publication URI",
-        allow_authorized_redirects=False,
-    )
-
-
-def strip_authorization_headers(headers: Mapping[str, str]) -> dict[str, str]:
-    return {key: value for key, value in headers.items() if str(key).lower() != "authorization"}
-
-
-def fetch_url_bytes_with_redirects(
-    url: str,
-    *,
-    timeout: float,
-    max_bytes: int,
-    headers: Mapping[str, str],
-    label: str,
-    allow_authorized_redirects: bool,
-) -> bytes:
-    opener = urllib.request.build_opener(NoRedirectHandler)
-    current = url
-    origin_host = (urllib.parse.urlparse(url).hostname or "").lower()
-    for _redirect in range(4):
-        validate_fetch_url(current)
-        current_host = (urllib.parse.urlparse(current).hostname or "").lower()
-        request_headers = dict(headers)
-        if not allow_authorized_redirects and current_host != origin_host:
-            request_headers = strip_authorization_headers(request_headers)
-        request = urllib.request.Request(current, headers=request_headers)
-        try:
-            with opener.open(request, timeout=timeout) as response:
-                return read_limited(response, max_bytes, label=label)
-        except urllib.error.HTTPError as exc:
-            if exc.code not in (301, 302, 303, 307, 308):
-                raise
-            try:
-                location = exc.headers.get("location")
-                if not location:
-                    raise SweeperError(f"{label} redirect response is missing Location") from exc
-                current = urllib.parse.urljoin(current, location)
-            finally:
-                exc.close()
-    raise SweeperError(f"{label} redirects too many times")
-
-
-def http_error_retryable(exc: urllib.error.HTTPError) -> bool:
-    return exc.code in (408, 425, 429, 500, 502, 503, 504)
-
-
-class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
+    try:
+        return fetch_url_bytes(
+            url,
+            timeout=config.request_timeout,
+            max_bytes=config.max_bundle_bytes,
+            headers={"user-agent": "rso-sweeper/1"},
+            label="publication URI fetch",
+            validate_url=validate_fetch_url,
+            allow_authorized_redirects=False,
+            retries=config.fetch_retries,
+            retry_delay=config.fetch_retry_delay,
+        )
+    except FetchError as exc:
+        raise SweeperError(str(exc)) from exc
 
 
 def publication_url(uri: str) -> str:
@@ -841,44 +796,15 @@ def publication_url(uri: str) -> str:
 
 
 def validate_fetch_url(url: str) -> None:
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != "https":
-        raise SweeperError("publication URI must resolve to HTTPS")
-    host = parsed.hostname
-    if not host:
-        raise SweeperError("publication URI is missing a host")
-    host = host.lower()
-    if not host_allowed(host):
-        raise SweeperError("publication URI host is not allowed")
-    reject_private_host(host)
+    try:
+        docchain_validate_fetch_url(url, host_allowed=host_allowed, label="publication URI")
+    except FetchError as exc:
+        raise SweeperError(str(exc)) from exc
 
 
 def host_allowed(host: str) -> bool:
     allowed_suffixes = ("arweave.net", "github.com", "githubusercontent.com")
     return any(host == suffix or host.endswith("." + suffix) for suffix in allowed_suffixes)
-
-
-def reject_private_host(host: str) -> None:
-    try:
-        addresses = [host]
-        ipaddress.ip_address(host)
-    except ValueError:
-        try:
-            addresses = [item[4][0] for item in socket.getaddrinfo(host, None)]
-        except OSError as exc:
-            raise SweeperError(f"publication URI host cannot be resolved: {host}") from exc
-    for address in addresses:
-        ip = ipaddress.ip_address(address)
-        if (
-            ip.is_private
-            or ip.is_loopback
-            or ip.is_link_local
-            or ip.is_multicast
-            or ip.is_reserved
-            or ip.is_unspecified
-            or not ip.is_global
-        ):
-            raise SweeperError("publication URI resolves to a non-public address")
 
 
 def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, config: SweeperConfig) -> None:
@@ -979,32 +905,11 @@ def validate_release_bundle(bundle_bytes: bytes, expected_content_hash: str, con
         raise SweeperError("canonical catalog fingerprint does not match attestation")
 
 
-def gzip_decompress_limited(payload: bytes, limit: int) -> bytes:
-    with gzip.GzipFile(fileobj=io.BytesIO(payload), mode="rb") as stream:
-        return read_limited(stream, limit)
-
-
 def load_stream_json(stream, name: str, limit: int) -> dict[str, object]:
     raw = json.loads(read_limited(stream, limit, label=name).decode("utf-8"))
     if not isinstance(raw, dict):
         raise SweeperError(f"{name} must contain a JSON object")
     return raw
-
-
-def read_limited(stream, limit: int, *, label: str = "download") -> bytes:
-    if limit < 1:
-        raise SweeperError(f"{label} size limit must be positive")
-    chunks = []
-    total = 0
-    while True:
-        chunk = stream.read(min(1024 * 1024, limit - total + 1))
-        if not chunk:
-            break
-        total += len(chunk)
-        if total > limit:
-            raise SweeperError(f"{label} exceeds sweeper size limit")
-        chunks.append(chunk)
-    return b"".join(chunks)
 
 
 def handle_signed_attestation(
@@ -1090,45 +995,19 @@ def validate_expected_date(
         raise SweeperError("signed artifact date does not match swept date")
 
 
-def is_duplicate_error(message: str) -> bool:
-    normalized = message.lower()
-    return (
-        "duplicateattestation" in normalized
-        or "duplicate attestation" in normalized
-        or DUPLICATE_ATTESTATION_SELECTOR in normalized
-    )
-
-
-def simulate_attest_doc(rpc: EthereumRpc, contract_address: str, calldata: str) -> dict[str, str]:
-    result = rpc.call(
-        "eth_call",
-        [
-            {
-                "to": normalize_address(contract_address),
-                "data": normalize_hex_bytes(calldata),
-            },
-            "latest",
-        ],
-    )
-    if not isinstance(result, str):
-        raise SweeperError("eth_call returned non-string result")
-    return parse_attest_doc_return(result)
-
-
-def parse_attest_doc_return(result: str) -> dict[str, str]:
-    body = normalize_hex_bytes(result)[2:]
-    if len(body) < 64 * 3:
-        raise SweeperError("attestDoc simulation returned too little data")
-    return {
-        "blockHash": "0x" + body[0:64],
-        "uriHash": "0x" + body[64:128],
-        "attestationKey": "0x" + body[128:192],
-    }
-
-
-def submit_with_cast(*, config: SweeperConfig, calldata: str, run=subprocess.run) -> str:
+def submit_with_cast(*, config: SweeperConfig, calldata: str, run=None) -> str:
+    # Keystore-only submission (allow_raw_private_key=False): the sweeper key is
+    # a funded treasury key and must never appear on cast's argv. The vendored
+    # sender also verifies the receipt status, so a mined-but-reverted
+    # transaction cannot be reported as a successful sponsorship.
     try:
-        with cast_wallet_args_from_env(
+        receipt = send_calldata_with_cast(
+            contract_address=config.docchain_address,
+            calldata=calldata,
+            rpc_url=config.rpc_url,
+            confirmations=config.confirmations,
+            cast=config.cast,
+            run=run,
             private_key_env=config.private_key_env,
             keystore_json_env="RSO_SWEEPER_KEYSTORE_JSON",
             keystore_path_env="RSO_SWEEPER_KEYSTORE",
@@ -1136,35 +1015,15 @@ def submit_with_cast(*, config: SweeperConfig, calldata: str, run=subprocess.run
             password_env="RSO_SWEEPER_KEYSTORE_PASSWORD",
             password_file_env="RSO_SWEEPER_KEYSTORE_PASSWORD_FILE",
             allow_raw_private_key=False,
-        ) as wallet_args:
-            command = [
-                cast_path(config.cast),
-                "send",
-                config.docchain_address,
-                "--data",
-                calldata,
-                "--rpc-url",
-                config.rpc_url,
-                "--confirmations",
-                str(config.confirmations),
-                *wallet_args,
-            ]
-            result = run(command, check=True, capture_output=True, text=True)
+        )
     except ValueError as exc:
         raise SweeperError(str(exc)) from exc
     except subprocess.CalledProcessError as exc:
         raise SweeperError(subprocess_error_detail(exc)) from exc
-    return transaction_hash_from_cast_output(result.stdout)
-
-
-def transaction_hash_from_cast_output(output: str) -> str:
-    match = re.search(r"transactionHash\s+([0-9a-fA-Fx]{66})", output)
-    if match:
-        return "0x" + match.group(1)[2:].lower()
-    match = re.search(r"0x[0-9a-fA-F]{64}", output)
-    if match:
-        return "0x" + match.group(0)[2:].lower()
-    raise SweeperError("cast send did not return a transaction hash")
+    transaction_hash = str(receipt.get("transactionHash", ""))
+    if not transaction_hash:
+        raise SweeperError("cast send did not return a transaction hash")
+    return transaction_hash
 
 
 def env_bool(name: str, default: bool) -> bool:
@@ -1196,7 +1055,7 @@ def main() -> int:
         args = parse_args()
         config = config_from_env()
         if not args.backing:
-            raise SweeperError("set --backing or RSO_OPERATOR_BACKING_SNAPSHOT")
+            raise SweeperError("set --backing or RSO_TDH_SUPPORT_SNAPSHOT")
         operators = load_operator_registry_source(args.operators, config.request_timeout)
         rpc = EthereumRpc(config.rpc_url, timeout=config.request_timeout)
         report = {
@@ -1240,7 +1099,7 @@ def main() -> int:
             candidate_operators = [
                 operator
                 for operator in candidate_operators
-                if int(operator["_backing"]["cardSpecificTdhBacking"]) >= args.min_tdh
+                if int(operator["_backing"]["usableBackingTdh"]) >= args.min_tdh
             ]
             candidate_operators.sort(key=operator_sponsorship_sort_key)
             selected_operators = candidate_operators if args.limit == 0 else candidate_operators[: args.limit]
@@ -1306,9 +1165,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--backing",
-        default=os.environ.get("RSO_OPERATOR_BACKING_SNAPSHOT"),
+        default=os.environ.get("RSO_TDH_SUPPORT_SNAPSHOT"),
         help=(
-            "Daily operator backing snapshot path/URL. May include {date}, or "
+            "Daily signed TDH support snapshot path/URL. May include {date}, or "
             "point to a directory containing YYYY-MM-DD.json."
         ),
     )

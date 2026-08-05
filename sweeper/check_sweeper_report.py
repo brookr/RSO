@@ -6,9 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import ipaddress
 import re
-import socket
 import sys
 import urllib.error
 import urllib.parse
@@ -22,6 +20,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from indexer.rso_profile import normalize_node_id as normalize_profile_node_id  # noqa: E402
+from vendor.docchain.fetch import FetchError, read_limited, reject_private_host  # noqa: E402
 
 
 ACTIONABLE_STATUSES = frozenset({"missing", "deferred", "failed", "error", "not_found"})
@@ -150,46 +149,11 @@ def validate_report_url(url: str) -> None:
     host = (parsed.hostname or "").lower()
     if host != "raw.githubusercontent.com":
         raise ReportCheckError("sweeper report URL must use raw.githubusercontent.com")
-    reject_private_host(host, context="sweeper report URL")
-
-
-def reject_private_host(host: str, *, context: str) -> None:
+    # the DNS/private-address check is the vendored SSRF guard
     try:
-        addresses = [host]
-        ipaddress.ip_address(host)
-    except ValueError:
-        try:
-            addresses = [item[4][0] for item in socket.getaddrinfo(host, None)]
-        except OSError as exc:
-            raise ReportCheckError(f"{context} host cannot be resolved: {host}") from exc
-    for address in addresses:
-        ip = ipaddress.ip_address(address)
-        if (
-            ip.is_private
-            or ip.is_loopback
-            or ip.is_link_local
-            or ip.is_multicast
-            or ip.is_reserved
-            or ip.is_unspecified
-            or not ip.is_global
-        ):
-            raise ReportCheckError(f"{context} resolves to a non-public address")
-
-
-def read_limited(stream, limit: int, *, label: str) -> bytes:
-    if limit < 1:
-        raise ReportCheckError(f"{label} size limit must be positive")
-    chunks = []
-    total = 0
-    while True:
-        chunk = stream.read(min(1024 * 1024, limit - total + 1))
-        if not chunk:
-            break
-        total += len(chunk)
-        if total > limit:
-            raise ReportCheckError(f"{label} exceeds size limit")
-        chunks.append(chunk)
-    return b"".join(chunks)
+        reject_private_host(host, label="sweeper report URL")
+    except FetchError as exc:
+        raise ReportCheckError(str(exc)) from exc
 
 
 def classify_node_status(report: Mapping[str, object], *, node_id: str) -> dict[str, object]:

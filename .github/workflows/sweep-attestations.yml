@@ -34,7 +34,6 @@ jobs:
       RSO_DOCCHAIN_DEPLOYMENT_BLOCK: ${{ vars.RSO_DOCCHAIN_DEPLOYMENT_BLOCK }}
       RSO_SWEEPER_RPC_URL: ${{ secrets.RSO_SWEEPER_RPC_URL || secrets.DOCCHAIN_RPC_URL }}
       RSO_SWEEPER_OPERATORS: ${{ vars.RSO_SWEEPER_OPERATORS || format('github-forks:{0}', vars.RSO_SWEEPER_OPERATOR_DISCOVERY_REPO || github.repository) }}
-      RSO_OPERATOR_BACKING_SNAPSHOT: ${{ vars.RSO_OPERATOR_BACKING_SNAPSHOT || 'data/backing/{date}.json' }}
       RSO_TDH_SUPPORT_SNAPSHOT: ${{ vars.RSO_TDH_SUPPORT_SNAPSHOT || 'data/backing' }}
       RSO_SWEEPER_DRY_RUN: ${{ vars.RSO_SWEEPER_DRY_RUN || 'false' }}
       RSO_SWEEPER_MAX_FORKS: ${{ vars.RSO_SWEEPER_MAX_FORKS || '100' }}
@@ -80,7 +79,7 @@ jobs:
           else
             RSO_SWEEPER_HAS_WALLET=false
           fi
-          if [ -z "${RSO_SWEEPER_RPC_URL:-}" ] || [ "$RSO_SWEEPER_HAS_WALLET" != "true" ] || [ -z "${RSO_DOCCHAIN_ADDRESS:-}" ] || [ -z "${RSO_OPERATOR_BACKING_SNAPSHOT:-}" ]; then
+          if [ -z "${RSO_SWEEPER_RPC_URL:-}" ] || [ "$RSO_SWEEPER_HAS_WALLET" != "true" ] || [ -z "${RSO_DOCCHAIN_ADDRESS:-}" ] || [ -z "${RSO_TDH_SUPPORT_SNAPSHOT:-}" ]; then
             echo "Sweeper skipped: RPC URL, wallet, DocChain address, or backing snapshot is not configured."
             exit 0
           fi
@@ -112,7 +111,7 @@ jobs:
             --start "$START" \
             --end "$END" \
             --operators "$RSO_SWEEPER_OPERATORS" \
-            --backing "$RSO_OPERATOR_BACKING_SNAPSHOT" \
+            --backing "$RSO_TDH_SUPPORT_SNAPSHOT" \
             --limit "$RSO_SWEEPER_TOP_OPERATORS" \
             --report "build/sweeper/sweep-$START-$END.json" \
             --report-dir "reports/sweeper"

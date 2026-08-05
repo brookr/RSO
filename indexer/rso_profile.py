@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import binascii
-import hashlib
 import json
 import re
 import urllib.parse
@@ -12,8 +11,16 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from datetime import datetime, timezone
 
+from vendor.docchain.attestation import (
+    attestation_claim_fingerprint,
+    claim_fingerprint,
+    event_claim_fingerprint,
+    normalize_address,
+    normalize_bytes32,
+)
 from vendor.docchain.model import DocAttested
 from vendor.docchain.store import build_docchain_index
+from support.tdh import SUPPORT_FIELDS, normalize_support_record
 
 # The RSO chain identity. The profile URI is the permanent protocol id --
 # docChainId = keccak256(profile URI) -- and is deliberately unversioned:
@@ -44,7 +51,7 @@ def build_static_index(
     confirmations: int,
     chunk_size: int,
     events: Iterable[DocAttested],
-    operator_backing: dict[str, int] | None = None,
+    operator_backing: Mapping[str, object] | None = None,
     operator_backing_by_date: Mapping[str, object] | None = None,
     verified_claims: Mapping[str, object] | None = None,
     direct_witnesses: Mapping[str, object] | None = None,
@@ -74,7 +81,7 @@ def build_static_index(
     if chain_profile is not None:
         index["chainProfile"] = dict(chain_profile)
     if operator_backing is not None:
-        index["operatorBacking"] = dict(sorted(operator_backing.items()))
+        index["nodeSupport"] = dict(sorted(normalize_operator_backing(operator_backing).items()))
     index["sweeperVerifiedClaimCount"] = len(normalize_verified_claims(verified_claims))
     witness_accounts = set(normalize_direct_witnesses(direct_witnesses))
     for records in normalize_dated_support(
@@ -102,7 +109,7 @@ def build_static_index(
 def decorate_rso_index(
     index: dict[str, object],
     *,
-    operator_backing: dict[str, int] | None = None,
+    operator_backing: Mapping[str, object] | None = None,
     operator_backing_by_date: Mapping[str, object] | None = None,
     verified_claims: Mapping[str, object] | None = None,
     direct_witnesses: Mapping[str, object] | None = None,
@@ -113,7 +120,7 @@ def decorate_rso_index(
     backing = normalize_operator_backing(
         operator_backing
         if operator_backing is not None
-        else index.get("operatorBacking", index.get("identityBacking", {}))
+        else index.get("nodeSupport", {})
     )
     claims = normalize_verified_claims(verified_claims)
     witnesses = normalize_direct_witnesses(direct_witnesses)
@@ -201,7 +208,7 @@ def decorate_attestation_timing(
 
 def decorate_tdh_support(
     event: dict[str, object],
-    backing: dict[str, int] | None = None,
+    backing: Mapping[str, object] | None = None,
     verified_claims: Mapping[str, Mapping[str, object]] | None = None,
     direct_witnesses: Mapping[str, Mapping[str, object]] | None = None,
 ) -> None:
@@ -222,7 +229,11 @@ def decorate_tdh_support(
     witness = direct_witnesses.get(attester, {})
     direct_identity = str(witness.get("identity", ""))
     direct_witness_tdh = int(witness.get("cardSpecificTdh", 0)) if direct_identity else 0
-    node_backing_tdh = backing.get(node_id, 0) if node_id else 0
+    node_support = (
+        normalize_support_record(backing[node_id])
+        if node_id and node_id in backing
+        else {field: 0 for field in SUPPORT_FIELDS}
+    )
     event["onBehalfOf"] = on_behalf_of
     event["claimFingerprint"] = claim_fingerprint
     event["claimedNodeId"] = claimed_node_id
@@ -235,8 +246,9 @@ def decorate_tdh_support(
     )
     event["directWitnessIdentity"] = direct_identity
     event["directWitnessTdh"] = direct_witness_tdh
-    event["nodeBackingTdh"] = node_backing_tdh
-    event["combinedSupportTdh"] = direct_witness_tdh + node_backing_tdh
+    for field in SUPPORT_FIELDS:
+        event["node" + field[0].upper() + field[1:]] = node_support[field]
+    event["combinedSupportTdh"] = direct_witness_tdh + node_support["usableBackingTdh"]
 
 
 def event_claimed_node_id(event: Mapping[str, object]) -> str:
@@ -346,7 +358,8 @@ def normalize_sha256(value: object) -> str:
         text = text[2:]
     if len(text) != 64:
         raise ValueError("SHA-256 values must be 32 bytes")
-    int(text, 16)
+    if not _HEX_DIGITS.issuperset(text):
+        raise ValueError("SHA-256 values contain non-hex characters")
     return text
 
 
@@ -405,14 +418,17 @@ def agreement_groups(
             )
             for identity in direct_identities
         )
-        node_backing_tdh = sum(
-            max(
-                int(event.get("nodeBackingTdh", 0))
-                for event in group_events
-                if event.get("nodeId") == node_id
+        node_support = {
+            field: sum(
+                max(
+                    int(event.get("node" + field[0].upper() + field[1:], 0))
+                    for event in group_events
+                    if event.get("nodeId") == node_id
+                )
+                for node_id in backed_node_ids
             )
-            for node_id in backed_node_ids
-        )
+            for field in SUPPORT_FIELDS
+        }
         records.append(
             {
                 "blockHash": block_hash,
@@ -428,8 +444,11 @@ def agreement_groups(
                     node_id for node_id, keys in node_groups.items() if len(keys) > 1 and agreement_key in keys
                 ),
                 "directWitnessTdh": direct_witness_tdh,
-                "nodeBackingTdh": node_backing_tdh,
-                "combinedSupportTdh": direct_witness_tdh + node_backing_tdh,
+                **{
+                    "node" + field[0].upper() + field[1:]: amount
+                    for field, amount in node_support.items()
+                },
+                "combinedSupportTdh": direct_witness_tdh + node_support["usableBackingTdh"],
                 "bundleFingerprints": sorted(
                     {
                         str(event.get("publication", {}).get("bundleSha256", ""))
@@ -479,56 +498,6 @@ def support_groups(
             if value:
                 result[value].add(agreement_key)
     return result
-
-
-def claim_fingerprint(
-    *,
-    attester: object,
-    on_behalf_of: object,
-    doc_chain_id: object,
-    doc_ref: object,
-    parent_hash: object,
-    content_hash: object,
-    uri: object,
-) -> str:
-    payload = {
-        "attester": normalize_address(attester),
-        "onBehalfOf": normalize_address(on_behalf_of),
-        "docChainId": normalize_bytes32(doc_chain_id),
-        "docRef": int(doc_ref),
-        "parentHash": normalize_bytes32(parent_hash),
-        "contentHash": normalize_bytes32(content_hash),
-        "uri": str(uri),
-    }
-    raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return hashlib.sha256(raw).hexdigest()
-
-
-def event_claim_fingerprint(event: Mapping[str, object]) -> str:
-    return claim_fingerprint(
-        attester=event["attester"],
-        on_behalf_of=event.get("onBehalfOf", ZERO_ADDRESS),
-        doc_chain_id=event["docChainId"],
-        doc_ref=event["docRef"],
-        parent_hash=event["parentHash"],
-        content_hash=event["contentHash"],
-        uri=event.get("uri", ""),
-    )
-
-
-def attestation_claim_fingerprint(attestation: Mapping[str, object]) -> str:
-    doc_block = attestation.get("docBlock")
-    if not isinstance(doc_block, Mapping):
-        raise ValueError("attestation docBlock must be a JSON object")
-    return claim_fingerprint(
-        attester=attestation["attester"],
-        on_behalf_of=attestation.get("onBehalfOf", ZERO_ADDRESS),
-        doc_chain_id=doc_block["docChainId"],
-        doc_ref=doc_block["docRef"],
-        parent_hash=doc_block["parentHash"],
-        content_hash=doc_block["contentHash"],
-        uri=attestation.get("uri", ""),
-    )
 
 
 def verified_node_id(
@@ -632,24 +601,17 @@ def normalize_direct_witnesses(
     return normalized
 
 
-def normalize_operator_backing(raw: object) -> dict[str, int]:
+def normalize_operator_backing(raw: object) -> dict[str, dict[str, int]]:
     if raw is None:
         return {}
     if not isinstance(raw, dict):
         raise ValueError("operator backing must be a JSON object")
-    normalized: dict[str, int] = {}
+    normalized: dict[str, dict[str, int]] = {}
     for node_id, value in raw.items():
-        if isinstance(value, dict):
-            amount = value.get("cardSpecificTdhBacking", value.get("cardSpecificTdh", 0))
-        else:
-            amount = value
-        amount_int = int(amount)
-        if amount_int < 0:
-            raise ValueError("cardSpecificTdhBacking must not be negative")
         normalized_node_id = normalize_node_id(str(node_id))
         if normalized_node_id in normalized:
             raise ValueError("operator backing contains duplicate normalized node ids")
-        normalized[normalized_node_id] = amount_int
+        normalized[normalized_node_id] = normalize_support_record(value)
     return normalized
 
 
@@ -729,6 +691,9 @@ def doc_ref_to_date(doc_ref: str) -> str:
     return parsed.date().isoformat()
 
 
+_HEX_DIGITS = frozenset("0123456789abcdef")
+
+
 def normalize_hex(value: object) -> str:
     """Normalize a 0x-prefixed hex string without changing its length."""
     text = str(value)
@@ -736,20 +701,9 @@ def normalize_hex(value: object) -> str:
         return ""
     if not text.lower().startswith("0x"):
         raise ValueError("hex values must be 0x-prefixed")
-    body = text[2:]
-    int(body or "0", 16)
-    return "0x" + body.lower()
-
-
-def normalize_address(value: object) -> str:
-    normalized = normalize_hex(value)
-    if len(normalized) != 42:
-        raise ValueError("address values must be 20 bytes")
-    return normalized
-
-
-def normalize_bytes32(value: object) -> str:
-    normalized = normalize_hex(value)
-    if len(normalized) != 66:
-        raise ValueError("bytes32 values must be 32 bytes")
-    return normalized
+    body = text[2:].lower()
+    # validate digits directly: int(body, 16) silently accepts "_", a leading
+    # sign, and whitespace, which would corrupt topic filters downstream
+    if body and not _HEX_DIGITS.issuperset(body):
+        raise ValueError("hex values contain non-hex characters")
+    return "0x" + body

@@ -26,7 +26,6 @@ from sweeper.rso_sweeper import (
     normalize_backing_snapshot,
     parse_attest_doc_return,
     signed_attestation_url,
-    transaction_hash_from_cast_output,
     validate_bundle_sha256,
     validate_fetch_url,
     validate_node_artifact_url,
@@ -100,33 +99,51 @@ class RsoSweeperTest(unittest.TestCase):
 
     def test_normalize_backing_snapshot_accepts_operator_records(self):
         snapshot = normalize_backing_snapshot(
-            {
-                "schema": "rso-operator-backing-snapshot-v1",
-                "date": "2026-06-01",
-                "operators": {
-                    "github:owner/repo": {
-                        "cardSpecificTdh": "100",
-                        "backerCount": 3,
-                        "rank": 1,
-                    }
-                },
-            },
+            support_snapshot(
+                {
+                    "github:owner/repo": support_record(
+                        positive=100,
+                        backer_count=3,
+                        positive_backer_count=3,
+                        rank=1,
+                    )
+                }
+            ),
             expected_date="2026-06-01",
         )
 
         self.assertEqual(snapshot["github:owner/repo"]["nodeId"], "github:owner/repo")
-        self.assertEqual(snapshot["github:owner/repo"]["cardSpecificTdhBacking"], 100)
+        self.assertEqual(snapshot["github:owner/repo"]["usableBackingTdh"], 100)
         self.assertEqual(snapshot["github:owner/repo"]["backerCount"], 3)
+
+    def test_normalize_backing_snapshot_accepts_negative_net_support(self):
+        snapshot = normalize_backing_snapshot(
+            support_snapshot(
+                {"github:owner/repo": support_record(positive=20, negative=75)}
+            )
+        )
+
+        record = snapshot["github:owner/repo"]
+        self.assertEqual(record["netBackingTdh"], -55)
+        self.assertEqual(record["usableBackingTdh"], 0)
+
+    def test_normalize_backing_snapshot_rejects_inconsistent_signed_totals(self):
+        record = support_record(positive=100, negative=25)
+        record["usableBackingTdh"] = 100
+        with self.assertRaisesRegex(SweeperError, "max"):
+            normalize_backing_snapshot(
+                support_snapshot({"github:owner/repo": record})
+            )
 
     def test_normalize_backing_snapshot_rejects_duplicate_normalized_node_ids(self):
         with self.assertRaisesRegex(SweeperError, "duplicate normalized node"):
             normalize_backing_snapshot(
-                {
-                    "operators": {
-                        "github:owner/repo": {"cardSpecificTdhBacking": 100},
-                        "GitHub:Owner/Repo": {"cardSpecificTdhBacking": 200},
+                support_snapshot(
+                    {
+                        "github:owner/repo": support_record(positive=100),
+                        "GitHub:Owner/Repo": support_record(positive=200),
                     }
-                }
+                )
             )
 
     def test_tdh_support_snapshot_requires_and_matches_date(self):
@@ -153,32 +170,35 @@ class RsoSweeperTest(unittest.TestCase):
             {"name": "low", "repository": "owner/low"},
             {"name": "high", "repository": "owner/high"},
             {"name": "zero", "repository": "owner/zero"},
+            {"name": "downvoted", "repository": "owner/downvoted"},
         ]
         backing = normalize_backing_snapshot(
-            {
-                "operators": {
-                    "github:owner/low": {"cardSpecificTdh": 25},
-                    "github:owner/high": {"cardSpecificTdh": 100},
-                    "github:owner/zero": {"cardSpecificTdh": 0},
+            support_snapshot(
+                {
+                    "github:owner/low": support_record(positive=25),
+                    "github:owner/high": support_record(positive=125, negative=25),
+                    "github:owner/zero": support_record(positive=25, negative=25),
+                    "github:owner/downvoted": support_record(positive=20, negative=75),
                 }
-            }
+            )
         )
 
         selected = eligible_operators(operators, backing, limit=1, min_card_specific_tdh=1)
 
         self.assertEqual([operator["name"] for operator in selected], ["high"])
-        self.assertEqual(selected[0]["_backing"]["cardSpecificTdhBacking"], 100)
+        self.assertEqual(selected[0]["_backing"]["usableBackingTdh"], 100)
 
     def test_backed_github_nodes_augment_discovery_in_tdh_order(self):
         backing = normalize_backing_snapshot(
-            {
-                "operators": {
-                    "github:existing/repo": {"cardSpecificTdhBacking": 300},
-                    "github:independent/high": {"cardSpecificTdhBacking": 200},
-                    "github:independent/low": {"cardSpecificTdhBacking": 100},
-                    "domain:node.example.com": {"cardSpecificTdhBacking": 400},
+            support_snapshot(
+                {
+                    "github:existing/repo": support_record(positive=300),
+                    "github:independent/high": support_record(positive=250, negative=50),
+                    "github:independent/low": support_record(positive=100),
+                    "github:downvoted/repo": support_record(positive=20, negative=40),
+                    "domain:node.example.com": support_record(positive=400),
                 }
-            }
+            )
         )
         operators = augment_operators_with_backed_github_nodes(
             [{"repository": "existing/repo", "branch": "node"}],
@@ -220,15 +240,17 @@ class RsoSweeperTest(unittest.TestCase):
         bundle = make_release_bundle(catalog, content_hash[2:])
         config = config_for_test(require_uri=True, max_json_bytes=8)
 
-        with self.assertRaisesRegex(SweeperError, "release-manifest.json exceeds"):
+        with self.assertRaisesRegex(ValueError, "release-manifest.json exceeds"):
             validate_release_bundle(bundle, content_hash, config)
 
     def test_read_limited_rejects_non_positive_limit(self):
-        with self.assertRaisesRegex(SweeperError, "positive"):
+        # bounded reads live in the vendored fetch layer and raise its
+        # FetchError (a ValueError); sweeper callers catch ValueError
+        with self.assertRaisesRegex(ValueError, "positive"):
             read_limited(io.BytesIO(b"x"), 0)
 
     def test_read_limited_rejects_oversized_stream(self):
-        with self.assertRaisesRegex(SweeperError, "exceeds"):
+        with self.assertRaisesRegex(ValueError, "exceeds"):
             read_limited(io.BytesIO(b"x" * 64), 16)
 
     def test_validate_release_bundle_bounds_catalog_decompression(self):
@@ -240,7 +262,7 @@ class RsoSweeperTest(unittest.TestCase):
         bundle = make_release_bundle(catalog, content_hash[2:])
         config = config_for_test(require_uri=True, max_catalog_bytes=1024)
 
-        with self.assertRaisesRegex(SweeperError, "exceeds"):
+        with self.assertRaisesRegex(ValueError, "exceeds"):
             validate_release_bundle(bundle, content_hash, config)
 
     def test_reject_private_host_rejects_rebound_addresses(self):
@@ -248,7 +270,7 @@ class RsoSweeperTest(unittest.TestCase):
         # to a private, loopback, metadata, or CGNAT address must be rejected.
         for addr in ("127.0.0.1", "169.254.169.254", "10.0.0.1", "100.64.0.1"):
             with patch(
-                "sweeper.rso_sweeper.socket.getaddrinfo",
+                "vendor.docchain.fetch.socket.getaddrinfo",
                 return_value=[(2, 1, 6, "", (addr, 443))],
             ):
                 with self.assertRaisesRegex(SweeperError, "non-public"):
@@ -256,7 +278,7 @@ class RsoSweeperTest(unittest.TestCase):
 
     def test_validate_fetch_url_allows_public_resolved_host(self):
         with patch(
-            "sweeper.rso_sweeper.socket.getaddrinfo",
+            "vendor.docchain.fetch.socket.getaddrinfo",
             return_value=[(2, 1, 6, "", ("185.199.108.133", 443))],
         ):
             validate_fetch_url("https://raw.githubusercontent.com/o/r/node/x.json")
@@ -294,8 +316,8 @@ class RsoSweeperTest(unittest.TestCase):
                     )
                 return _Resp(b"ok-bytes")
 
-        with patch("sweeper.rso_sweeper.urllib.request.build_opener", return_value=_Opener()), patch(
-            "sweeper.rso_sweeper.socket.getaddrinfo",
+        with patch("vendor.docchain.fetch.urllib.request.build_opener", return_value=_Opener()), patch(
+            "vendor.docchain.fetch.socket.getaddrinfo",
             return_value=[(2, 1, 6, "", ("185.199.108.133", 443))],
         ):
             body = fetch_url_bytes_with_redirects(
@@ -322,11 +344,11 @@ class RsoSweeperTest(unittest.TestCase):
                     io.BytesIO(b""),
                 )
 
-        with patch("sweeper.rso_sweeper.urllib.request.build_opener", return_value=_Opener()), patch(
-            "sweeper.rso_sweeper.socket.getaddrinfo",
+        with patch("vendor.docchain.fetch.urllib.request.build_opener", return_value=_Opener()), patch(
+            "vendor.docchain.fetch.socket.getaddrinfo",
             return_value=[(2, 1, 6, "", ("185.199.108.133", 443))],
         ):
-            with self.assertRaisesRegex(SweeperError, "redirects too many times"):
+            with self.assertRaisesRegex(ValueError, "redirects too many times"):
                 fetch_url_bytes_with_redirects(
                     "https://raw.githubusercontent.com/o/r/start",
                     timeout=1,
@@ -441,11 +463,9 @@ class RsoSweeperTest(unittest.TestCase):
         artifact = make_artifact(node_id="github:owner/fork")
         operators = [{"name": "fork", "repository": "owner/fork", "branch": "node"}]
         backing = normalize_backing_snapshot(
-            {
-                "operators": {
-                    "github:owner/fork": {"cardSpecificTdh": 100},
-                }
-            }
+            support_snapshot(
+                {"github:owner/fork": support_record(positive=100)}
+            )
         )
 
         with patch("sweeper.rso_sweeper.fetch_json_url", return_value=artifact):
@@ -459,20 +479,20 @@ class RsoSweeperTest(unittest.TestCase):
         self.assertEqual(len(candidates), 1)
         self.assertEqual(candidates[0]["nodeId"], "github:owner/fork")
         self.assertEqual(candidates[0]["attester"], "0x" + "bb" * 20)
-        self.assertEqual(candidates[0]["_backing"]["cardSpecificTdhBacking"], 100)
+        self.assertEqual(candidates[0]["_backing"]["usableBackingTdh"], 100)
         self.assertEqual(records[0]["status"], "candidate")
         self.assertEqual(records[0]["authorizationStatus"], "pending_signature")
         self.assertEqual(records[0]["nodeBindingStatus"], "aligned")
         self.assertEqual(records[0]["publicationStatus"], "pending")
         self.assertEqual(records[0]["declaredAttester"], "0x" + "bb" * 20)
-        self.assertEqual(records[0]["backing"]["cardSpecificTdhBacking"], 100)
+        self.assertEqual(records[0]["backing"]["usableBackingTdh"], 100)
         self.assertEqual(len(records[0]["declarationSha256"]), 64)
 
     def test_candidate_operator_payloads_rejects_copied_victim_artifact(self):
         victim_artifact = make_artifact(node_id="github:victim/rso")
         operators = [{"name": "attacker", "repository": "attacker/rso", "branch": "node"}]
         backing = normalize_backing_snapshot(
-            {"operators": {"github:attacker/rso": {"cardSpecificTdhBacking": 100}}}
+            support_snapshot({"github:attacker/rso": support_record(positive=100)})
         )
 
         with patch("sweeper.rso_sweeper.fetch_json_url", return_value=victim_artifact):
@@ -499,7 +519,7 @@ class RsoSweeperTest(unittest.TestCase):
             }
         ]
         backing = normalize_backing_snapshot(
-            {"operators": {"github:victim/rso": {"cardSpecificTdhBacking": 100}}}
+            support_snapshot({"github:victim/rso": support_record(positive=100)})
         )
 
         with patch("sweeper.rso_sweeper.fetch_json_url") as fetch:
@@ -669,9 +689,14 @@ class RsoSweeperTest(unittest.TestCase):
                     "repository": "owner/repo",
                     "_backing": {
                         "nodeId": "github:owner/repo",
-                        "cardSpecificTdhBacking": 100,
-                        "backerCount": 2,
-                        "rank": 1,
+                        **support_record(
+                            positive=125,
+                            negative=25,
+                            backer_count=2,
+                            positive_backer_count=2,
+                            negative_backer_count=1,
+                            rank=1,
+                        ),
                         "snapshotDate": "2026-06-01",
                     },
                 },
@@ -682,9 +707,12 @@ class RsoSweeperTest(unittest.TestCase):
 
         self.assertEqual(response["status"], "simulated")
         self.assertEqual(response["blockHash"], "0x" + "11" * 32)
-        self.assertEqual(response["sponsorship"]["scheme"], "rso-tdh-support-snapshot")
+        self.assertEqual(response["sponsorship"]["scheme"], "rso-tdh-support-snapshot-v1")
         self.assertEqual(response["sponsorship"]["nodeId"], "github:owner/repo")
-        self.assertEqual(response["sponsorship"]["cardSpecificTdhBacking"], 100)
+        self.assertEqual(response["sponsorship"]["positiveBackingTdh"], 125)
+        self.assertEqual(response["sponsorship"]["negativeBackingTdh"], 25)
+        self.assertEqual(response["sponsorship"]["netBackingTdh"], 100)
+        self.assertEqual(response["sponsorship"]["usableBackingTdh"], 100)
         self.assertEqual(response["authorizationStatus"], "verified")
         self.assertEqual(response["nodeBindingStatus"], "verified")
         self.assertEqual(response["publicationStatus"], "verified")
@@ -740,9 +768,11 @@ class RsoSweeperTest(unittest.TestCase):
             command_text = " ".join(command)
             self.assertIn("--keystore", command)
             self.assertIn("--password-file", command)
+            self.assertIn("--json", command)
             self.assertNotIn("treasury-keystore-json", command_text)
             self.assertNotIn("treasury-keystore-password", command_text)
-            return subprocess.CompletedProcess(command, 0, stdout=f"transactionHash {tx}\n", stderr="")
+            receipt = json.dumps({"status": "0x1", "transactionHash": tx})
+            return subprocess.CompletedProcess(command, 0, stdout=receipt + "\n", stderr="")
 
         with patch.dict(
             "os.environ",
@@ -764,10 +794,38 @@ class RsoSweeperTest(unittest.TestCase):
         self.assertEqual(response["status"], "submitted")
         self.assertEqual(response["transactionHash"], tx)
 
-    def test_transaction_hash_from_cast_output(self):
-        tx = "0x" + "aa" * 32
-        self.assertEqual(transaction_hash_from_cast_output(f"transactionHash {tx}\n"), tx)
-        self.assertEqual(transaction_hash_from_cast_output(f"sent {tx}\n"), tx)
+    def test_handle_signed_attestation_rejects_reverted_submission(self):
+        # `cast send` can exit 0 on a mined-but-reverted transaction; the
+        # vendored sender checks the receipt status so a reverted sponsorship
+        # is reported as an error, not success.
+        config = config_for_test(dry_run=False)
+        rpc = FakeRpc()
+
+        def fake_run(command, check, capture_output, text):
+            receipt = json.dumps({"status": "0x0", "transactionHash": "0x" + "44" * 32})
+            return subprocess.CompletedProcess(command, 0, stdout=receipt + "\n", stderr="")
+
+        with patch.dict(
+            "os.environ",
+            {
+                "RSO_SWEEPER_KEYSTORE_JSON": "treasury-keystore-json",
+                "RSO_SWEEPER_KEYSTORE_PASSWORD": "treasury-keystore-password",
+            },
+            clear=False,
+        ):
+            with patch("sweeper.rso_sweeper.validate_uri", return_value=verified_publication()):
+                with self.assertRaisesRegex(SweeperError, "reverted"):
+                    handle_signed_attestation(
+                        make_artifact(),
+                        operator={
+                            "repository": "owner/repo",
+                            "attester": "0x" + "bb" * 20,
+                            "_backing": backed_operator(),
+                        },
+                        config=config,
+                        rpc=rpc,
+                        run=fake_run,
+                    )
 
     def test_handle_signed_attestation_reports_contract_duplicate(self):
         rpc = FakeRpc(error=RpcError("execution reverted: 0xdd65d744" + "33" * 32))
@@ -794,10 +852,7 @@ class FakeRpc:
         self.error = error
         self.calls = []
 
-    def call(self, method, params):
-        if method != "eth_call":
-            raise AssertionError(f"unexpected method {method}")
-        data = params[0]["data"]
+    def eth_call(self, to, data, block="latest"):
         self.calls.append(data)
         if data.startswith("0xd2b85e96"):
             if self.error is not None:
@@ -817,12 +872,47 @@ def config_for_test(**overrides):
     return SweeperConfig(**values)
 
 
+def support_record(
+    *,
+    positive=0,
+    negative=0,
+    backer_count=0,
+    positive_backer_count=0,
+    negative_backer_count=0,
+    rank=0,
+):
+    net = positive - negative
+    return {
+        "positiveBackingTdh": positive,
+        "negativeBackingTdh": negative,
+        "netBackingTdh": net,
+        "usableBackingTdh": max(net, 0),
+        "backerCount": backer_count,
+        "positiveBackerCount": positive_backer_count,
+        "negativeBackerCount": negative_backer_count,
+        "rank": rank,
+    }
+
+
+def support_snapshot(operators, *, date="2026-06-01"):
+    return {
+        "schema": "rso-tdh-support-snapshot-v1",
+        "date": date,
+        "operators": operators,
+    }
+
+
 def backed_operator():
     return {
         "nodeId": "github:owner/repo",
-        "cardSpecificTdhBacking": 100,
-        "backerCount": 2,
-        "rank": 1,
+        **support_record(
+            positive=125,
+            negative=25,
+            backer_count=2,
+            positive_backer_count=2,
+            negative_backer_count=1,
+            rank=1,
+        ),
         "snapshotDate": "2026-06-01",
     }
 

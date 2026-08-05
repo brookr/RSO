@@ -78,8 +78,13 @@ Supported shape:
   },
   "operators": {
     "github:owner/repo": {
-      "cardSpecificTdhBacking": 12345,
+      "positiveBackingTdh": 15000,
+      "negativeBackingTdh": 2655,
+      "netBackingTdh": 12345,
+      "usableBackingTdh": 12345,
       "backerCount": 17,
+      "positiveBackerCount": 15,
+      "negativeBackerCount": 2,
       "rank": 1
     }
   }
@@ -97,8 +102,10 @@ claiming another node's backing by placing a victim-looking GitHub URL in an
 attestation, and it allows Arweave-only nodes to receive backing after the
 sweeper verifies them.
 
-The index reports `directWitnessTdh`, `nodeBackingTdh`, and
-`combinedSupportTdh` separately. It counts each identity and node at most once
+The index reports `directWitnessTdh`, the four signed node fields
+`nodePositiveBackingTdh`, `nodeNegativeBackingTdh`, `nodeNetBackingTdh`, and
+`nodeUsableBackingTdh`, plus `combinedSupportTdh`. Only usable node backing is
+added to combined branch support. It counts each identity and node at most once
 per agreement group. If an identity or node supports conflicting groups for one
 day, that channel is reported as equivocating and counts for neither group.
 Raw attestation count is descriptive only and never breaks a support tie; when
