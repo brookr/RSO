@@ -116,8 +116,10 @@ RELEASE_OUTPUT_DIR = Path(__file__).parent.parent / ".release"
 # inlines the latest day's full aggregate. See build_index().
 INDEX_DIR = Path(__file__).parent.parent / "index"
 INDEX_SCHEMA = "rso-index-v1"
-# The lean per-day fields the index carries (plus the catalog locator). Order is
-# documentation only -- write_json sorts keys.
+# The lean per-day fields the index carries (plus the catalog locator).
+# AUTHORITATIVE SCHEMA: docs/snapshot-spec.md "Tier-1 Index" -- change it there
+# first, then keep this list and the card's ledgerFromIndex in sync.
+# Order is documentation only -- write_json sorts keys.
 INDEX_ENTRY_FIELDS = (
     "date",
     "object_count",
@@ -4565,9 +4567,9 @@ def node_tdh_from_attestations(index_path=None):
             ).lower()
             if not nid:
                 continue
-            # Each node's own backing only (nodeBackingTdh); combinedSupportTdh is the agreement
+            # Each node's usable signed support only; combinedSupportTdh is the agreement
             # group's aggregate across attesters, not a per-node quantity.
-            backing = int(event.get("nodeBackingTdh") or 0)
+            backing = int(event.get("nodeUsableBackingTdh") or 0)
             if backing > tdh.get(nid, 0):
                 tdh[nid] = backing
     return tdh
