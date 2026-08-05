@@ -339,6 +339,85 @@ def event_index_record(event: DocAttested) -> dict[str, object]:
     }
 
 
+def fetch_block_timestamps(
+    rpc: EthereumRpc,
+    block_numbers: Iterable[int],
+    cache_path: str | Path | None = None,
+) -> dict[int, int]:
+    """Resolve block numbers to timestamps, with an optional grow-only cache.
+
+    A finalized block's timestamp is immutable, so the cache only ever grows;
+    a run pays one `eth_getBlockByNumber` per previously unseen block
+    (attestations cluster in few blocks, so daily runs add only a couple).
+    The block timestamp is the unforgeable commitment time of an attestation:
+    "these bytes were committed no later than this block."
+    """
+    cached: dict[str, int] = {}
+    if cache_path is not None:
+        cache_file = Path(cache_path)
+        if cache_file.exists():
+            loaded = json.loads(cache_file.read_text(encoding="utf-8"))
+            if not isinstance(loaded, dict):
+                raise ValueError(f"{cache_file}: block timestamp cache must be a JSON object")
+            cached = {str(key): int(value) for key, value in loaded.items()}
+    wanted = sorted({int(number) for number in block_numbers})
+    missing = [number for number in wanted if str(number) not in cached]
+    for number in missing:
+        cached[str(number)] = rpc.block_timestamp(number)
+    if missing and cache_path is not None:
+        write_json_file(Path(cache_path), cached)
+    return {int(key): value for key, value in cached.items()}
+
+
+def agreement_groups_by_doc_ref(
+    events: Iterable[DocAttested],
+) -> dict[int, list[dict[str, object]]]:
+    """Group each docRef's attestations into unweighted agreement groups.
+
+    An agreement group is one candidate `(blockHash, contentHash)` for a
+    docRef, with the attesters standing behind it. An attester appearing in
+    more than one group for the same docRef is equivocating. Groups are
+    sorted by descending attestation count, then blockHash — a display
+    order, NOT a canonicality ranking: branch choice is a profile rule, and
+    profiles should layer their own scoring on these neutral groups.
+    """
+    by_doc_ref: dict[int, dict[tuple[str, str], list[DocAttested]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    for event in dedupe_events(events):
+        candidate = (event.block_hash.lower(), event.content_hash.lower())
+        by_doc_ref[event.doc_ref][candidate].append(event)
+
+    grouped: dict[int, list[dict[str, object]]] = {}
+    for doc_ref, candidates in sorted(by_doc_ref.items()):
+        attester_candidates: dict[str, set[tuple[str, str]]] = defaultdict(set)
+        for candidate, group_events in candidates.items():
+            for event in group_events:
+                attester_candidates[event.attester.lower()].add(candidate)
+        records = []
+        for (block_hash, content_hash), group_events in candidates.items():
+            attesters = sorted({event.attester.lower() for event in group_events})
+            records.append(
+                {
+                    "blockHash": block_hash,
+                    "contentHash": content_hash,
+                    "parentHashes": sorted(
+                        {event.parent_hash.lower() for event in group_events}
+                    ),
+                    "attestationCount": len(group_events),
+                    "attesters": attesters,
+                    "equivocatingAttesters": sorted(
+                        attester
+                        for attester in attesters
+                        if len(attester_candidates[attester]) > 1
+                    ),
+                }
+            )
+        records.sort(key=lambda record: (-int(record["attestationCount"]), str(record["blockHash"])))
+        grouped[doc_ref] = records
+    return grouped
+
+
 def write_json_file(path: Path, payload: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_name(path.name + ".tmp")

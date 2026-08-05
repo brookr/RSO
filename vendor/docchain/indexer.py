@@ -37,6 +37,8 @@ RPC_RETRY_MAX_DELAY_SECONDS = 30.0
 GET_LOGS_REQUEST_DELAY_SECONDS = 0.2
 RPC_MAX_RESPONSE_BYTES = 10 * 1024 * 1024
 
+_HEX_DIGITS = frozenset("0123456789abcdef")
+
 
 class EthereumRpc:
     """Small JSON-RPC client for the methods needed by a log indexer."""
@@ -110,6 +112,23 @@ class EthereumRpc:
             raise RpcError("eth_blockNumber returned a non-string result")
         return int(result, 16)
 
+    def block_timestamp(self, block_number: int) -> int:
+        if block_number < 0:
+            raise ValueError("block numbers must not be negative")
+        result = self.call("eth_getBlockByNumber", [hex(block_number), False])
+        if not isinstance(result, dict) or not isinstance(result.get("timestamp"), str):
+            raise RpcError(f"eth_getBlockByNumber({block_number}) returned no timestamp")
+        return int(result["timestamp"], 16)
+
+    def eth_call(self, to: str, data: str, block: str = "latest") -> str:
+        result = self.call(
+            "eth_call",
+            [{"to": normalize_address(to), "data": data}, block],
+        )
+        if not isinstance(result, str):
+            raise RpcError("eth_call returned a non-string result")
+        return result
+
     def get_logs(
         self,
         address: str,
@@ -166,6 +185,9 @@ def block_ranges(from_block: int, to_block: int, chunk_size: int) -> Iterator[tu
     """Split an inclusive block range into provider-friendly chunks."""
     if from_block < 0 or to_block < 0:
         raise ValueError("block numbers must not be negative")
+    if from_block > to_block:
+        # fail-closed on an inverted range rather than silently scanning nothing
+        raise ValueError(f"from_block {from_block} is after to_block {to_block}")
     if chunk_size < 1:
         raise ValueError("chunk_size must be at least 1")
     start = from_block
@@ -187,8 +209,19 @@ def _iter_doc_attested_range(
     except RateLimitError:
         raise
     except BlockRangeLimitError as exc:
-        if exc.max_block_range is None or from_block >= to_block:
+        if from_block >= to_block:
             raise
+        # A provider can report a limit that does not actually shrink the current
+        # range: it may cap by result count while its message names a block
+        # ceiling >= the chunk we already requested. Re-chunking by that limit
+        # would reproduce the identical range and recurse forever, so bisect --
+        # which always makes progress -- exactly like the RpcError path below.
+        width = to_block - from_block + 1
+        if exc.max_block_range is None or exc.max_block_range >= width:
+            mid_block = (from_block + to_block) // 2
+            yield from _iter_doc_attested_range(rpc, address, from_block, mid_block, topics)
+            yield from _iter_doc_attested_range(rpc, address, mid_block + 1, to_block, topics)
+            return
         for start, end in block_ranges(from_block, to_block, exc.max_block_range):
             yield from _iter_doc_attested_range(rpc, address, start, end, topics)
         return
@@ -245,10 +278,11 @@ def _hex_body(value: str, field: str) -> str:
     if not isinstance(value, str) or not value.lower().startswith("0x"):
         raise ValueError(f"{field} must be a 0x-prefixed hex string")
     body = value[2:].lower()
-    try:
-        int(body or "0", 16)
-    except ValueError as exc:
-        raise ValueError(f"{field} contains non-hex characters") from exc
+    # Validate the digits directly. int(body, 16) would silently accept "_",
+    # a leading "+/-", and surrounding whitespace, letting malformed hex through
+    # to calldata/topic encoding instead of failing loudly here.
+    if body and not _HEX_DIGITS.issuperset(body):
+        raise ValueError(f"{field} contains non-hex characters")
     return body
 
 

@@ -6,6 +6,7 @@ choose the DocBlock values, URI, identity policy, and submission rules.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -17,7 +18,7 @@ from pathlib import Path
 from typing import Mapping
 
 from .abi import MAX_URI_BYTES
-from .model import ZERO_ADDRESS
+from .model import ZERO_ADDRESS, DocAttested
 
 
 ATTEST_DOC_SELECTOR = "d2b85e96"
@@ -25,6 +26,8 @@ ATTEST_BATCH_SELECTOR = "7fba5650"
 DOC_BLOCK_TYPEHASH = "0xb84212102d711af6fc7ae9fa3e37753befb8b25762a552631b0e9ff9e8d07894"
 DOCCHAIN_DOMAIN_NAME = "Doc Chain"
 DOCCHAIN_DOMAIN_VERSION = "1"
+
+_HEX_DIGITS = frozenset("0123456789abcdef")
 
 
 def typed_data_for_attestation(
@@ -153,11 +156,11 @@ def sign_prepared_with_cast(
     try:
         with cast_wallet_args_from_env(
             private_key_env=private_key_env,
-            keystore_json_env=keystore_json_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_JSON"),
-            keystore_path_env=keystore_path_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE"),
-            account_env=account_env or private_key_env.replace("PRIVATE_KEY", "ACCOUNT"),
-            password_env=password_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_PASSWORD"),
-            password_file_env=password_file_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_PASSWORD_FILE"),
+            keystore_json_env=keystore_json_env,
+            keystore_path_env=keystore_path_env,
+            account_env=account_env,
+            password_env=password_env,
+            password_file_env=password_file_env,
         ) as wallet_args:
             expected_attester = prepared_attester(prepared)
             if expected_attester is not None:
@@ -212,6 +215,18 @@ def cast_wallet_address(
     return normalize_address(address)
 
 
+def derived_signer_env(private_key_env: str, suffix: str) -> str | None:
+    """Derive a companion signer env name (KEYSTORE_JSON, ACCOUNT, ...).
+
+    Only names containing "PRIVATE_KEY" have a derivable companion; for any
+    other name the substitution would degenerate to the key env itself and a
+    raw key value would be misread as keystore JSON.
+    """
+    if "PRIVATE_KEY" not in private_key_env:
+        return None
+    return private_key_env.replace("PRIVATE_KEY", suffix)
+
+
 def has_cast_wallet_config(
     *,
     private_key_env: str = "PRIVATE_KEY",
@@ -221,13 +236,13 @@ def has_cast_wallet_config(
     allow_raw_private_key: bool = True,
 ) -> bool:
     names = [
-        keystore_json_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_JSON"),
-        keystore_path_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE"),
-        account_env or private_key_env.replace("PRIVATE_KEY", "ACCOUNT"),
+        keystore_json_env or derived_signer_env(private_key_env, "KEYSTORE_JSON"),
+        keystore_path_env or derived_signer_env(private_key_env, "KEYSTORE"),
+        account_env or derived_signer_env(private_key_env, "ACCOUNT"),
     ]
     if allow_raw_private_key:
         names.append(private_key_env)
-    return any(os.environ.get(name) for name in names)
+    return any(os.environ.get(name) for name in names if name)
 
 
 @contextmanager
@@ -242,18 +257,20 @@ def cast_wallet_args_from_env(
     allow_raw_private_key: bool = True,
 ):
     """Yield Foundry wallet arguments from environment-backed signer config."""
-    keystore_json_env = keystore_json_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_JSON")
-    keystore_path_env = keystore_path_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE")
-    account_env = account_env or private_key_env.replace("PRIVATE_KEY", "ACCOUNT")
-    password_env = password_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_PASSWORD")
-    password_file_env = password_file_env or private_key_env.replace("PRIVATE_KEY", "KEYSTORE_PASSWORD_FILE")
+    keystore_json_env = keystore_json_env or derived_signer_env(private_key_env, "KEYSTORE_JSON")
+    keystore_path_env = keystore_path_env or derived_signer_env(private_key_env, "KEYSTORE")
+    account_env = account_env or derived_signer_env(private_key_env, "ACCOUNT")
+    password_env = password_env or derived_signer_env(private_key_env, "KEYSTORE_PASSWORD")
+    password_file_env = password_file_env or derived_signer_env(
+        private_key_env, "KEYSTORE_PASSWORD_FILE"
+    )
 
     with tempfile.TemporaryDirectory(prefix="docchain-wallet-") as tmpdir:
         tmp = Path(tmpdir)
         args: list[str]
-        keystore_json = os.environ.get(keystore_json_env)
-        keystore_path = os.environ.get(keystore_path_env)
-        account = os.environ.get(account_env)
+        keystore_json = os.environ.get(keystore_json_env) if keystore_json_env else None
+        keystore_path = os.environ.get(keystore_path_env) if keystore_path_env else None
+        account = os.environ.get(account_env) if account_env else None
         raw_private_key = os.environ.get(private_key_env)
 
         if keystore_json:
@@ -267,13 +284,15 @@ def cast_wallet_args_from_env(
         elif raw_private_key and allow_raw_private_key:
             args = ["--private-key", raw_private_key]
         else:
-            choices = f"{keystore_json_env}, {keystore_path_env}, or {account_env}"
+            names = [
+                name for name in (keystore_json_env, keystore_path_env, account_env) if name
+            ]
             if allow_raw_private_key:
-                choices += f", or {private_key_env}"
-            raise ValueError(f"set {choices}")
+                names.append(private_key_env)
+            raise ValueError(f"set {', or '.join(names) if names else private_key_env}")
 
-        password_file = os.environ.get(password_file_env)
-        password = os.environ.get(password_env)
+        password_file = os.environ.get(password_file_env) if password_file_env else None
+        password = os.environ.get(password_env) if password_env else None
         if password_file:
             args.extend(["--password-file", password_file])
         elif password:
@@ -282,6 +301,73 @@ def cast_wallet_args_from_env(
             args.extend(["--password-file", str(password_path)])
 
         yield args
+
+
+def send_calldata_with_cast(
+    *,
+    contract_address: str,
+    calldata: str,
+    rpc_url: str,
+    confirmations: int = 1,
+    cast: str | None = None,
+    run=None,
+    private_key_env: str = "SUBMITTER_PRIVATE_KEY",
+    keystore_json_env: str | None = None,
+    keystore_path_env: str | None = None,
+    account_env: str | None = None,
+    password_env: str | None = None,
+    password_file_env: str | None = None,
+    allow_raw_private_key: bool = True,
+    interactive: bool = False,
+) -> dict[str, object]:
+    """Broadcast raw calldata with Foundry `cast send` and return the receipt.
+
+    Wallet material comes from `cast_wallet_args_from_env`: keystore and named
+    accounts take precedence, keeping key material off the process command
+    line. The raw private-key fallback (when `allow_raw_private_key`) does put
+    the key on `cast`'s argv; pass False for funded courier keys. The receipt
+    status is verified: `cast send` can exit 0 on a mined-but-REVERTED
+    transaction (version-dependent), which must not be reported as a
+    successful attestation.
+    """
+    if run is None:
+        run = subprocess.run
+    command = [
+        cast_path(cast),
+        "send",
+        normalize_address(contract_address),
+        "--data",
+        normalize_hex_bytes(calldata),
+        "--rpc-url",
+        rpc_url,
+        "--confirmations",
+        str(confirmations),
+        "--json",
+    ]
+    if interactive:
+        command.append("--interactive")
+        result = run(command, check=True, capture_output=True, text=True)
+    else:
+        with cast_wallet_args_from_env(
+            private_key_env=private_key_env,
+            keystore_json_env=keystore_json_env,
+            keystore_path_env=keystore_path_env,
+            account_env=account_env,
+            password_env=password_env,
+            password_file_env=password_file_env,
+            allow_raw_private_key=allow_raw_private_key,
+        ) as wallet_args:
+            command.extend(wallet_args)
+            result = run(command, check=True, capture_output=True, text=True)
+    receipt = json.loads(result.stdout.strip().splitlines()[-1])
+    if not isinstance(receipt, dict):
+        raise ValueError("cast send did not return a JSON receipt")
+    if receipt.get("status") not in ("0x1", 1, "1"):
+        raise ValueError(
+            f"transaction {receipt.get('transactionHash', '?')} reverted "
+            f"(status {receipt.get('status')!r})"
+        )
+    return receipt
 
 
 def attest_doc_calldata(attestation: Mapping[str, object], signature: str) -> str:
@@ -330,6 +416,49 @@ def attest_batch_calldata(items) -> str:
     return "0x" + ATTEST_BATCH_SELECTOR + payload
 
 
+def parse_attest_doc_return(result: str) -> dict[str, str]:
+    """Decode `attestDoc` return data: `(blockHash, uriHash, attestationKey)`."""
+    body = normalize_hex_bytes(result)[2:]
+    if len(body) < 64 * 3:
+        raise ValueError("attestDoc return data is too short")
+    return {
+        "blockHash": "0x" + body[0:64],
+        "uriHash": "0x" + body[64:128],
+        "attestationKey": "0x" + body[128:192],
+    }
+
+
+def parse_attest_batch_return(result: str) -> dict[str, int]:
+    """Decode `attestBatch` return data: `(storedCount, skippedCount)`."""
+    body = normalize_hex_bytes(result)[2:]
+    if len(body) < 64 * 2:
+        raise ValueError("attestBatch return data is too short")
+    return {
+        "storedCount": int(body[0:64], 16),
+        "skippedCount": int(body[64:128], 16),
+    }
+
+
+def simulate_attest_doc(rpc, contract_address: str, calldata: str) -> dict[str, str]:
+    """`eth_call` an `attestDoc` payload and decode its return.
+
+    `rpc` is any client exposing `eth_call(to, data) -> str`, such as
+    `docchain.indexer.EthereumRpc`. A revert surfaces as the client's RPC
+    error; check it with `abi.is_duplicate_attestation_error` before treating
+    it as a failure.
+    """
+    return parse_attest_doc_return(
+        rpc.eth_call(normalize_address(contract_address), normalize_hex_bytes(calldata))
+    )
+
+
+def simulate_attest_batch(rpc, contract_address: str, calldata: str) -> dict[str, int]:
+    """`eth_call` an `attestBatch` payload and decode its return."""
+    return parse_attest_batch_return(
+        rpc.eth_call(normalize_address(contract_address), normalize_hex_bytes(calldata))
+    )
+
+
 def doc_block_hash_with_cast(
     doc_block: Mapping[str, object],
     *,
@@ -354,9 +483,129 @@ def doc_block_hash_payload(doc_block: Mapping[str, object]) -> str:
     )
 
 
+def claim_fingerprint(
+    *,
+    attester: object,
+    on_behalf_of: object,
+    doc_chain_id: object,
+    doc_ref: object,
+    parent_hash: object,
+    content_hash: object,
+    uri: object,
+) -> str:
+    """Offline identity for a publication claim: SHA-256 over canonical JSON.
+
+    This is the stdlib (keccak-free) analog of the contract's `attestationKey`:
+    the same seven duplicate-prevention fields, so signed artifacts, sweeper
+    evidence, and indexed events can be joined without an Ethereum toolchain.
+    It is NOT the on-chain key; recompute that with the contract when needed.
+    """
+    payload = {
+        "attester": normalize_address(attester),
+        "onBehalfOf": normalize_address(on_behalf_of),
+        "docChainId": normalize_bytes32(doc_chain_id),
+        "docRef": uint64(int(str(doc_ref)), "docRef"),
+        "parentHash": normalize_bytes32(parent_hash),
+        "contentHash": normalize_bytes32(content_hash),
+        "uri": str(uri),
+    }
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def attestation_claim_fingerprint(attestation: Mapping[str, object]) -> str:
+    """Claim fingerprint for a prepared/signed attestation mapping."""
+    doc_block = attestation.get("docBlock")
+    if not isinstance(doc_block, Mapping):
+        raise ValueError("attestation docBlock must be an object")
+    return claim_fingerprint(
+        attester=attestation["attester"],
+        on_behalf_of=attestation.get("onBehalfOf", ZERO_ADDRESS),
+        doc_chain_id=doc_block["docChainId"],
+        doc_ref=doc_block["docRef"],
+        parent_hash=doc_block["parentHash"],
+        content_hash=doc_block["contentHash"],
+        uri=attestation.get("uri", ""),
+    )
+
+
+def event_claim_fingerprint(event) -> str:
+    """Claim fingerprint for a `DocAttested` record or camelCase index record."""
+    if isinstance(event, DocAttested):
+        return claim_fingerprint(
+            attester=event.attester,
+            on_behalf_of=event.on_behalf_of or ZERO_ADDRESS,
+            doc_chain_id=event.doc_chain_id,
+            doc_ref=event.doc_ref,
+            parent_hash=event.parent_hash,
+            content_hash=event.content_hash,
+            uri=event.uri,
+        )
+    if not isinstance(event, Mapping):
+        raise ValueError("event must be a DocAttested or a mapping")
+    return claim_fingerprint(
+        attester=event["attester"],
+        on_behalf_of=event.get("onBehalfOf", ZERO_ADDRESS),
+        doc_chain_id=event["docChainId"],
+        doc_ref=event["docRef"],
+        parent_hash=event["parentHash"],
+        content_hash=event["contentHash"],
+        uri=event.get("uri", ""),
+    )
+
+
+def preflight_prepared_attestation(
+    prepared: Mapping[str, object],
+    *,
+    expected_chain_id: int | None = None,
+    expected_contract_address: str | None = None,
+    expected_doc_chain_id: str | None = None,
+    now: int | None = None,
+    deadline_margin_seconds: int = 0,
+) -> None:
+    """Validate a prepared attestation before a courier spends gas on it.
+
+    Raises ValueError on schema, target, or deadline mismatch. The deadline
+    check requires `deadline >= now + margin` (the contract accepts
+    `deadline == block.timestamp`); the margin covers submission latency so a
+    signature does not expire between preflight and inclusion.
+    """
+    if prepared.get("schema") != "doc-chain-prepared-attestation-v1":
+        raise ValueError("unsupported prepared attestation schema")
+    if expected_contract_address is not None:
+        if normalize_address(prepared.get("contractAddress")) != normalize_address(
+            expected_contract_address
+        ):
+            raise ValueError("prepared contractAddress does not match the expected contract")
+    if expected_chain_id is not None and int(str(prepared.get("chainId"))) != int(expected_chain_id):
+        raise ValueError("prepared chainId does not match the expected chain")
+    attestation = prepared.get("attestation")
+    if not isinstance(attestation, Mapping):
+        raise ValueError("prepared.attestation must be an object")
+    doc_block = attestation.get("docBlock")
+    if not isinstance(doc_block, Mapping):
+        raise ValueError("attestation docBlock must be an object")
+    if expected_doc_chain_id is not None:
+        if normalize_bytes32(doc_block.get("docChainId")) != normalize_bytes32(
+            expected_doc_chain_id
+        ):
+            raise ValueError("attestation docChainId does not match the expected doc chain")
+    deadline = int(str(attestation["deadline"]))
+    current = int(time.time()) if now is None else int(now)
+    if deadline < current + deadline_margin_seconds:
+        raise ValueError(
+            f"attestation deadline {deadline} is inside the submission margin "
+            f"(now {current}, margin {deadline_margin_seconds}s); re-sign it"
+        )
+
+
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    # Write-then-rename so a crash mid-write can never leave a truncated JSON
+    # file at the committed path (a torn state/artifact file wedges every reader).
+    tmp_path = path.with_name(path.name + ".tmp")
+    tmp_path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(tmp_path, path)
 
 
 def load_json(path: Path) -> dict[str, object]:
@@ -418,7 +667,10 @@ def subprocess_error_detail(exc: subprocess.CalledProcessError) -> str:
 
 def redact_secret_values(text: str) -> str:
     redacted = text
-    for name in (
+    # Redact both the well-known names and any runtime-selected signer env var
+    # (a custom --private-key-env value echoed in cast's stderr would otherwise
+    # reach logs unredacted): any env var whose NAME marks it as a key/secret.
+    names = {
         "DISPOSABLE_NO_FUNDS_ETH_PRIVATE_KEY",
         "PRIVATE_KEY",
         "RSO_SWEEPER_PRIVATE_KEY",
@@ -427,7 +679,13 @@ def redact_secret_values(text: str) -> str:
         "DISPOSABLE_NO_FUNDS_ETH_KEYSTORE_PASSWORD",
         "RSO_SWEEPER_KEYSTORE_JSON",
         "RSO_SWEEPER_KEYSTORE_PASSWORD",
-    ):
+    }
+    names.update(
+        name
+        for name in os.environ
+        if "PRIVATE_KEY" in name or "KEYSTORE_JSON" in name or "KEYSTORE_PASSWORD" in name
+    )
+    for name in names:
         value = os.environ.get(name)
         if value:
             redacted = redacted.replace(value, "<redacted>")
@@ -492,8 +750,9 @@ def _hex_body(value: object, field: str) -> str:
     if not isinstance(value, str) or not value.lower().startswith("0x"):
         raise ValueError(f"{field} must be a 0x-prefixed hex string")
     body = value[2:].lower()
-    try:
-        int(body or "0", 16)
-    except ValueError as exc:
-        raise ValueError(f"{field} contains non-hex characters") from exc
+    # Validate the digits directly. int(body, 16) would silently accept "_",
+    # a leading "+/-", and surrounding whitespace, letting malformed hex through
+    # to calldata encoding instead of failing loudly here.
+    if body and not _HEX_DIGITS.issuperset(body):
+        raise ValueError(f"{field} contains non-hex characters")
     return body
