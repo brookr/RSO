@@ -980,11 +980,11 @@ class CardNodeRankTest(unittest.TestCase):
 
     def test_default_rank_is_by_tdh(self):
         # nodes default-sort by on-chain TDH backing (custom-first, then TDH desc), derived from
-        # the attestation index's per-node nodeBackingTdh; a manual drag overrides + persists
+        # the attestation index's per-node usable support; a manual drag overrides + persists
         self.assertIn("const tdhOf = ", self.html)
         self.assertIn("const nodesByTdh = ", self.html)
         self.assertIn("function autoRankByTdh()", self.html)
-        self.assertIn("nodeBackingTdh", self.html)            # honest TDH from the attestation events
+        self.assertIn("nodeUsableBackingTdh", self.html)      # signed, net-positive TDH from attestation events
         self.assertIn("let nodeOrderManual = false", self.html)
         self.assertIn("else { state.nodes = nodesByTdh(); }", self.html)   # TDH is the default
         self.assertIn('id="node-rank-reset"', self.html)      # reset back to TDH rank
@@ -1035,7 +1035,7 @@ class CardNodeRankTest(unittest.TestCase):
         self.assertIn("function scheduleRefresh()", self.html)
         self.assertIn("refreshTimer = setTimeout(", self.html)
         self.assertIn("if (seq !== refreshSeq) return;", self.html)          # superseded re-ranks drop out
-        self.assertIn("const t = +e.nodeBackingTdh || 0;", self.html)        # group combinedSupportTdh not mis-attributed
+        self.assertIn("const t = +e.nodeUsableBackingTdh || 0;", self.html)  # group combinedSupportTdh not mis-attributed
         # add/remove must NOT latch a manual order (only an explicit drag does)
         self.assertNotIn("state.nodes.unshift(node);\n      nodeOrderManual = true;", self.html)
 

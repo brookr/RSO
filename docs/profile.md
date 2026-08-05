@@ -110,7 +110,7 @@ versions move only on a genuine parse-breaking change.
   and `nodeId` (the attesting node's identity, e.g. `github:ompub/rso`). The
   uri is inside the signature; locations are commitments.
 - **Hash-only attestations** (empty uri) are valid and sweeper-sponsored when
-  the operator holds card-specific TDH backing for the date and its
+  the operator has net-positive usable card-specific TDH backing for the date and its
   attester-to-node binding verifies against the node declaration. They carry
   no publication locator, so data custody cannot be checked: the index counts
   them in agreement and attaches their backing, but marks them

@@ -375,7 +375,7 @@ RSO_SWEEPER_RPC_URL
 RSO_DOCCHAIN_ADDRESS
 RSO_SWEEPER_KEYSTORE_JSON
 RSO_SWEEPER_KEYSTORE_PASSWORD
-RSO_OPERATOR_BACKING_SNAPSHOT
+RSO_TDH_SUPPORT_SNAPSHOT
 ```
 
 The sweeper key is funded, so the workflow intentionally does not use a raw
@@ -403,6 +403,45 @@ The default TDH support snapshot location is:
 
 ```text
 data/backing/{date}.json
+```
+
+Build a snapshot directly from the public 6529 API with:
+
+```text
+python3 support/live_6529.py \
+  --identity <RSO handle or wallet> \
+  --card-token-id <existing Meme token id> \
+  --date YYYY-MM-DD \
+  --digest-roster indexer/generated/nodes.json \
+  --out data/backing/YYYY-MM-DD.json
+```
+
+The fetcher reads every valid `!node` category received by the RSO identity,
+paginates every current rater for each category, and reads that consolidated
+collector's selected-card row from the same `tdh/nft` endpoint used by the
+6529 collectors leaderboard. Card-specific TDH weighting uses the API's
+unboosted `tdh` field so every card holder starts without collection-wide set
+or Gradient boosts. The fetcher verifies each category's REP sum and contributor
+count, reads the REP totals again after collection, and requires the latest 6529
+TDH date and block to remain unchanged across the run. The raw rater identities,
+wallets, signed REP, card balance, `boosted_tdh`, `tdh`, `tdh__raw`, and
+modification times remain in the snapshot as reproducibility evidence.
+
+These public APIs expose current state, not a historical REP query. The daily
+snapshot therefore must be generated and durably published after the selected
+TDH boundary; an old support snapshot cannot be reconstructed faithfully from
+the later live API alone. Until the RSO Meme card exists, an explicitly chosen
+existing Meme token provides the card-specific TDH test population. Changing
+that token changes the weighting universe and must produce a new snapshot.
+
+Before the RSO identity has a valid `!node` category, exercise the same live
+rater pagination and per-rater TDH calls without producing support:
+
+```text
+python3 support/live_6529.py \
+  --identity <test identity> \
+  --card-token-id <existing Meme token id> \
+  --probe-category '<an exact existing REP category>'
 ```
 
 The default sponsorship policy funds the top 5 backed operators for each day.

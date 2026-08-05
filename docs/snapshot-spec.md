@@ -155,6 +155,10 @@ the day's `delta.json` for `updated`/`new`) and mirror `card/index.html` exactly
   objects, by `OBJECT_TYPE` substring
 - `delta` — `{updated, new, decayed}`; `updated`/`new` from the bounded
   `gp_history` delta, `decayed` = objects whose `DECAY_DATE` is exactly this date
+- `anno_summary` — `{directory_changes, tip_count, decay_notices}`: the day's
+  daily-changes legend, precomputed from `annotations.json` (distinct objects
+  with directory edits, the reentry-forecast count, the decay-notice count) so a
+  consumer shows it instantly without the catalog
 
 These are observation-plane, like the full `sha256` (`DECAY_DATE` is excluded
 from the consensus `content_sha256`): they may differ between nodes capturing the
@@ -178,13 +182,39 @@ index/
                    #   latestEntry:{...full aggregate for the head day...} }
 ```
 
-Each `index/YYYY.json` entry carries only `date`, `object_count`,
-`on_orbit_count`, `reentered_count`, `band_counts`, `type_counts`, `delta`,
-`sha256`, `content_sha256`, `provenance`, `compressed_bytes`, plus a
-**CORS-fetchable catalog locator**: `catalog_url` (+ `catalog_url_kind`,
-`bundle_tar` for a confirmed Arweave tx, else `catalog_gz` for the node-branch
+> **This section is the authoritative schema for a Tier-1 index entry.** The
+> producer (`INDEX_ENTRY_FIELDS` in `pipeline/snapshot.py`), the card consumer
+> (`ledgerFromIndex` in `card/index.html`), and the design rationale in
+> [card/DATA-ARCHITECTURE.md](../card/DATA-ARCHITECTURE.md) all follow this list —
+> change it here first, then update those to match.
+
+Each `index/YYYY.json` entry carries exactly:
+
+| Field | Meaning |
+|---|---|
+| `date` | UTC day (`YYYY-MM-DD`) |
+| `object_count` | total objects catalogued that day |
+| `on_orbit_count`, `reentered_count` | still-up / already-decayed split (sum to `object_count`) |
+| `band_counts` | `{leo, meo, geo}` over the on-orbit set |
+| `type_counts` | `{payload, rocket, debris, unknown, tba}` over the on-orbit set |
+| `delta` | `{updated, new, decayed}` |
+| `anno_summary` | `{directory_changes, tip_count, decay_notices}` — daily-changes legend, precomputed |
+| `sha256` | raw catalog fingerprint (artifact integrity) |
+| `content_sha256` | consensus hash (attested on-chain) |
+| `content_schema` | consensus-hash schema id (e.g. `rso-core-v1`), so an index-only consumer labels the hash face correctly |
+| `provenance` | `genesis_from_gp` or `rolling_gp_history_delta` |
+| `compressed_bytes` | gzip size of the day's catalog |
+| `catalog_url`, `catalog_url_kind` | CORS-fetchable catalog locator (below) |
+
+The **catalog locator** is `bundle_tar` (a confirmed Arweave tx — a permanent
+bundle tarball) when available, else `catalog_gz` (the node-branch
 `catalog.json.gz`). The GitHub release asset is never the locator — its redirect
-target serves no CORS headers, so a browser cannot read it.
+target serves no CORS headers, so a browser cannot read it. `source` and
+`format` are identical for every day (`space-track.org` / `OMM/JSON`), so they
+are card-side constants, not repeated per entry.
+
+`manifest.json`'s `latestEntry` inlines the newest day's full entry (above), so a
+consumer boots to the head with exact numbers from the manifest alone.
 
 Mirrors: the node branch (GitHub-raw) is the convenience mirror, committed each
 run; `build-index --arweave` (with `ARWEAVE_JWK`) additionally uploads the

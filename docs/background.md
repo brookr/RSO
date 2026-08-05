@@ -291,8 +291,9 @@ DocChain:
    day.
 6. Sweepers publish evidence connecting selected nodes to their signed claims
    only after every identity and publication check passes.
-7. Indexers report direct witness TDH and node-backing TDH separately, then sum
-   them for display while excluding equivocation.
+7. Indexers report direct witness TDH and signed node backing separately. Only
+   a node's net-positive usable backing contributes to branch support, while
+   negative backing remains visible and can disqualify a node.
 
 Historical TDH can come from 6529's published Arweave snapshots or the 6529
 node today. A future composable TDH oracle could replace that lookup without
@@ -453,7 +454,7 @@ publication by `CREATION_DATE`, not retrieval-time current `gp` behavior.
 - [ ] DocChain contract deployment to Ethereum mainnet
 - [ ] Contract verified on Etherscan, immutable, no owner functions
 - [ ] Configure RSO Meme Card token ID after card issuance
-- [ ] Add production TDH/backing snapshot generation and historical branch scoring
+- [ ] Add production signed REP/TDH support snapshot generation and historical branch scoring
 - [ ] Publish canonical sweeper operator registry
 - [ ] Add production monitoring/runbook for treasury-funded sweepers
 

@@ -3,6 +3,12 @@
 Canonical project documentation. The repo [`README.md`](../README.md) has
 the high-level pitch and quick-start; this index is the deeper map.
 
+## Start here
+
+- [How it all fits together](overview.md) — one-page tour of the archive, the
+  lean index, and the NFT card, and how they connect. The doc to hand a
+  newcomer or collector before the deeper specs below.
+
 ## Operating
 
 For anyone running RSO infrastructure — an archive node, the sweeper, or both.

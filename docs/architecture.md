@@ -15,6 +15,7 @@ Witness pipeline
         +--> canonical JSON catalog
         +--> SHA-256 hash
         +--> manifest, delta, audit, ledger
+        +--> lean Tier-1 index (year-chunked per-day aggregates)
         |
         +--> GitHub Release bundle
         +--> optional Arweave upload
@@ -48,9 +49,10 @@ own archive history.
 | Git `node` branch | Public metadata, ledger, latest bootstrap catalogs |
 | GitHub Releases | Deterministic full daily bundles |
 | Arweave | Optional permanent bundle storage |
+| Tier-1 index | Lean year-chunked per-day aggregates for instant browsing (node branch; optional Arweave) |
 | Ethereum | Append-only DocChain attestation log |
 | Sweeper | Funded courier for eligible signed operator attestations |
-| NFT client | Planned verification and visualization dashboard |
+| NFT client | Verification + visualization card; boots from the Tier-1 index and embeds an offline baseline |
 
 The daily consensus object is the SHA-256 of the canonical catalog bytes, not a
 release URL, Arweave transaction ID, or storage location. Different operators
@@ -63,6 +65,7 @@ Live:
 
 - daily rolling snapshot pipeline
 - Git metadata and ledger
+- lean Tier-1 index (year-chunked per-day aggregates with CORS catalog locators)
 - newest two full catalogs retained on `node`
 - deterministic GitHub Release bundles
 - optional Arweave upload with per-day `storage.json`
