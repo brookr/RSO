@@ -47,9 +47,31 @@ timestamp, which is the unforgeable part. A day witnessed at lag 0 proves
 the knowledge existed that day; a re-attestation of history proves only
 that the bytes existed when it landed.
 
+## The whole timeline, fast (the index)
+
+For browsing or rendering the whole archive cheaply, read the lean **Tier-1
+index** rather than the full `ledger.json`. It is year-chunked per-day aggregates
+(~340 bytes/day) — counts, the on-orbit/re-entered split, band/type breakdowns,
+the day's delta and daily-changes summary, fingerprints, and a CORS-fetchable
+catalog locator:
+
+```
+https://raw.githubusercontent.com/{node}/RSO/node/index/manifest.json
+https://raw.githubusercontent.com/{node}/RSO/node/index/YYYY.json
+```
+
+`manifest.json` lists the year chunks (each with its `sha256`) and inlines the
+newest day's full entry as `latestEntry`, so you can render the head with exact
+numbers from one fetch and lazy-load only the year-chunk(s) you display. Per-entry
+fields are specified in [snapshot-spec.md → Tier-1 Index](snapshot-spec.md#tier-1-index).
+Each entry's `catalog_url` points to a browser-readable copy of that day's catalog
+(an Arweave bundle tar, or the node-branch `catalog.json.gz`) — never the GitHub
+release asset, which a browser cannot read across origins.
+
 ## Any past day
 
-The full day list, with hashes and the same publication fields per entry:
+`ledger.json` is the verbose, verification-oriented superset of the index — the
+full day list, with hashes and the same publication fields per entry:
 
 ```
 https://raw.githubusercontent.com/{node}/RSO/node/ledger.json

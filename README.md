@@ -23,6 +23,7 @@ and publish evidence anyone can verify.
 
 | Goal | Read |
 |------|------|
+| **New here — how it all fits together** | [docs/overview.md](docs/overview.md) |
 | Understand the public value | [docs/faq.md](docs/faq.md) |
 | Set up a node | [docs/setup.md](docs/setup.md) |
 | Operator and sweeper model | [docs/operator.md](docs/operator.md) |
@@ -110,6 +111,7 @@ On the operator's `node` branch:
 - `data/YYYY/MM/DD/visibility_state.json`
 - `data/YYYY/MM/DD/storage.json`
 - `ledger.json`
+- `index/manifest.json` and `index/YYYY.json` — the lean Tier-1 index the card boots from
 - `catalog.json.gz` for the newest two archived days
 
 As a release asset:

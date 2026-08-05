@@ -19,16 +19,20 @@
 - Treasury sweeper with daily TDH support snapshots, signed node identity,
   public verification evidence, URI bundle validation, simulation, and funded
   submission path
-- Static index weighting with separate direct-witness TDH and verified
-  node-backing TDH
+- Static index weighting with separate direct-witness TDH and verified signed
+  node backing; only net-positive usable backing contributes to branch weight
+- Lean Tier-1 index: year-chunked per-day aggregates (on-orbit/re-entered split,
+  band/type counts, daily delta + changes summary) with CORS catalog locators
+- Card-parity aggregates carried in manifest, ledger, and index, with offline
+  backfill (`rebuild-content`) and validator parity
 
 ## Next
 
 - Deploy DocChain v1 to Ethereum mainnet and verify it on Etherscan
 - Configure the RSO Meme Card token ID after issuance
 - Add production TDH support snapshot generation, including public allocation
-  evidence and enforcement that one identity cannot allocate more node backing
-  than its card-specific TDH
+  evidence and enforcement that each participating identity allocates exactly
+  its card-specific TDH across the absolute values of its signed allocations
 - Publish and fingerprint daily TDH support snapshots and sweeper reports in
   durable storage so historical weighting inputs are independently reproducible
 - Daily diff computation for objects added, updated, and carried forward

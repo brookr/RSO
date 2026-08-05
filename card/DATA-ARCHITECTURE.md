@@ -69,6 +69,10 @@ the index, rest from the catalog" — the catalog is for inspecting individual o
 else.
 
 ### Index entry schema (per day)
+> **Authoritative field list:** [docs/snapshot-spec.md → Tier-1 Index](../docs/snapshot-spec.md#tier-1-index).
+> The JSON below is illustrative rationale; the spec table is the source of truth (it omits the
+> card-side constants `source`/`format` and includes `content_sha256`).
+
 The pipeline already has the full catalog in hand when it builds each snapshot, so emitting these
 is essentially free:
 
@@ -130,7 +134,8 @@ year(s) in view. ~150 bytes/day → ~55 KB/year → trivial for centuries; boot 
   Un-backfilled days fall back to a proportional estimate that becomes exact on stop.
 - **Source rank:** the settings "index source priority" is a draggable stack-rank of nodes — the top
   one serves every fetch, any failure falls through to the next. It is **ranked by on-chain TDH
-  backing by default** (derived from the attestation index's per-node `nodeBackingTdh`); the visitor
+  usable backing by default** (derived from the attestation index's per-node
+  `nodeUsableBackingTdh`); the visitor
   can drag to override (persisted), **paste their own node** (`owner/repo`) to take an arbitrary one,
   or reset to TDH. The list is extended by the network's published roster
   (`indexer/generated/nodes.json`, carrying each node's `tdh`, sorted by TDH).

@@ -49,7 +49,7 @@ After the daily 6529 TDH calculation, RSO computes a TDH support snapshot:
 
 ```text
 date -> identity accounts -> direct witness card-specific TDH
-date -> node id -> card-specific TDH backing
+date -> node id -> positive, negative, net, and usable TDH backing
 ```
 
 The sweeper uses that snapshot before spending treasury gas. The indexer uses
@@ -65,8 +65,8 @@ The sweeper:
 - reads the daily TDH support snapshot
 - augments discovery with the highest-backed GitHub node ids in that snapshot,
   so an independent implementation does not need to be an upstream fork
-- extracts each signed artifact's attester and ranks only backed nodes by
-  card-specific TDH backing
+- extracts each signed artifact's attester and ranks only net-positive nodes by
+  usable card-specific TDH backing
 - fetches signed artifacts from operator `node` branches
 - requires the signed-artifact URL to belong to the selected GitHub repository
   or domain

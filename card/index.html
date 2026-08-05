@@ -2484,13 +2484,13 @@
         }
         // Per-node TDH backing, keyed by canonical nodeId ("github:owner/repo") — the honest
         // "TDH rank" the source list defaults to: each node's strongest OWN backing across its events
-        // (nodeBackingTdh only; combinedSupportTdh is the agreement group's aggregate, not per-node).
+        // (nodeUsableBackingTdh only; combinedSupportTdh is the agreement group's aggregate, not per-node).
         // Key extraction mirrors pipeline node_tdh_from_attestations exactly so roster + live agree.
         nodeTdhLive.clear();
         for (const e of idx.events || []) {
           const nid = String((e.nodeId || e.claimedNodeId || (e.publication && e.publication.nodeId) || "")).toLowerCase();
           if (!nid) continue;
-          const t = +e.nodeBackingTdh || 0;
+          const t = +e.nodeUsableBackingTdh || 0;
           if (t > (nodeTdhLive.get(nid) || 0)) nodeTdhLive.set(nid, t);
         }
         autoRankByTdh();   // re-rank to TDH order unless the visitor has set a manual order
