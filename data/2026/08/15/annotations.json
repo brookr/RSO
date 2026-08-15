@@ -1,0 +1,2297 @@
+{
+  "api_query_paths": [
+    "/class/satcat_change/CHANGE_MADE/2026-08-14T00:00:00--2026-08-15T00:00:00/orderby/CHANGE_MADE%20asc/format/json",
+    "/class/decay/MSG_EPOCH/2026-08-14T00:00:00--2026-08-15T00:00:00/MSG_TYPE/Historical/DECAY_EPOCH/2026-07-15--2026-08-22/orderby/MSG_EPOCH%20asc/format/json",
+    "/class/tip/MSG_EPOCH/2026-08-14T00:00:00--2026-08-15T00:00:00/DECAY_EPOCH/2026-07-15--2026-10-14/orderby/MSG_EPOCH%20asc/format/json"
+  ],
+  "baseline": false,
+  "catalog_changes": [
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "4376",
+      "previous": "LARGE"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "35548",
+      "previous": "SMALL"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "38107",
+      "previous": "LARGE"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "39635",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "2026-08-13",
+      "field": "DECAY_DATE",
+      "first_observation": false,
+      "norad_cat_id": "57406",
+      "previous": null
+    },
+    {
+      "current": "TAIJING-2 04",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "58820",
+      "previous": "OBJECT A"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "58820",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 TAIJING-2 04",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "58820",
+      "previous": "0 OBJECT A"
+    },
+    {
+      "current": "TAIJING-1 03",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "58821",
+      "previous": "OBJECT B"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "58821",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 TAIJING-1 03",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "58821",
+      "previous": "0 OBJECT B"
+    },
+    {
+      "current": "TAIJING-3 02",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "58822",
+      "previous": "OBJECT C"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "58822",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 TAIJING-3 02",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "58822",
+      "previous": "0 OBJECT C"
+    },
+    {
+      "current": "TAIJING-4 03",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "58823",
+      "previous": "OBJECT D"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "58823",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 TAIJING-4 03",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "58823",
+      "previous": "0 OBJECT D"
+    },
+    {
+      "current": "HULIANWANG DIGUI-169",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "69572",
+      "previous": "OBJECT A"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69572",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-169",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "69572",
+      "previous": "0 OBJECT A"
+    },
+    {
+      "current": "HULIANWANG DIGUI-170",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "69573",
+      "previous": "OBJECT B"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69573",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-170",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "69573",
+      "previous": "0 OBJECT B"
+    },
+    {
+      "current": "HULIANWANG DIGUI-171",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "69574",
+      "previous": "OBJECT C"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69574",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-171",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "69574",
+      "previous": "0 OBJECT C"
+    },
+    {
+      "current": "HULIANWANG DIGUI-172",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "69575",
+      "previous": "OBJECT D"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69575",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-172",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "69575",
+      "previous": "0 OBJECT D"
+    },
+    {
+      "current": "HULIANWANG DIGUI-173",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "69576",
+      "previous": "OBJECT E"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69576",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-173",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "69576",
+      "previous": "0 OBJECT E"
+    },
+    {
+      "current": "HULIANWANG DIGUI-174",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "69577",
+      "previous": "OBJECT F"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69577",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-174",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "69577",
+      "previous": "0 OBJECT F"
+    },
+    {
+      "current": "HULIANWANG DIGUI-176",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "69579",
+      "previous": "OBJECT H"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69579",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-176",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "69579",
+      "previous": "0 OBJECT H"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "69884",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "CA",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "69912",
+      "previous": "CAN"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100014",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100021",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100027",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100109",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100152",
+      "previous": null
+    },
+    {
+      "current": "HULIANWANG DIGUI-182",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "100207",
+      "previous": "OBJECT E"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100207",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-182",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "100207",
+      "previous": "0 OBJECT E"
+    },
+    {
+      "current": "HULIANWANG DIGUI-183",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "100208",
+      "previous": "OBJECT F"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100208",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-183",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "100208",
+      "previous": "0 OBJECT F"
+    },
+    {
+      "current": "HULIANWANG DIGUI-184",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "100209",
+      "previous": "OBJECT G"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100209",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-184",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "100209",
+      "previous": "0 OBJECT G"
+    },
+    {
+      "current": "HULIANWANG DIGUI-185",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "100210",
+      "previous": "OBJECT H"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100210",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-185",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "100210",
+      "previous": "0 OBJECT H"
+    },
+    {
+      "current": "HULIANWANG DIGUI-186",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "100211",
+      "previous": "OBJECT J"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100211",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 HULIANWANG DIGUI-186",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "100211",
+      "previous": "0 OBJECT J"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100242",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100246",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100246",
+      "previous": null
+    },
+    {
+      "current": "2026-181A",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100246",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38191",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100246",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100246",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100246",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38191",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100246",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100247",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100247",
+      "previous": null
+    },
+    {
+      "current": "2026-181B",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100247",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38246",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100247",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100247",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100247",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38246",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100247",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100248",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100248",
+      "previous": null
+    },
+    {
+      "current": "2026-181C",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100248",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38221",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100248",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100248",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100248",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38221",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100248",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100249",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100249",
+      "previous": null
+    },
+    {
+      "current": "2026-181D",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100249",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38233",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100249",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100249",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100249",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38233",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100249",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100250",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38163",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100250",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100250",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38163",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100250",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100251",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38168",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100251",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100251",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38168",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100251",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100252",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100252",
+      "previous": null
+    },
+    {
+      "current": "2026-181G",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100252",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38259",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100252",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100252",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100252",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38259",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100252",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100253",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100253",
+      "previous": null
+    },
+    {
+      "current": "2026-181H",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100253",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38243",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100253",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100253",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100253",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38243",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100253",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100254",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100254",
+      "previous": null
+    },
+    {
+      "current": "2026-181J",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100254",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38252",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100254",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100254",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100254",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38252",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100254",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100255",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38266",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100255",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100255",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38266",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100255",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100256",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38144",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100256",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100256",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38144",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100256",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100257",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38167",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100257",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100257",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38167",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100257",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100258",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38154",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100258",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100258",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38154",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100258",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100259",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38187",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100259",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100259",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38187",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100259",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100260",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100260",
+      "previous": null
+    },
+    {
+      "current": "2026-181Q",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100260",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38232",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100260",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100260",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100260",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38232",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100260",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100261",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100261",
+      "previous": null
+    },
+    {
+      "current": "2026-181R",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100261",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-37947",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100261",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100261",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100261",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-37947",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100261",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100262",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38279",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100262",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100262",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38279",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100262",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100263",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38157",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100263",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100263",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38157",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100263",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100264",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100264",
+      "previous": null
+    },
+    {
+      "current": "2026-181U",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100264",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38263",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100264",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100264",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100264",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38263",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100264",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100265",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38280",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100265",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100265",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38280",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100265",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100266",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38242",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100266",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100266",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38242",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100266",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100267",
+      "previous": null
+    },
+    {
+      "current": "2026-08-08",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100267",
+      "previous": null
+    },
+    {
+      "current": "2026-181X",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100267",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38212",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100267",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100267",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100267",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38212",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100267",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100268",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38129",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100268",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100268",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38129",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100268",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100269",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38255",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100269",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100269",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38255",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100269",
+      "previous": null
+    }
+  ],
+  "date": "2026-08-15",
+  "decay_messages": [
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-08-13 0:00:00",
+      "INTLDES": "2023-102C",
+      "MSG_EPOCH": "2026-08-14 04:15:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "57406",
+      "OBJECT_ID": "2023-102C",
+      "OBJECT_NAME": "STARLINK-30195",
+      "OBJECT_NUMBER": "57406",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "decay_msg"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-08-13 0:00:00",
+      "INTLDES": "2021-040AJ",
+      "MSG_EPOCH": "2026-08-14 17:59:23",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "48460",
+      "OBJECT_ID": "2021-040AJ",
+      "OBJECT_NAME": "STARLINK-2582",
+      "OBJECT_NUMBER": "48460",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "TBD",
+      "DECAY_EPOCH": "2026-08-11 0:00:00",
+      "INTLDES": "2025-313BD",
+      "MSG_EPOCH": "2026-08-14 17:59:23",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "67299",
+      "OBJECT_ID": "2025-313BD",
+      "OBJECT_NAME": "OBJECT BD",
+      "OBJECT_NUMBER": "67299",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "MEDIUM",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-08-10 0:00:00",
+      "INTLDES": "2020-062AC",
+      "MSG_EPOCH": "2026-08-14 17:59:23",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "46351",
+      "OBJECT_ID": "2020-062AC",
+      "OBJECT_NAME": "STARLINK-1646",
+      "OBJECT_NUMBER": "46351",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "CIS",
+      "DECAY_EPOCH": "2026-07-26 0:00:00",
+      "INTLDES": "2025-275A",
+      "MSG_EPOCH": "2026-08-14 17:59:23",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "66664",
+      "OBJECT_ID": "2025-275A",
+      "OBJECT_NAME": "SOYUZ MS-28",
+      "OBJECT_NUMBER": "66664",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "CIS",
+      "DECAY_EPOCH": "2026-07-20 0:00:00",
+      "INTLDES": "2011-018A",
+      "MSG_EPOCH": "2026-08-14 17:59:23",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "37398",
+      "OBJECT_ID": "2011-018A",
+      "OBJECT_NAME": "MERIDIAN 4",
+      "OBJECT_NUMBER": "37398",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-08-13 0:00:00",
+      "INTLDES": "2023-102C",
+      "MSG_EPOCH": "2026-08-14 17:59:23",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "57406",
+      "OBJECT_ID": "2023-102C",
+      "OBJECT_NAME": "STARLINK-30195",
+      "OBJECT_NUMBER": "57406",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    }
+  ],
+  "fields": [
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0"
+  ],
+  "observation_lag_days": 0,
+  "observed_at_utc": "2026-08-15T01:51:00Z",
+  "satcat_changes": [
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2024-016D",
+      "CURRENT_LAUNCH": "2024-01-23",
+      "CURRENT_NAME": "TAIJING-4 03",
+      "NORAD_CAT_ID": "58823",
+      "OBJECT_NUMBER": "58823",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2024-016D",
+      "PREVIOUS_LAUNCH": "2024-01-23",
+      "PREVIOUS_NAME": "OBJECT D"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181U",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38263",
+      "NORAD_CAT_ID": "100264",
+      "OBJECT_NUMBER": "100264",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2024-016C",
+      "CURRENT_LAUNCH": "2024-01-23",
+      "CURRENT_NAME": "TAIJING-3 02",
+      "NORAD_CAT_ID": "58822",
+      "OBJECT_NUMBER": "58822",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2024-016C",
+      "PREVIOUS_LAUNCH": "2024-01-23",
+      "PREVIOUS_NAME": "OBJECT C"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-176J",
+      "CURRENT_LAUNCH": "2026-08-04",
+      "CURRENT_NAME": "HULIANWANG DIGUI-186",
+      "NORAD_CAT_ID": "100211",
+      "OBJECT_NUMBER": "100211",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-176J",
+      "PREVIOUS_LAUNCH": "2026-08-04",
+      "PREVIOUS_NAME": "OBJECT J"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-176C",
+      "CURRENT_LAUNCH": "2026-08-04",
+      "CURRENT_NAME": "HULIANWANG DIGUI-180",
+      "NORAD_CAT_ID": "100205",
+      "OBJECT_NUMBER": "100205",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-176C",
+      "PREVIOUS_LAUNCH": "2026-08-04",
+      "PREVIOUS_NAME": "OBJECT C"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181Y",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38129",
+      "NORAD_CAT_ID": "100268",
+      "OBJECT_NUMBER": "100268",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181F",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38168",
+      "NORAD_CAT_ID": "100251",
+      "OBJECT_NUMBER": "100251",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181W",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38242",
+      "NORAD_CAT_ID": "100266",
+      "OBJECT_NUMBER": "100266",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-137C",
+      "CURRENT_LAUNCH": "2026-06-17",
+      "CURRENT_NAME": "HULIANWANG DIGUI-171",
+      "NORAD_CAT_ID": "69574",
+      "OBJECT_NUMBER": "69574",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-137C",
+      "PREVIOUS_LAUNCH": "2026-06-17",
+      "PREVIOUS_NAME": "OBJECT C"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-137G",
+      "CURRENT_LAUNCH": "2026-06-17",
+      "CURRENT_NAME": "HULIANWANG DIGUI-175",
+      "NORAD_CAT_ID": "69578",
+      "OBJECT_NUMBER": "69578",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-137G",
+      "PREVIOUS_LAUNCH": "2026-06-17",
+      "PREVIOUS_NAME": "OBJECT G"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181N",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38154",
+      "NORAD_CAT_ID": "100258",
+      "OBJECT_NUMBER": "100258",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": "2025-11-16",
+      "CURRENT_INTLDES": "2024-016F",
+      "CURRENT_LAUNCH": "2024-01-23",
+      "CURRENT_NAME": "TAIJING-2 02",
+      "NORAD_CAT_ID": "58825",
+      "OBJECT_NUMBER": "58825",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": "2025-11-16",
+      "PREVIOUS_INTLDES": "2024-016F",
+      "PREVIOUS_LAUNCH": "2024-01-23",
+      "PREVIOUS_NAME": "OBJECT F"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181L",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38144",
+      "NORAD_CAT_ID": "100256",
+      "OBJECT_NUMBER": "100256",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-137H",
+      "CURRENT_LAUNCH": "2026-06-17",
+      "CURRENT_NAME": "HULIANWANG DIGUI-176",
+      "NORAD_CAT_ID": "69579",
+      "OBJECT_NUMBER": "69579",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-137H",
+      "PREVIOUS_LAUNCH": "2026-06-17",
+      "PREVIOUS_NAME": "OBJECT H"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181R",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-37947",
+      "NORAD_CAT_ID": "100261",
+      "OBJECT_NUMBER": "100261",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-176A",
+      "CURRENT_LAUNCH": "2026-08-04",
+      "CURRENT_NAME": "HULIANWANG DIGUI-178",
+      "NORAD_CAT_ID": "100203",
+      "OBJECT_NUMBER": "100203",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-176A",
+      "PREVIOUS_LAUNCH": "2026-08-04",
+      "PREVIOUS_NAME": "OBJECT A"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": "2024-06-24",
+      "CURRENT_INTLDES": "2024-016E",
+      "CURRENT_LAUNCH": "2024-01-23",
+      "CURRENT_NAME": "ZK-1A R/B",
+      "NORAD_CAT_ID": "58824",
+      "OBJECT_NUMBER": "58824",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": "2024-06-24",
+      "PREVIOUS_INTLDES": "2024-016E",
+      "PREVIOUS_LAUNCH": "2024-01-23",
+      "PREVIOUS_NAME": "OBJECT E"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2024-016A",
+      "CURRENT_LAUNCH": "2024-01-23",
+      "CURRENT_NAME": "TAIJING-2 04",
+      "NORAD_CAT_ID": "58820",
+      "OBJECT_NUMBER": "58820",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2024-016A",
+      "PREVIOUS_LAUNCH": "2024-01-23",
+      "PREVIOUS_NAME": "OBJECT A"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-137D",
+      "CURRENT_LAUNCH": "2026-06-17",
+      "CURRENT_NAME": "HULIANWANG DIGUI-172",
+      "NORAD_CAT_ID": "69575",
+      "OBJECT_NUMBER": "69575",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-137D",
+      "PREVIOUS_LAUNCH": "2026-06-17",
+      "PREVIOUS_NAME": "OBJECT D"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181M",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38167",
+      "NORAD_CAT_ID": "100257",
+      "OBJECT_NUMBER": "100257",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-176B",
+      "CURRENT_LAUNCH": "2026-08-04",
+      "CURRENT_NAME": "HULIANWANG DIGUI-179",
+      "NORAD_CAT_ID": "100204",
+      "OBJECT_NUMBER": "100204",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-176B",
+      "PREVIOUS_LAUNCH": "2026-08-04",
+      "PREVIOUS_NAME": "OBJECT B"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-176H",
+      "CURRENT_LAUNCH": "2026-08-04",
+      "CURRENT_NAME": "HULIANWANG DIGUI-185",
+      "NORAD_CAT_ID": "100210",
+      "OBJECT_NUMBER": "100210",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-176H",
+      "PREVIOUS_LAUNCH": "2026-08-04",
+      "PREVIOUS_NAME": "OBJECT H"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-176D",
+      "CURRENT_LAUNCH": "2026-08-04",
+      "CURRENT_NAME": "HULIANWANG DIGUI-181",
+      "NORAD_CAT_ID": "100206",
+      "OBJECT_NUMBER": "100206",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-176D",
+      "PREVIOUS_LAUNCH": "2026-08-04",
+      "PREVIOUS_NAME": "OBJECT D"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181S",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38279",
+      "NORAD_CAT_ID": "100262",
+      "OBJECT_NUMBER": "100262",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181H",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38243",
+      "NORAD_CAT_ID": "100253",
+      "OBJECT_NUMBER": "100253",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181K",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38266",
+      "NORAD_CAT_ID": "100255",
+      "OBJECT_NUMBER": "100255",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-137A",
+      "CURRENT_LAUNCH": "2026-06-17",
+      "CURRENT_NAME": "HULIANWANG DIGUI-169",
+      "NORAD_CAT_ID": "69572",
+      "OBJECT_NUMBER": "69572",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-137A",
+      "PREVIOUS_LAUNCH": "2026-06-17",
+      "PREVIOUS_NAME": "OBJECT A"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181T",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38157",
+      "NORAD_CAT_ID": "100263",
+      "OBJECT_NUMBER": "100263",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181D",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38233",
+      "NORAD_CAT_ID": "100249",
+      "OBJECT_NUMBER": "100249",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181V",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38280",
+      "NORAD_CAT_ID": "100265",
+      "OBJECT_NUMBER": "100265",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "TBD",
+      "CURRENT_DECAY": "2026-08-11",
+      "CURRENT_INTLDES": "2025-313BD",
+      "CURRENT_LAUNCH": "2025-12-28",
+      "CURRENT_NAME": "OBJECT BD",
+      "NORAD_CAT_ID": "67299",
+      "OBJECT_NUMBER": "67299",
+      "PREVIOUS_COUNTRY": "TBD",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2025-313BD",
+      "PREVIOUS_LAUNCH": "2025-12-28",
+      "PREVIOUS_NAME": "OBJECT BD"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-176E",
+      "CURRENT_LAUNCH": "2026-08-04",
+      "CURRENT_NAME": "HULIANWANG DIGUI-182",
+      "NORAD_CAT_ID": "100207",
+      "OBJECT_NUMBER": "100207",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-176E",
+      "PREVIOUS_LAUNCH": "2026-08-04",
+      "PREVIOUS_NAME": "OBJECT E"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181Q",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38232",
+      "NORAD_CAT_ID": "100260",
+      "OBJECT_NUMBER": "100260",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-176G",
+      "CURRENT_LAUNCH": "2026-08-04",
+      "CURRENT_NAME": "HULIANWANG DIGUI-184",
+      "NORAD_CAT_ID": "100209",
+      "OBJECT_NUMBER": "100209",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-176G",
+      "PREVIOUS_LAUNCH": "2026-08-04",
+      "PREVIOUS_NAME": "OBJECT G"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-137J",
+      "CURRENT_LAUNCH": "2026-06-17",
+      "CURRENT_NAME": "HULIANWANG DIGUI-177",
+      "NORAD_CAT_ID": "69580",
+      "OBJECT_NUMBER": "69580",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-137J",
+      "PREVIOUS_LAUNCH": "2026-06-17",
+      "PREVIOUS_NAME": "OBJECT J"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-08-13",
+      "CURRENT_INTLDES": "2021-040AJ",
+      "CURRENT_LAUNCH": "2021-05-09",
+      "CURRENT_NAME": "STARLINK-2582",
+      "NORAD_CAT_ID": "48460",
+      "OBJECT_NUMBER": "48460",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2021-040AJ",
+      "PREVIOUS_LAUNCH": "2021-05-09",
+      "PREVIOUS_NAME": "STARLINK-2582"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2024-016B",
+      "CURRENT_LAUNCH": "2024-01-23",
+      "CURRENT_NAME": "TAIJING-1 03",
+      "NORAD_CAT_ID": "58821",
+      "OBJECT_NUMBER": "58821",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2024-016B",
+      "PREVIOUS_LAUNCH": "2024-01-23",
+      "PREVIOUS_NAME": "OBJECT B"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-137B",
+      "CURRENT_LAUNCH": "2026-06-17",
+      "CURRENT_NAME": "HULIANWANG DIGUI-170",
+      "NORAD_CAT_ID": "69573",
+      "OBJECT_NUMBER": "69573",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-137B",
+      "PREVIOUS_LAUNCH": "2026-06-17",
+      "PREVIOUS_NAME": "OBJECT B"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181J",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38252",
+      "NORAD_CAT_ID": "100254",
+      "OBJECT_NUMBER": "100254",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-137F",
+      "CURRENT_LAUNCH": "2026-06-17",
+      "CURRENT_NAME": "HULIANWANG DIGUI-174",
+      "NORAD_CAT_ID": "69577",
+      "OBJECT_NUMBER": "69577",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-137F",
+      "PREVIOUS_LAUNCH": "2026-06-17",
+      "PREVIOUS_NAME": "OBJECT F"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181E",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38163",
+      "NORAD_CAT_ID": "100250",
+      "OBJECT_NUMBER": "100250",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181B",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38246",
+      "NORAD_CAT_ID": "100247",
+      "OBJECT_NUMBER": "100247",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "CA",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-156AV",
+      "CURRENT_LAUNCH": "2026-07-07",
+      "CURRENT_NAME": "MARMOTSAT",
+      "NORAD_CAT_ID": "69912",
+      "OBJECT_NUMBER": "69912",
+      "PREVIOUS_COUNTRY": "CAN",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-156AV",
+      "PREVIOUS_LAUNCH": "2026-07-07",
+      "PREVIOUS_NAME": "MARMOTSAT"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-176F",
+      "CURRENT_LAUNCH": "2026-08-04",
+      "CURRENT_NAME": "HULIANWANG DIGUI-183",
+      "NORAD_CAT_ID": "100208",
+      "OBJECT_NUMBER": "100208",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-176F",
+      "PREVIOUS_LAUNCH": "2026-08-04",
+      "PREVIOUS_NAME": "OBJECT F"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181X",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38212",
+      "NORAD_CAT_ID": "100267",
+      "OBJECT_NUMBER": "100267",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181C",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38221",
+      "NORAD_CAT_ID": "100248",
+      "OBJECT_NUMBER": "100248",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-137E",
+      "CURRENT_LAUNCH": "2026-06-17",
+      "CURRENT_NAME": "HULIANWANG DIGUI-173",
+      "NORAD_CAT_ID": "69576",
+      "OBJECT_NUMBER": "69576",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-137E",
+      "PREVIOUS_LAUNCH": "2026-06-17",
+      "PREVIOUS_NAME": "OBJECT E"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181Z",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38255",
+      "NORAD_CAT_ID": "100269",
+      "OBJECT_NUMBER": "100269",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181G",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38259",
+      "NORAD_CAT_ID": "100252",
+      "OBJECT_NUMBER": "100252",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-08-13",
+      "CURRENT_INTLDES": "2023-102C",
+      "CURRENT_LAUNCH": "2023-07-20",
+      "CURRENT_NAME": "STARLINK-30195",
+      "NORAD_CAT_ID": "57406",
+      "OBJECT_NUMBER": "57406",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2023-102C",
+      "PREVIOUS_LAUNCH": "2023-07-20",
+      "PREVIOUS_NAME": "STARLINK-30195"
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181A",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38191",
+      "NORAD_CAT_ID": "100246",
+      "OBJECT_NUMBER": "100246",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-08-14 17:59:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-181P",
+      "CURRENT_LAUNCH": "2026-08-08",
+      "CURRENT_NAME": "STARLINK-38187",
+      "NORAD_CAT_ID": "100259",
+      "OBJECT_NUMBER": "100259",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    }
+  ],
+  "schema": "rso-annotations-v2",
+  "source": "space-track.org",
+  "tip_messages": [
+    {
+      "DECAY_EPOCH": "2026-08-14 19:29:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66405",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-08-14 09:06:34",
+      "LAT": "2.6",
+      "LON": "232.3",
+      "MSG_EPOCH": "2026-08-14 08:51:00",
+      "NEXT_REPORT": "6",
+      "NORAD_CAT_ID": "47590",
+      "OBJECT_NUMBER": "47590",
+      "REV": "30578",
+      "WINDOW": "120"
+    },
+    {
+      "DECAY_EPOCH": "2026-08-14 19:39:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66406",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-08-14 20:46:23",
+      "LAT": "-29.5",
+      "LON": "256.8",
+      "MSG_EPOCH": "2026-08-14 20:37:00",
+      "NEXT_REPORT": "2",
+      "NORAD_CAT_ID": "47590",
+      "OBJECT_NUMBER": "47590",
+      "REV": "30578",
+      "WINDOW": "22"
+    },
+    {
+      "DECAY_EPOCH": "2026-08-16 15:48:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66408",
+      "INCL": "43",
+      "INSERT_EPOCH": "2026-08-14 21:46:31",
+      "LAT": "41.4",
+      "LON": "218.4",
+      "MSG_EPOCH": "2026-08-14 21:29:00",
+      "NEXT_REPORT": "24",
+      "NORAD_CAT_ID": "67630",
+      "OBJECT_NUMBER": "67630",
+      "REV": "657",
+      "WINDOW": "540"
+    }
+  ],
+  "window_end_utc": "2026-08-15T00:00:00Z",
+  "window_start_utc": "2026-08-14T00:00:00Z"
+}
