@@ -2,51 +2,51 @@
   "branch": "node",
   "chunks": [
     {
-      "count": 119,
+      "count": 120,
       "first": "2026-04-20",
-      "last": "2026-08-16",
+      "last": "2026-08-17",
       "path": "index/2026.json",
-      "sha256": "2c847c1e95f9521dc5fb478225bf9bc790d012928db856b959095536521c931e",
+      "sha256": "e6007605ba42c53c0576a770341185149f1ce7b3096d7dff14567556b17d3358",
       "year": "2026"
     }
   ],
-  "day_count": 119,
+  "day_count": 120,
   "first": "2026-04-20",
-  "generated_at_utc": "2026-08-16T01:59:51Z",
-  "latest": "2026-08-16",
+  "generated_at_utc": "2026-08-17T01:57:17Z",
+  "latest": "2026-08-17",
   "latestEntry": {
     "anno_summary": {
-      "decay_notices": 6,
-      "directory_changes": 35,
-      "tip_count": 9
+      "decay_notices": 4,
+      "directory_changes": 23,
+      "tip_count": 1
     },
     "band_counts": {
       "geo": 1847,
-      "leo": 29740,
+      "leo": 29747,
       "meo": 3696
     },
-    "catalog_url": "https://raw.githubusercontent.com/brookr/RSO/node/data/2026/08/16/catalog.json.gz",
+    "catalog_url": "https://raw.githubusercontent.com/brookr/RSO/node/data/2026/08/17/catalog.json.gz",
     "catalog_url_kind": "catalog_gz",
-    "compressed_bytes": 11497193,
+    "compressed_bytes": 11545422,
     "content_schema": "rso-core-v1",
-    "content_sha256": "009cda50306f0ed24e5dde7b995c7ae3a86112aff391e4a63e5950ac284f294f",
-    "date": "2026-08-16",
+    "content_sha256": "213e11498c086978e1d0a6b214d5abbf810243bdcce17e3845a39a7605e6c9e9",
+    "date": "2026-08-17",
     "delta": {
       "decayed": 0,
-      "new": 0,
-      "updated": 28237
+      "new": 8,
+      "updated": 28146
     },
-    "object_count": 68912,
-    "on_orbit_count": 35283,
+    "object_count": 68920,
+    "on_orbit_count": 35290,
     "provenance": "rolling_gp_history_delta",
-    "reentered_count": 33629,
-    "sha256": "a46acf75945c1cb42ceb8b7fdb09537c58e1ee68a91d60d56a3a3b14394f3b84",
+    "reentered_count": 33630,
+    "sha256": "f588882dc6211c2f58779d21dcfcb034cfd5c0845928738bc0f10c1b0e70bc50",
     "type_counts": {
       "debris": 12386,
-      "payload": 18804,
+      "payload": 18803,
       "rocket": 2259,
       "tba": 0,
-      "unknown": 1834
+      "unknown": 1842
     }
   },
   "repo": "brookr/RSO",
