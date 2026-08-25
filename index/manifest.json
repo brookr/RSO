@@ -2,47 +2,47 @@
   "branch": "node",
   "chunks": [
     {
-      "count": 127,
+      "count": 128,
       "first": "2026-04-20",
-      "last": "2026-08-24",
+      "last": "2026-08-25",
       "path": "index/2026.json",
-      "sha256": "e7f7803be0640a8907c0e571ffb0467be59352c76f6ef6473bd5d3fcf020b386",
+      "sha256": "2f6d087826f576b8462ad6c9c239823ca4a6e94ddb843d16818b579530459c01",
       "year": "2026"
     }
   ],
-  "day_count": 127,
+  "day_count": 128,
   "first": "2026-04-20",
-  "generated_at_utc": "2026-08-24T02:00:01Z",
-  "latest": "2026-08-24",
+  "generated_at_utc": "2026-08-25T01:54:10Z",
+  "latest": "2026-08-25",
   "latestEntry": {
     "anno_summary": {
-      "decay_notices": 6,
-      "directory_changes": 33,
-      "tip_count": 12
+      "decay_notices": 19,
+      "directory_changes": 15,
+      "tip_count": 16
     },
     "band_counts": {
       "geo": 1853,
-      "leo": 29814,
+      "leo": 29812,
       "meo": 3693
     },
-    "catalog_url": "https://raw.githubusercontent.com/brookr/RSO/node/data/2026/08/24/catalog.json.gz",
+    "catalog_url": "https://raw.githubusercontent.com/brookr/RSO/node/data/2026/08/25/catalog.json.gz",
     "catalog_url_kind": "catalog_gz",
-    "compressed_bytes": 11579877,
+    "compressed_bytes": 11593816,
     "content_schema": "rso-core-v1",
-    "content_sha256": "1c158db7c4bf33516bf72054402919ae01313955e67597c934b0f32955d0a278",
-    "date": "2026-08-24",
+    "content_sha256": "98a9668f08adda4b7fa7da3423c10862812f423352fe6cae64108a88533f1c5d",
+    "date": "2026-08-25",
     "delta": {
       "decayed": 0,
       "new": 0,
-      "updated": 27758
+      "updated": 27555
     },
     "object_count": 68997,
-    "on_orbit_count": 35360,
+    "on_orbit_count": 35358,
     "provenance": "rolling_gp_history_delta",
-    "reentered_count": 33637,
-    "sha256": "8c966a57604e8be6d2b32f8f45ff20994d4973456b1258a4855e5dff3296b790",
+    "reentered_count": 33639,
+    "sha256": "09eddb6d709ba93e7c2c80dfef4eed626a0c6c5f06aba85268ef836343f3b222",
     "type_counts": {
-      "debris": 12389,
+      "debris": 12387,
       "payload": 18882,
       "rocket": 2260,
       "tba": 0,
