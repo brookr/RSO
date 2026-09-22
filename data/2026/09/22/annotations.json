@@ -1,0 +1,1555 @@
+{
+  "api_query_paths": [
+    "/class/satcat_change/CHANGE_MADE/2026-09-21T00:00:00--2026-09-22T00:00:00/orderby/CHANGE_MADE%20asc/format/json",
+    "/class/decay/MSG_EPOCH/2026-09-21T00:00:00--2026-09-22T00:00:00/MSG_TYPE/Historical/DECAY_EPOCH/2026-08-22--2026-09-29/orderby/MSG_EPOCH%20asc/format/json",
+    "/class/tip/MSG_EPOCH/2026-09-21T00:00:00--2026-09-22T00:00:00/DECAY_EPOCH/2026-08-22--2026-11-21/orderby/MSG_EPOCH%20asc/format/json"
+  ],
+  "baseline": false,
+  "catalog_changes": [
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "2219",
+      "previous": "LARGE"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "2654",
+      "previous": "LARGE"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "28491",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "43381",
+      "previous": "LARGE"
+    },
+    {
+      "current": "2026-09-20",
+      "field": "DECAY_DATE",
+      "first_observation": false,
+      "norad_cat_id": "47596",
+      "previous": null
+    },
+    {
+      "current": "BSLT-3",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "69009",
+      "previous": "OBJECT AF"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69009",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 BSLT-3",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "69009",
+      "previous": "0 OBJECT AF"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100282",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100419",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100500",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100702",
+      "previous": null
+    },
+    {
+      "current": "PRC",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100711",
+      "previous": null
+    },
+    {
+      "current": "2026-09-15",
+      "field": "LAUNCH_DATE",
+      "first_observation": false,
+      "norad_cat_id": "100711",
+      "previous": null
+    },
+    {
+      "current": "OBJECT K",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "100711",
+      "previous": "TBA - TO BE ASSIGNED"
+    },
+    {
+      "current": "YSLA",
+      "field": "SITE",
+      "first_observation": false,
+      "norad_cat_id": "100711",
+      "previous": null
+    },
+    {
+      "current": "0 OBJECT K",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "100711",
+      "previous": "0 TBA - TO BE ASSIGNED"
+    },
+    {
+      "current": "JPN",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100746",
+      "previous": null
+    },
+    {
+      "current": "2026-09-19",
+      "field": "LAUNCH_DATE",
+      "first_observation": false,
+      "norad_cat_id": "100746",
+      "previous": null
+    },
+    {
+      "current": "STRIX-10",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "100746",
+      "previous": "TBA - TO BE ASSIGNED"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100746",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "RLLC",
+      "field": "SITE",
+      "first_observation": false,
+      "norad_cat_id": "100746",
+      "previous": null
+    },
+    {
+      "current": "0 STRIX-10",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "100746",
+      "previous": "0 TBA - TO BE ASSIGNED"
+    },
+    {
+      "current": "PRC",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100780",
+      "previous": null
+    },
+    {
+      "current": "2026-09-21",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100780",
+      "previous": null
+    },
+    {
+      "current": "2026-220A",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100780",
+      "previous": null
+    },
+    {
+      "current": "OBJECT A",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100780",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100780",
+      "previous": null
+    },
+    {
+      "current": "JSC",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100780",
+      "previous": null
+    },
+    {
+      "current": "0 OBJECT A",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100780",
+      "previous": null
+    },
+    {
+      "current": "PRC",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100786",
+      "previous": null
+    },
+    {
+      "current": "2026-09-21",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100786",
+      "previous": null
+    },
+    {
+      "current": "2026-220G",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100786",
+      "previous": null
+    },
+    {
+      "current": "OBJECT G",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100786",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100786",
+      "previous": null
+    },
+    {
+      "current": "JSC",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100786",
+      "previous": null
+    },
+    {
+      "current": "0 OBJECT G",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100786",
+      "previous": null
+    },
+    {
+      "current": "PRC",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100787",
+      "previous": null
+    },
+    {
+      "current": "2026-09-21",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100787",
+      "previous": null
+    },
+    {
+      "current": "2026-220H",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100787",
+      "previous": null
+    },
+    {
+      "current": "OBJECT H",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100787",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100787",
+      "previous": null
+    },
+    {
+      "current": "JSC",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100787",
+      "previous": null
+    },
+    {
+      "current": "0 OBJECT H",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100787",
+      "previous": null
+    },
+    {
+      "current": "PRC",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "100788",
+      "previous": null
+    },
+    {
+      "current": "2026-09-21",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "100788",
+      "previous": null
+    },
+    {
+      "current": "2026-220J",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "100788",
+      "previous": null
+    },
+    {
+      "current": "OBJECT J",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "100788",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "100788",
+      "previous": null
+    },
+    {
+      "current": "JSC",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "100788",
+      "previous": null
+    },
+    {
+      "current": "0 OBJECT J",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "100788",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": false,
+      "norad_cat_id": "270290",
+      "previous": "1987-060Z"
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290000",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290000",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290000",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290000",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290001",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290001",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290001",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290001",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290002",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290002",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290002",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290002",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290003",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290003",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290003",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290003",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290004",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290004",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290004",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290004",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290005",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290005",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290005",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290005",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290006",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290006",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290006",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290006",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290007",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290007",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290007",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290007",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290008",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290008",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290008",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290008",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290009",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290009",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290009",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290009",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290010",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290010",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290010",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290010",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290011",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290011",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290011",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290011",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290012",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290012",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290012",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290012",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290013",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290013",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290013",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290013",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290014",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290014",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290014",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290014",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290015",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290015",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290015",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290015",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290016",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290016",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290016",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290016",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290017",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290017",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290017",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290017",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290018",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290018",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290018",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290018",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290019",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290019",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290019",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290019",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290020",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290020",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290020",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290020",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290021",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290021",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290021",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290021",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290022",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290022",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290022",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290022",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290023",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290023",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290023",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290023",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290024",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290024",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290024",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290024",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290025",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290025",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290025",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290025",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290026",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290026",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290026",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290026",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "290027",
+      "previous": null
+    },
+    {
+      "current": "TBA - TO BE ASSIGNED",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "290027",
+      "previous": null
+    },
+    {
+      "current": "UNKNOWN",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "290027",
+      "previous": null
+    },
+    {
+      "current": "0 TBA - TO BE ASSIGNED",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "290027",
+      "previous": null
+    }
+  ],
+  "date": "2026-09-22",
+  "decay_messages": [
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-09-20 0:00:00",
+      "INTLDES": "2021-009BA",
+      "MSG_EPOCH": "2026-09-21 04:53:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "47596",
+      "OBJECT_ID": "2021-009BA",
+      "OBJECT_NAME": "STARLINK-2001",
+      "OBJECT_NUMBER": "47596",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "decay_msg"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-09-21 0:00:00",
+      "INTLDES": "2020-062BC",
+      "MSG_EPOCH": "2026-09-21 09:13:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "46375",
+      "OBJECT_ID": "2020-062BC",
+      "OBJECT_NAME": "STARLINK-1724",
+      "OBJECT_NUMBER": "46375",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "decay_msg"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-09-16 0:00:00",
+      "INTLDES": "2020-073AM",
+      "MSG_EPOCH": "2026-09-21 18:21:13",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "46705",
+      "OBJECT_ID": "2020-073AM",
+      "OBJECT_NAME": "STARLINK-1805",
+      "OBJECT_NUMBER": "46705",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-09-20 0:00:00",
+      "INTLDES": "2021-009BA",
+      "MSG_EPOCH": "2026-09-21 18:21:13",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "47596",
+      "OBJECT_ID": "2021-009BA",
+      "OBJECT_NAME": "STARLINK-2001",
+      "OBJECT_NUMBER": "47596",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "ESA",
+      "DECAY_EPOCH": "2026-09-01 0:00:00",
+      "INTLDES": "2000-045B",
+      "MSG_EPOCH": "2026-09-21 18:21:13",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "26464",
+      "OBJECT_ID": "2000-045B",
+      "OBJECT_NAME": "CLUSTER II-FM8",
+      "OBJECT_NUMBER": "26464",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "PRC",
+      "DECAY_EPOCH": "2026-09-20 0:00:00",
+      "INTLDES": "2021-039E",
+      "MSG_EPOCH": "2026-09-21 18:21:13",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "48427",
+      "OBJECT_ID": "2021-039E",
+      "OBJECT_NAME": "CZ-2C R/B",
+      "OBJECT_NUMBER": "48427",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-09-03 0:00:00",
+      "INTLDES": "2022-099AM",
+      "MSG_EPOCH": "2026-09-21 18:21:13",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "53500",
+      "OBJECT_ID": "2022-099AM",
+      "OBJECT_NAME": "STARLINK-4455",
+      "OBJECT_NUMBER": "53500",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    }
+  ],
+  "fields": [
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0"
+  ],
+  "observation_lag_days": 0,
+  "observed_at_utc": "2026-09-22T04:52:22Z",
+  "satcat_changes": [
+    {
+      "CHANGE_MADE": "2026-09-21 18:21:13",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": "2026-09-20",
+      "CURRENT_INTLDES": "2021-039E",
+      "CURRENT_LAUNCH": "2021-05-06",
+      "CURRENT_NAME": "CZ-2C R/B",
+      "NORAD_CAT_ID": "48427",
+      "OBJECT_NUMBER": "48427",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2021-039E",
+      "PREVIOUS_LAUNCH": "2021-05-06",
+      "PREVIOUS_NAME": "CZ-2C R/B"
+    },
+    {
+      "CHANGE_MADE": "2026-09-21 18:21:13",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-09-20",
+      "CURRENT_INTLDES": "2021-009BA",
+      "CURRENT_LAUNCH": "2021-02-04",
+      "CURRENT_NAME": "STARLINK-2001",
+      "NORAD_CAT_ID": "47596",
+      "OBJECT_NUMBER": "47596",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2021-009BA",
+      "PREVIOUS_LAUNCH": "2021-02-04",
+      "PREVIOUS_NAME": "STARLINK-2001"
+    },
+    {
+      "CHANGE_MADE": "2026-09-21 18:21:13",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-100AF",
+      "CURRENT_LAUNCH": "2026-05-03",
+      "CURRENT_NAME": "BSLT-3",
+      "NORAD_CAT_ID": "69009",
+      "OBJECT_NUMBER": "69009",
+      "PREVIOUS_COUNTRY": "TBD",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-100AF",
+      "PREVIOUS_LAUNCH": "2026-05-03",
+      "PREVIOUS_NAME": "OBJECT AF"
+    },
+    {
+      "CHANGE_MADE": "2026-09-21 18:21:13",
+      "CURRENT_COUNTRY": "PRC",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-213B",
+      "CURRENT_LAUNCH": "2023-09-17",
+      "CURRENT_NAME": "OBJECT B",
+      "NORAD_CAT_ID": "100715",
+      "OBJECT_NUMBER": "100715",
+      "PREVIOUS_COUNTRY": "PRC",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2023-213B",
+      "PREVIOUS_LAUNCH": "2023-09-17",
+      "PREVIOUS_NAME": "OBJECT B"
+    }
+  ],
+  "schema": "rso-annotations-v2",
+  "source": "space-track.org",
+  "tip_messages": [
+    {
+      "DECAY_EPOCH": "2026-09-21 03:45:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66964",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-09-21 01:36:32",
+      "LAT": "32.4",
+      "LON": "129.2",
+      "MSG_EPOCH": "2026-09-21 01:28:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "46375",
+      "OBJECT_NUMBER": "46375",
+      "REV": "33636",
+      "WINDOW": "60"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-21 14:03:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66965",
+      "INCL": "97.6",
+      "INSERT_EPOCH": "2026-09-21 01:46:49",
+      "LAT": "-28.6",
+      "LON": "1.4",
+      "MSG_EPOCH": "2026-09-21 01:40:00",
+      "NEXT_REPORT": "6",
+      "NORAD_CAT_ID": "53492",
+      "OBJECT_NUMBER": "53492",
+      "REV": "22624",
+      "WINDOW": "180"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-21 05:25:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66966",
+      "INCL": "43",
+      "INSERT_EPOCH": "2026-09-21 03:26:51",
+      "LAT": "24.9",
+      "LON": "162.8",
+      "MSG_EPOCH": "2026-09-21 03:04:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "59322",
+      "OBJECT_NUMBER": "59322",
+      "REV": "14055",
+      "WINDOW": "120"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-20 22:26:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66967",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-09-21 05:06:21",
+      "LAT": "-51.1",
+      "LON": "42.5",
+      "MSG_EPOCH": "2026-09-21 04:51:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "47596",
+      "OBJECT_NUMBER": "47596",
+      "REV": "31153",
+      "WINDOW": "1"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-25 05:36:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66968",
+      "INCL": "70",
+      "INSERT_EPOCH": "2026-09-21 05:16:22",
+      "LAT": "52.3",
+      "LON": "26.7",
+      "MSG_EPOCH": "2026-09-21 05:07:00",
+      "NEXT_REPORT": "72",
+      "NORAD_CAT_ID": "49176",
+      "OBJECT_NUMBER": "49176",
+      "REV": "27747",
+      "WINDOW": "1140"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-21 14:03:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66969",
+      "INCL": "97.6",
+      "INSERT_EPOCH": "2026-09-21 07:56:38",
+      "LAT": "-30.1",
+      "LON": "1",
+      "MSG_EPOCH": "2026-09-21 07:51:00",
+      "NEXT_REPORT": "2",
+      "NORAD_CAT_ID": "53492",
+      "OBJECT_NUMBER": "53492",
+      "REV": "22624",
+      "WINDOW": "60"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-21 02:36:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66970",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-09-21 09:16:22",
+      "LAT": "-41.2",
+      "LON": "215",
+      "MSG_EPOCH": "2026-09-21 09:06:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "46375",
+      "OBJECT_NUMBER": "46375",
+      "REV": "33636",
+      "WINDOW": "1"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-20 21:44:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66971",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-09-21 10:16:21",
+      "LAT": "-42.4",
+      "LON": "22.6",
+      "MSG_EPOCH": "2026-09-21 10:05:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "47171",
+      "OBJECT_NUMBER": "47171",
+      "REV": "32287",
+      "WINDOW": "120"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-22 10:32:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66972",
+      "INCL": "43",
+      "INSERT_EPOCH": "2026-09-21 10:16:21",
+      "LAT": "-15.5",
+      "LON": "230.6",
+      "MSG_EPOCH": "2026-09-21 10:07:00",
+      "NEXT_REPORT": "12",
+      "NORAD_CAT_ID": "58598",
+      "OBJECT_NUMBER": "58598",
+      "REV": "15476",
+      "WINDOW": "360"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-21 05:29:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66973",
+      "INCL": "43",
+      "INSERT_EPOCH": "2026-09-21 11:36:22",
+      "LAT": "-18.9",
+      "LON": "210",
+      "MSG_EPOCH": "2026-09-21 11:23:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "59322",
+      "OBJECT_NUMBER": "59322",
+      "REV": "14055",
+      "WINDOW": "1"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-21 14:03:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66974",
+      "INCL": "97.6",
+      "INSERT_EPOCH": "2026-09-21 11:46:23",
+      "LAT": "-30.1",
+      "LON": "1",
+      "MSG_EPOCH": "2026-09-21 11:38:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "53492",
+      "OBJECT_NUMBER": "53492",
+      "REV": "22624",
+      "WINDOW": "60"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-24 08:15:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66975",
+      "INCL": "20.6",
+      "INSERT_EPOCH": "2026-09-21 15:06:22",
+      "LAT": "-12",
+      "LON": "217.5",
+      "MSG_EPOCH": "2026-09-21 15:03:00",
+      "NEXT_REPORT": "48",
+      "NORAD_CAT_ID": "69792",
+      "OBJECT_NUMBER": "69792",
+      "REV": "1312",
+      "WINDOW": "780"
+    },
+    {
+      "DECAY_EPOCH": "2026-09-21 13:04:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "66976",
+      "INCL": "97.6",
+      "INSERT_EPOCH": "2026-09-21 19:16:22",
+      "LAT": "-13.5",
+      "LON": "200.8",
+      "MSG_EPOCH": "2026-09-21 19:07:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "53492",
+      "OBJECT_NUMBER": "53492",
+      "REV": "22624",
+      "WINDOW": "1"
+    }
+  ],
+  "window_end_utc": "2026-09-22T00:00:00Z",
+  "window_start_utc": "2026-09-21T00:00:00Z"
+}
