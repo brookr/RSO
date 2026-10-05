@@ -2,48 +2,48 @@
   "branch": "node",
   "chunks": [
     {
-      "count": 168,
+      "count": 169,
       "first": "2026-04-20",
-      "last": "2026-10-04",
+      "last": "2026-10-05",
       "path": "index/2026.json",
-      "sha256": "633dc76cb3844894d15ee816cfeef79d1cafceda896ec744e75ff9d5a502100d",
+      "sha256": "f729d66399fdb5dbf646c67f2c031383981475fca601f760bd9e8399239c27df",
       "year": "2026"
     }
   ],
-  "day_count": 168,
+  "day_count": 169,
   "first": "2026-04-20",
-  "generated_at_utc": "2026-10-04T05:51:08Z",
-  "latest": "2026-10-04",
+  "generated_at_utc": "2026-10-05T05:36:20Z",
+  "latest": "2026-10-05",
   "latestEntry": {
     "anno_summary": {
-      "decay_notices": 11,
-      "directory_changes": 11,
+      "decay_notices": 6,
+      "directory_changes": 30,
       "tip_count": 21
     },
     "band_counts": {
       "geo": 1862,
-      "leo": 30222,
+      "leo": 30221,
       "meo": 3701
     },
-    "catalog_url": "https://raw.githubusercontent.com/brookr/RSO/node/data/2026/10/04/catalog.json.gz",
+    "catalog_url": "https://raw.githubusercontent.com/brookr/RSO/node/data/2026/10/05/catalog.json.gz",
     "catalog_url_kind": "catalog_gz",
-    "compressed_bytes": 11615336,
+    "compressed_bytes": 11621166,
     "content_schema": "rso-core-v1",
-    "content_sha256": "200b2b44fc7153e446fa6989d20389b1f7546245b523f334ac0438497fb23f9d",
-    "date": "2026-10-04",
+    "content_sha256": "34d7e711093401e7819d9a01ed9c6c4b10a2c4750cfcd97f00500457dd5a29b9",
+    "date": "2026-10-05",
     "delta": {
       "decayed": 0,
       "new": 0,
-      "updated": 29564
+      "updated": 28268
     },
     "object_count": 69465,
-    "on_orbit_count": 35785,
+    "on_orbit_count": 35784,
     "provenance": "rolling_gp_history_delta",
-    "reentered_count": 33680,
-    "sha256": "9f99df1cd6d720e22a5831e3f0321240e5fb8e5689ede8bc10a1b1083c03cb27",
+    "reentered_count": 33681,
+    "sha256": "3475fcefbb69e827c89685c8fda0497f6d6cb757f32b6d5d0544c08a295b9eb3",
     "type_counts": {
       "debris": 12455,
-      "payload": 19152,
+      "payload": 19151,
       "rocket": 2281,
       "tba": 0,
       "unknown": 1897
