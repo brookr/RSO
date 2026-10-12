@@ -1,0 +1,563 @@
+{
+  "api_query_paths": [
+    "/class/satcat_change/CHANGE_MADE/2026-10-11T00:00:00--2026-10-12T00:00:00/orderby/CHANGE_MADE%20asc/format/json",
+    "/class/decay/MSG_EPOCH/2026-10-11T00:00:00--2026-10-12T00:00:00/MSG_TYPE/Historical/DECAY_EPOCH/2026-09-11--2026-10-19/orderby/MSG_EPOCH%20asc/format/json",
+    "/class/tip/MSG_EPOCH/2026-10-11T00:00:00--2026-10-12T00:00:00/DECAY_EPOCH/2026-09-11--2026-12-11/orderby/MSG_EPOCH%20asc/format/json"
+  ],
+  "baseline": false,
+  "catalog_changes": [
+    {
+      "current": "2026-10-11",
+      "field": "DECAY_DATE",
+      "first_observation": false,
+      "norad_cat_id": "20453",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "25001",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "2026-10-10",
+      "field": "DECAY_DATE",
+      "first_observation": false,
+      "norad_cat_id": "41892",
+      "previous": null
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "46665",
+      "previous": "SMALL"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "48418",
+      "previous": "LARGE"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "66755",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100549",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100554",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100626",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100756",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100762",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100767",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100772",
+      "previous": null
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100784",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100889",
+      "previous": "TBD"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "100891",
+      "previous": null
+    },
+    {
+      "current": "FIN",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100894",
+      "previous": "TBD"
+    },
+    {
+      "current": "UAE",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100897",
+      "previous": "TBD"
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100901",
+      "previous": "TBD"
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100903",
+      "previous": "TBD"
+    },
+    {
+      "current": "CAN",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100909",
+      "previous": "TBD"
+    },
+    {
+      "current": "SWED",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100910",
+      "previous": "TBD"
+    },
+    {
+      "current": "POL",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100913",
+      "previous": "TBD"
+    },
+    {
+      "current": "NETH",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100914",
+      "previous": "TBD"
+    },
+    {
+      "current": "IT",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100917",
+      "previous": "TBD"
+    },
+    {
+      "current": "IT",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100919",
+      "previous": "TBD"
+    },
+    {
+      "current": "UK",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100924",
+      "previous": "TBD"
+    },
+    {
+      "current": "IT",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100925",
+      "previous": "TBD"
+    },
+    {
+      "current": "POL",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100934",
+      "previous": "TBD"
+    },
+    {
+      "current": "POL",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100939",
+      "previous": "TBD"
+    },
+    {
+      "current": "SKOR",
+      "field": "COUNTRY_CODE",
+      "first_observation": false,
+      "norad_cat_id": "100950",
+      "previous": "TBD"
+    }
+  ],
+  "date": "2026-10-12",
+  "decay_messages": [
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-10-10 0:00:00",
+      "INTLDES": "2016-078J",
+      "MSG_EPOCH": "2026-10-11 00:29:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "41892",
+      "OBJECT_ID": "2016-078J",
+      "OBJECT_NAME": "PEGASUS R/B",
+      "OBJECT_NUMBER": "41892",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "decay_msg"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-10-11 0:00:00",
+      "INTLDES": "1990-008B",
+      "MSG_EPOCH": "2026-10-11 09:11:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "20453",
+      "OBJECT_ID": "1990-008B",
+      "OBJECT_NAME": "DELTA 2 R/B(1)",
+      "OBJECT_NUMBER": "20453",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "decay_msg"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-10-10 0:00:00",
+      "INTLDES": "2016-078J",
+      "MSG_EPOCH": "2026-10-11 17:27:13",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "41892",
+      "OBJECT_ID": "2016-078J",
+      "OBJECT_NAME": "PEGASUS R/B",
+      "OBJECT_NUMBER": "41892",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-09-16 0:00:00",
+      "INTLDES": "2020-073AM",
+      "MSG_EPOCH": "2026-10-11 17:27:13",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "46705",
+      "OBJECT_ID": "2020-073AM",
+      "OBJECT_NAME": "STARLINK-1805",
+      "OBJECT_NUMBER": "46705",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-10-11 0:00:00",
+      "INTLDES": "1990-008B",
+      "MSG_EPOCH": "2026-10-11 17:27:13",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "20453",
+      "OBJECT_ID": "1990-008B",
+      "OBJECT_NAME": "DELTA 2 R/B(1)",
+      "OBJECT_NUMBER": "20453",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-10-11 0:00:00",
+      "INTLDES": "2022-105X",
+      "MSG_EPOCH": "2026-10-11 18:14:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "53669",
+      "OBJECT_ID": "2022-105X",
+      "OBJECT_NAME": "STARLINK-4464",
+      "OBJECT_NUMBER": "53669",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "decay_msg"
+    }
+  ],
+  "fields": [
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0"
+  ],
+  "observation_lag_days": 0,
+  "observed_at_utc": "2026-10-12T05:53:53Z",
+  "satcat_changes": [
+    {
+      "CHANGE_MADE": "2026-10-11 17:27:13",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-10-10",
+      "CURRENT_INTLDES": "2016-078J",
+      "CURRENT_LAUNCH": "2016-12-15",
+      "CURRENT_NAME": "PEGASUS R/B",
+      "NORAD_CAT_ID": "41892",
+      "OBJECT_NUMBER": "41892",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2016-078J",
+      "PREVIOUS_LAUNCH": "2016-12-15",
+      "PREVIOUS_NAME": "PEGASUS R/B"
+    },
+    {
+      "CHANGE_MADE": "2026-10-11 17:27:13",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-10-11",
+      "CURRENT_INTLDES": "1990-008B",
+      "CURRENT_LAUNCH": "1990-01-24",
+      "CURRENT_NAME": "DELTA 2 R/B(1)",
+      "NORAD_CAT_ID": "20453",
+      "OBJECT_NUMBER": "20453",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "1990-008B",
+      "PREVIOUS_LAUNCH": "1990-01-24",
+      "PREVIOUS_NAME": "DELTA 2 R/B(1)"
+    }
+  ],
+  "schema": "rso-annotations-v2",
+  "source": "space-track.org",
+  "tip_messages": [
+    {
+      "DECAY_EPOCH": "2026-10-12 23:13:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67265",
+      "INCL": "55",
+      "INSERT_EPOCH": "2026-10-11 00:46:22",
+      "LAT": "35.9",
+      "LON": "280.9",
+      "MSG_EPOCH": "2026-10-11 00:43:00",
+      "NEXT_REPORT": "24",
+      "NORAD_CAT_ID": "62459",
+      "OBJECT_NUMBER": "62459",
+      "REV": "10120",
+      "WINDOW": "540"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-12 16:23:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67266",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-10-11 01:36:36",
+      "LAT": "5.2",
+      "LON": "150.9",
+      "MSG_EPOCH": "2026-10-11 01:25:00",
+      "NEXT_REPORT": "24",
+      "NORAD_CAT_ID": "45582",
+      "OBJECT_NUMBER": "45582",
+      "REV": "36001",
+      "WINDOW": "480"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-12 15:37:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67267",
+      "INCL": "55",
+      "INSERT_EPOCH": "2026-10-11 02:06:41",
+      "LAT": "1.7",
+      "LON": "248.8",
+      "MSG_EPOCH": "2026-10-11 01:54:00",
+      "NEXT_REPORT": "24",
+      "NORAD_CAT_ID": "62460",
+      "OBJECT_NUMBER": "62460",
+      "REV": "10114",
+      "WINDOW": "420"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-11 14:28:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67268",
+      "INCL": "97.6",
+      "INSERT_EPOCH": "2026-10-11 03:26:53",
+      "LAT": "6.1",
+      "LON": "123.9",
+      "MSG_EPOCH": "2026-10-11 03:17:00",
+      "NEXT_REPORT": "6",
+      "NORAD_CAT_ID": "53669",
+      "OBJECT_NUMBER": "53669",
+      "REV": "22676",
+      "WINDOW": "120"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-14 23:04:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67269",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-10-11 03:36:42",
+      "LAT": "8.4",
+      "LON": "32.7",
+      "MSG_EPOCH": "2026-10-11 03:26:00",
+      "NEXT_REPORT": "72",
+      "NORAD_CAT_ID": "46709",
+      "OBJECT_NUMBER": "46709",
+      "REV": "33170",
+      "WINDOW": "1080"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-11 14:05:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67270",
+      "INCL": "97.6",
+      "INSERT_EPOCH": "2026-10-11 08:46:21",
+      "LAT": "80.2",
+      "LON": "259.2",
+      "MSG_EPOCH": "2026-10-11 08:38:00",
+      "NEXT_REPORT": "2",
+      "NORAD_CAT_ID": "53669",
+      "OBJECT_NUMBER": "53669",
+      "REV": "22676",
+      "WINDOW": "60"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-11 13:51:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67271",
+      "INCL": "97.6",
+      "INSERT_EPOCH": "2026-10-11 09:36:57",
+      "LAT": "21.8",
+      "LON": "309.3",
+      "MSG_EPOCH": "2026-10-11 09:23:00",
+      "NEXT_REPORT": "2",
+      "NORAD_CAT_ID": "53669",
+      "OBJECT_NUMBER": "53669",
+      "REV": "22676",
+      "WINDOW": "60"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-11 12:59:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67272",
+      "INCL": "97.6",
+      "INSERT_EPOCH": "2026-10-11 10:56:55",
+      "LAT": "11.8",
+      "LON": "146.9",
+      "MSG_EPOCH": "2026-10-11 10:46:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "53669",
+      "OBJECT_NUMBER": "53669",
+      "REV": "22675",
+      "WINDOW": "39"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-12 17:45:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67273",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-10-11 17:36:22",
+      "LAT": "-10.2",
+      "LON": "118.3",
+      "MSG_EPOCH": "2026-10-11 17:25:00",
+      "NEXT_REPORT": "12",
+      "NORAD_CAT_ID": "45582",
+      "OBJECT_NUMBER": "45582",
+      "REV": "36001",
+      "WINDOW": "240"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-11 12:08:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67274",
+      "INCL": "97.6",
+      "INSERT_EPOCH": "2026-10-11 18:06:35",
+      "LAT": "-28",
+      "LON": "341.2",
+      "MSG_EPOCH": "2026-10-11 18:00:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "53669",
+      "OBJECT_NUMBER": "53669",
+      "REV": "22674",
+      "WINDOW": "1"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-14 18:48:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67275",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-10-11 18:26:37",
+      "LAT": "-23.6",
+      "LON": "123.5",
+      "MSG_EPOCH": "2026-10-11 18:20:00",
+      "NEXT_REPORT": "48",
+      "NORAD_CAT_ID": "46709",
+      "OBJECT_NUMBER": "46709",
+      "REV": "33167",
+      "WINDOW": "720"
+    },
+    {
+      "DECAY_EPOCH": "2026-10-12 18:07:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67276",
+      "INCL": "55",
+      "INSERT_EPOCH": "2026-10-11 19:16:33",
+      "LAT": "-24.8",
+      "LON": "190.2",
+      "MSG_EPOCH": "2026-10-11 19:12:00",
+      "NEXT_REPORT": "12",
+      "NORAD_CAT_ID": "62459",
+      "OBJECT_NUMBER": "62459",
+      "REV": "10116",
+      "WINDOW": "420"
+    }
+  ],
+  "window_end_utc": "2026-10-12T00:00:00Z",
+  "window_start_utc": "2026-10-11T00:00:00Z"
+}
