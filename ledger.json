@@ -6799,5 +6799,47 @@
       "tba": 0,
       "unknown": 1909
     }
+  },
+  {
+    "anno_summary": {
+      "decay_notices": 8,
+      "directory_changes": 65,
+      "tip_count": 14
+    },
+    "annotations_sha256": "ad0650088f20c356f14e1827b8f6c9283228e6f01e243946ad54396bb0b95374",
+    "archived_at": "2026-10-24T04:34:34.580275+00:00",
+    "band_counts": {
+      "geo": 1861,
+      "leo": 30432,
+      "meo": 3702
+    },
+    "base_snapshot_date": "2026-10-23",
+    "base_snapshot_sha256": "7ab33c85f276aec4f69ce66d2efeb7e57565c3a3f81ba5950f7a419fabf9fada",
+    "compressed_bytes": 11681604,
+    "conjunctions_sha256": "fdfdacbb72382f3d8db9637fd7cd9947f0fad5b88073a60e296ab07b0633e34a",
+    "content_schema": "rso-core-v1",
+    "content_sha256": "eadd50150679307e673940bf4e11b9101073a0447c2d34f709b139adb001e064",
+    "date": "2026-10-24",
+    "delta": {
+      "decayed": 0,
+      "new": 32,
+      "updated": 25921
+    },
+    "delta_window_end_utc": "2026-10-24T00:00:00Z",
+    "delta_window_start_utc": "2026-10-23T00:00:00Z",
+    "object_count": 69704,
+    "on_orbit_count": 35995,
+    "provenance": "rolling_gp_history_delta",
+    "query_strategy": "prior_snapshot_plus_bounded_gp_history_delta",
+    "reentered_count": 33709,
+    "sha256": "e409947ba95df50468e8638d5ba0ab2505b49dcc6521a30ff3632447d4436e7b",
+    "state_as_of_utc": "2026-10-24T00:00:00Z",
+    "type_counts": {
+      "debris": 12486,
+      "payload": 19300,
+      "rocket": 2280,
+      "tba": 0,
+      "unknown": 1929
+    }
   }
 ]
