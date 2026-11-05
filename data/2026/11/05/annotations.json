@@ -1,0 +1,4917 @@
+{
+  "api_query_paths": [
+    "/class/satcat_change/CHANGE_MADE/2026-11-04T00:00:00--2026-11-05T00:00:00/orderby/CHANGE_MADE%20asc/format/json",
+    "/class/decay/MSG_EPOCH/2026-11-04T00:00:00--2026-11-05T00:00:00/MSG_TYPE/Historical/DECAY_EPOCH/2026-10-05--2026-11-12/orderby/MSG_EPOCH%20asc/format/json",
+    "/class/tip/MSG_EPOCH/2026-11-04T00:00:00--2026-11-05T00:00:00/DECAY_EPOCH/2026-10-05--2027-01-04/orderby/MSG_EPOCH%20asc/format/json"
+  ],
+  "baseline": false,
+  "catalog_changes": [
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "4376",
+      "previous": "LARGE"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "28327",
+      "previous": "SMALL"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "38107",
+      "previous": "LARGE"
+    },
+    {
+      "current": "SMALL",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "38724",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "42833",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "42834",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "42843",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "42849",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "43761",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "43771",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "43775",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "43806",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "43810",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "43822",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "44890",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "2026-11-04",
+      "field": "DECAY_DATE",
+      "first_observation": false,
+      "norad_cat_id": "45755",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "47252",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "47700",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "49398",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "49404",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "51947",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "51948",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "56732",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "57426",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "59125",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "59776",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "59777",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "60089",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "60203",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "60209",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "60530",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "61240",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "61905",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62380",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62385",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62387",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62395",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62396",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62399",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62403",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62404",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62615",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62655",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62656",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62657",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62672",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "62674",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63211",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63214",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63215",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63217",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63218",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63219",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63221",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63228",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63232",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63237",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63239",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63241",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "63260",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "64532",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "64547",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "64554",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "64556",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "64560",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "64590",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "65488",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "65491",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "65815",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "65938",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "65939",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "65940",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "65946",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66054",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66055",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66056",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66175",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66409",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66410",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66651",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66652",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66656",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66660",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66661",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66676",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66690",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66750",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66759",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66760",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66761",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66765",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66773",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66775",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66993",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66995",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66996",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66997",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66998",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "66999",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67000",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67001",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67161",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67248",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67249",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67250",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67251",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67252",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67253",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67254",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67255",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67256",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67257",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67258",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67259",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67260",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67261",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67262",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67263",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67264",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67265",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67266",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67267",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67268",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67269",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67270",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67271",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67272",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67273",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67274",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67275",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67276",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67277",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67278",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67279",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67280",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67281",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67282",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67283",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67284",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67285",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67287",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67288",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67289",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67290",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67291",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67292",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67293",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67294",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67295",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67296",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67297",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67364",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67386",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67646",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67647",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67746",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67747",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67748",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67749",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67750",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67751",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "67752",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68198",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68200",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68201",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68202",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68203",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68204",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68206",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68426",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68438",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68439",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68440",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68457",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "68461",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68627",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68794",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68797",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "68799",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69472",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69543",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69583",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69584",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69673",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69796",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69797",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69798",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69799",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69877",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69911",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "69921",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100080",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100081",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100082",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100126",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100127",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100128",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100129",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100130",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100132",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100133",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100134",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100135",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100137",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100144",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100145",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100146",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100147",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100237",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100238",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100366",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100367",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100368",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100369",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100462",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100463",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100464",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100465",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100466",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100467",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100468",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100469",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100470",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100471",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100609",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100610",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100613",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100651",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100652",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100653",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100654",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100655",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100656",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100702",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100703",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100704",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100705",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100706",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100707",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100708",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100709",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100711",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100780",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100781",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100782",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100783",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100784",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100785",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100786",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100787",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100788",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100896",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100898",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100906",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100907",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100908",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100911",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100912",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100915",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100918",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100920",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100922",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100923",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100927",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100928",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100929",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100931",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100936",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100937",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100947",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100956",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100957",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100959",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100960",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100964",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100965",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100966",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "100967",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101060",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101062",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101063",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101064",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101065",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101066",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101067",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101068",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101069",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101092",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101093",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101094",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101095",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101096",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101097",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101098",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101099",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101100",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101101",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101102",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101103",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101111",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101112",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101113",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101114",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101115",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101116",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "101117",
+      "previous": "LARGE"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101118",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101126",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101127",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101131",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101134",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101135",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101141",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101151",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101152",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101153",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101154",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101155",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "101177",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "101190",
+      "previous": null
+    },
+    {
+      "current": "NVS-03",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "101228",
+      "previous": "OBJECT A"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101228",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 NVS-03",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "101228",
+      "previous": "0 OBJECT A"
+    },
+    {
+      "current": "GSLV R/B",
+      "field": "OBJECT_NAME",
+      "first_observation": false,
+      "norad_cat_id": "101229",
+      "previous": "OBJECT B"
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": false,
+      "norad_cat_id": "101229",
+      "previous": "UNKNOWN"
+    },
+    {
+      "current": "0 GSLV R/B",
+      "field": "TLE_LINE0",
+      "first_observation": false,
+      "norad_cat_id": "101229",
+      "previous": "0 OBJECT B"
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101230",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101230",
+      "previous": null
+    },
+    {
+      "current": "2026-246A",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101230",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38432",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101230",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101230",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101230",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38432",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101230",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101231",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101231",
+      "previous": null
+    },
+    {
+      "current": "2026-246B",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101231",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38433",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101231",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101231",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101231",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38433",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101231",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101232",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101232",
+      "previous": null
+    },
+    {
+      "current": "2026-246C",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101232",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38169",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101232",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101232",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101232",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38169",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101232",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101233",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101233",
+      "previous": null
+    },
+    {
+      "current": "2026-246D",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101233",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38441",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101233",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101233",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101233",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38441",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101233",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101234",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101234",
+      "previous": null
+    },
+    {
+      "current": "2026-246E",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101234",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38404",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101234",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101234",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101234",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38404",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101234",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101235",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101235",
+      "previous": null
+    },
+    {
+      "current": "2026-246F",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101235",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38460",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101235",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101235",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101235",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38460",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101235",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101236",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101236",
+      "previous": null
+    },
+    {
+      "current": "2026-246G",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101236",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38445",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101236",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101236",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101236",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38445",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101236",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101237",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101237",
+      "previous": null
+    },
+    {
+      "current": "2026-246H",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101237",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38449",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101237",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101237",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101237",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38449",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101237",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101238",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101238",
+      "previous": null
+    },
+    {
+      "current": "2026-246J",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101238",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38499",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101238",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101238",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101238",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38499",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101238",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101239",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101239",
+      "previous": null
+    },
+    {
+      "current": "2026-246K",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101239",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38459",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101239",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101239",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101239",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38459",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101239",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101240",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101240",
+      "previous": null
+    },
+    {
+      "current": "2026-246L",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101240",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38458",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101240",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101240",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101240",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38458",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101240",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101241",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101241",
+      "previous": null
+    },
+    {
+      "current": "2026-246M",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101241",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38240",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101241",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101241",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101241",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38240",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101241",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101242",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101242",
+      "previous": null
+    },
+    {
+      "current": "2026-246N",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101242",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38250",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101242",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101242",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101242",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38250",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101242",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101243",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101243",
+      "previous": null
+    },
+    {
+      "current": "2026-246P",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101243",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38183",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101243",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101243",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101243",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38183",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101243",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101244",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101244",
+      "previous": null
+    },
+    {
+      "current": "2026-246Q",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101244",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38467",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101244",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101244",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101244",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38467",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101244",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101245",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101245",
+      "previous": null
+    },
+    {
+      "current": "2026-246R",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101245",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38461",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101245",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101245",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101245",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38461",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101245",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101246",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101246",
+      "previous": null
+    },
+    {
+      "current": "2026-246S",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101246",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38213",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101246",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101246",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101246",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38213",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101246",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101247",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101247",
+      "previous": null
+    },
+    {
+      "current": "2026-246T",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101247",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38166",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101247",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101247",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101247",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38166",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101247",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101248",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101248",
+      "previous": null
+    },
+    {
+      "current": "2026-246U",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101248",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38344",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101248",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101248",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101248",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38344",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101248",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101249",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101249",
+      "previous": null
+    },
+    {
+      "current": "2026-246V",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101249",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38495",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101249",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101249",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101249",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38495",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101249",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101250",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101250",
+      "previous": null
+    },
+    {
+      "current": "2026-246W",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101250",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38407",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101250",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101250",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101250",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38407",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101250",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101251",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101251",
+      "previous": null
+    },
+    {
+      "current": "2026-246X",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101251",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38341",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101251",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101251",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101251",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38341",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101251",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101252",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101252",
+      "previous": null
+    },
+    {
+      "current": "2026-246Y",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101252",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38485",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101252",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101252",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101252",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38485",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101252",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101253",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101253",
+      "previous": null
+    },
+    {
+      "current": "2026-246Z",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101253",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38431",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101253",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101253",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101253",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38431",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101253",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101254",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101254",
+      "previous": null
+    },
+    {
+      "current": "2026-246AA",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101254",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-37806",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101254",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101254",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101254",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-37806",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101254",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101255",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101255",
+      "previous": null
+    },
+    {
+      "current": "2026-246AB",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101255",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38155",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101255",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101255",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101255",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38155",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101255",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101256",
+      "previous": null
+    },
+    {
+      "current": "2026-10-31",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101256",
+      "previous": null
+    },
+    {
+      "current": "2026-246AC",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101256",
+      "previous": null
+    },
+    {
+      "current": "STARLINK-38457",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101256",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101256",
+      "previous": null
+    },
+    {
+      "current": "AFWTR",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101256",
+      "previous": null
+    },
+    {
+      "current": "0 STARLINK-38457",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101256",
+      "previous": null
+    },
+    {
+      "current": "JPN",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101257",
+      "previous": null
+    },
+    {
+      "current": "2026-11-02",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101257",
+      "previous": null
+    },
+    {
+      "current": "2026-247A",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101257",
+      "previous": null
+    },
+    {
+      "current": "QPS-SAR-20",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101257",
+      "previous": null
+    },
+    {
+      "current": "PAYLOAD",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101257",
+      "previous": null
+    },
+    {
+      "current": "RLLC",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101257",
+      "previous": null
+    },
+    {
+      "current": "0 QPS-SAR-20",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101257",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101258",
+      "previous": null
+    },
+    {
+      "current": "2026-11-02",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101258",
+      "previous": null
+    },
+    {
+      "current": "2026-247B",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101258",
+      "previous": null
+    },
+    {
+      "current": "ELECTRON R/B",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101258",
+      "previous": null
+    },
+    {
+      "current": "ROCKET BODY",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101258",
+      "previous": null
+    },
+    {
+      "current": "RLLC",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101258",
+      "previous": null
+    },
+    {
+      "current": "0 ELECTRON R/B",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101258",
+      "previous": null
+    },
+    {
+      "current": "US",
+      "field": "COUNTRY_CODE",
+      "first_observation": true,
+      "norad_cat_id": "101259",
+      "previous": null
+    },
+    {
+      "current": "2026-11-02",
+      "field": "LAUNCH_DATE",
+      "first_observation": true,
+      "norad_cat_id": "101259",
+      "previous": null
+    },
+    {
+      "current": "2026-247C",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101259",
+      "previous": null
+    },
+    {
+      "current": "ELECTRON KICK STAGE R/B",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101259",
+      "previous": null
+    },
+    {
+      "current": "ROCKET BODY",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101259",
+      "previous": null
+    },
+    {
+      "current": "RLLC",
+      "field": "SITE",
+      "first_observation": true,
+      "norad_cat_id": "101259",
+      "previous": null
+    },
+    {
+      "current": "0 ELECTRON KICK STAGE R/B",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101259",
+      "previous": null
+    },
+    {
+      "current": "1981-043AC",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101260",
+      "previous": null
+    },
+    {
+      "current": "METEOR 2-7 DEB",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101260",
+      "previous": null
+    },
+    {
+      "current": "DEBRIS",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101260",
+      "previous": null
+    },
+    {
+      "current": "0 METEOR 2-7 DEB",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101260",
+      "previous": null
+    },
+    {
+      "current": "1981-043AD",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101261",
+      "previous": null
+    },
+    {
+      "current": "METEOR 2-7 DEB",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101261",
+      "previous": null
+    },
+    {
+      "current": "DEBRIS",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101261",
+      "previous": null
+    },
+    {
+      "current": "0 METEOR 2-7 DEB",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101261",
+      "previous": null
+    },
+    {
+      "current": "1981-043AE",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101262",
+      "previous": null
+    },
+    {
+      "current": "METEOR 2-7 DEB",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101262",
+      "previous": null
+    },
+    {
+      "current": "DEBRIS",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101262",
+      "previous": null
+    },
+    {
+      "current": "0 METEOR 2-7 DEB",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101262",
+      "previous": null
+    },
+    {
+      "current": "1981-043AF",
+      "field": "OBJECT_ID",
+      "first_observation": true,
+      "norad_cat_id": "101263",
+      "previous": null
+    },
+    {
+      "current": "METEOR 2-7 DEB",
+      "field": "OBJECT_NAME",
+      "first_observation": true,
+      "norad_cat_id": "101263",
+      "previous": null
+    },
+    {
+      "current": "DEBRIS",
+      "field": "OBJECT_TYPE",
+      "first_observation": true,
+      "norad_cat_id": "101263",
+      "previous": null
+    },
+    {
+      "current": "0 METEOR 2-7 DEB",
+      "field": "TLE_LINE0",
+      "first_observation": true,
+      "norad_cat_id": "101263",
+      "previous": null
+    }
+  ],
+  "date": "2026-11-05",
+  "decay_messages": [
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-11-04 0:00:00",
+      "INTLDES": "2020-038AB",
+      "MSG_EPOCH": "2026-11-04 09:27:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "45755",
+      "OBJECT_ID": "2020-038AB",
+      "OBJECT_NAME": "STARLINK-1478",
+      "OBJECT_NUMBER": "45755",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "decay_msg"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-11-04 0:00:00",
+      "INTLDES": "2020-038AB",
+      "MSG_EPOCH": "2026-11-04 17:16:41",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "45755",
+      "OBJECT_ID": "2020-038AB",
+      "OBJECT_NAME": "STARLINK-1478",
+      "OBJECT_NUMBER": "45755",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-10-28 0:00:00",
+      "INTLDES": "2025-009AD",
+      "MSG_EPOCH": "2026-11-04 17:16:41",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "62636",
+      "OBJECT_ID": "2025-009AD",
+      "OBJECT_NAME": "FLOCK 4G 20",
+      "OBJECT_NUMBER": "62636",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "MEDIUM",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "CIS",
+      "DECAY_EPOCH": "2026-10-31 0:00:00",
+      "INTLDES": "1981-053HD",
+      "MSG_EPOCH": "2026-11-04 17:16:41",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "13809",
+      "OBJECT_ID": "1981-053HD",
+      "OBJECT_NAME": "COSMOS 1275 DEB",
+      "OBJECT_NUMBER": "13809",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "MEDIUM",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-11-03 0:00:00",
+      "INTLDES": "2020-025AA",
+      "MSG_EPOCH": "2026-11-04 17:16:41",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "45555",
+      "OBJECT_ID": "2020-025AA",
+      "OBJECT_NAME": "STARLINK-1327",
+      "OBJECT_NUMBER": "45555",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "CIS",
+      "DECAY_EPOCH": "2026-10-21 0:00:00",
+      "INTLDES": "1993-036BTX",
+      "MSG_EPOCH": "2026-11-04 17:16:41",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "38487",
+      "OBJECT_ID": "1993-036BTX",
+      "OBJECT_NAME": "COSMOS 2251 DEB",
+      "OBJECT_NUMBER": "38487",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "SMALL",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "IT",
+      "DECAY_EPOCH": "2026-10-28 0:00:00",
+      "INTLDES": "2024-149BE",
+      "MSG_EPOCH": "2026-11-04 17:16:41",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "60520",
+      "OBJECT_ID": "2024-149BE",
+      "OBJECT_NAME": "IPERDRONE.0",
+      "OBJECT_NUMBER": "60520",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "MEDIUM",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-11-01 0:00:00",
+      "INTLDES": "1969-082CP",
+      "MSG_EPOCH": "2026-11-04 17:16:41",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "4133",
+      "OBJECT_ID": "1969-082CP",
+      "OBJECT_NAME": "THORAD AGENA D DEB",
+      "OBJECT_NUMBER": "4133",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "MEDIUM",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "SPN",
+      "DECAY_EPOCH": "2026-10-30 0:00:00",
+      "INTLDES": "2025-052C",
+      "MSG_EPOCH": "2026-11-04 17:16:41",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "63212",
+      "OBJECT_ID": "2025-052C",
+      "OBJECT_NAME": "IOD1_STARTICAL",
+      "OBJECT_NUMBER": "63212",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "MEDIUM",
+      "SOURCE": "satcat"
+    },
+    {
+      "COUNTRY": "THAI",
+      "DECAY_EPOCH": "2026-11-02 0:00:00",
+      "INTLDES": "2020-061BA",
+      "MSG_EPOCH": "2026-11-04 17:29:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "46320",
+      "OBJECT_ID": "2020-061BA",
+      "OBJECT_NAME": "NAPA-1",
+      "OBJECT_NUMBER": "46320",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "MEDIUM",
+      "SOURCE": "decay_msg"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-11-05 0:00:00",
+      "INTLDES": "2004-047A",
+      "MSG_EPOCH": "2026-11-04 17:44:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "28485",
+      "OBJECT_ID": "2004-047A",
+      "OBJECT_NAME": "SWIFT",
+      "OBJECT_NUMBER": "28485",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "decay_msg"
+    },
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-11-04 0:00:00",
+      "INTLDES": "2024-229N",
+      "MSG_EPOCH": "2026-11-04 21:44:00",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "62204",
+      "OBJECT_ID": "2024-229N",
+      "OBJECT_NAME": "STARLINK-32664",
+      "OBJECT_NUMBER": "62204",
+      "PRECEDENCE": "2",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "decay_msg"
+    }
+  ],
+  "fields": [
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0"
+  ],
+  "observation_lag_days": 0,
+  "observed_at_utc": "2026-11-05T06:41:27Z",
+  "satcat_changes": [
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-11-03",
+      "CURRENT_INTLDES": "2020-025AA",
+      "CURRENT_LAUNCH": "2020-04-22",
+      "CURRENT_NAME": "STARLINK-1327",
+      "NORAD_CAT_ID": "45555",
+      "OBJECT_NUMBER": "45555",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2020-025AA",
+      "PREVIOUS_LAUNCH": "2020-04-22",
+      "PREVIOUS_NAME": "STARLINK-1327"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "IND",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-245B",
+      "CURRENT_LAUNCH": "2026-10-30",
+      "CURRENT_NAME": "GSLV R/B",
+      "NORAD_CAT_ID": "101229",
+      "OBJECT_NUMBER": "101229",
+      "PREVIOUS_COUNTRY": "IND",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-245B",
+      "PREVIOUS_LAUNCH": "2026-10-30",
+      "PREVIOUS_NAME": "OBJECT B"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "CIS",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "1981-043AE",
+      "CURRENT_LAUNCH": "1981-05-14",
+      "CURRENT_NAME": "METEOR 2-7 DEB",
+      "NORAD_CAT_ID": "101262",
+      "OBJECT_NUMBER": "101262",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246B",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38433",
+      "NORAD_CAT_ID": "101231",
+      "OBJECT_NUMBER": "101231",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246V",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38495",
+      "NORAD_CAT_ID": "101249",
+      "OBJECT_NUMBER": "101249",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246U",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38344",
+      "NORAD_CAT_ID": "101248",
+      "OBJECT_NUMBER": "101248",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-10-28",
+      "CURRENT_INTLDES": "2025-009AD",
+      "CURRENT_LAUNCH": "2025-01-14",
+      "CURRENT_NAME": "FLOCK 4G 20",
+      "NORAD_CAT_ID": "62636",
+      "OBJECT_NUMBER": "62636",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2025-009AD",
+      "PREVIOUS_LAUNCH": "2025-01-14",
+      "PREVIOUS_NAME": "FLOCK 4G 20"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246F",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38460",
+      "NORAD_CAT_ID": "101235",
+      "OBJECT_NUMBER": "101235",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "IND",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-245A",
+      "CURRENT_LAUNCH": "2026-10-30",
+      "CURRENT_NAME": "NVS-03",
+      "NORAD_CAT_ID": "101228",
+      "OBJECT_NUMBER": "101228",
+      "PREVIOUS_COUNTRY": "IND",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2026-245A",
+      "PREVIOUS_LAUNCH": "2026-10-30",
+      "PREVIOUS_NAME": "OBJECT A"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "CIS",
+      "CURRENT_DECAY": "2026-10-21",
+      "CURRENT_INTLDES": "1993-036BTX",
+      "CURRENT_LAUNCH": "1993-06-16",
+      "CURRENT_NAME": "COSMOS 2251 DEB",
+      "NORAD_CAT_ID": "38487",
+      "OBJECT_NUMBER": "38487",
+      "PREVIOUS_COUNTRY": "CIS",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "1993-036BTX",
+      "PREVIOUS_LAUNCH": "1993-06-16",
+      "PREVIOUS_NAME": "COSMOS 2251 DEB"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "SPN",
+      "CURRENT_DECAY": "2026-10-30",
+      "CURRENT_INTLDES": "2025-052C",
+      "CURRENT_LAUNCH": "2025-03-15",
+      "CURRENT_NAME": "IOD1_STARTICAL",
+      "NORAD_CAT_ID": "63212",
+      "OBJECT_NUMBER": "63212",
+      "PREVIOUS_COUNTRY": "SPN",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2025-052C",
+      "PREVIOUS_LAUNCH": "2025-03-15",
+      "PREVIOUS_NAME": "IOD1_STARTICAL"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246G",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38445",
+      "NORAD_CAT_ID": "101236",
+      "OBJECT_NUMBER": "101236",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-11-01",
+      "CURRENT_INTLDES": "1969-082CP",
+      "CURRENT_LAUNCH": "1969-09-30",
+      "CURRENT_NAME": "THORAD AGENA D DEB",
+      "NORAD_CAT_ID": "4133",
+      "OBJECT_NUMBER": "4133",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "1969-082CP",
+      "PREVIOUS_LAUNCH": "1969-09-30",
+      "PREVIOUS_NAME": "THORAD AGENA D DEB"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246Q",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38467",
+      "NORAD_CAT_ID": "101244",
+      "OBJECT_NUMBER": "101244",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246Z",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38431",
+      "NORAD_CAT_ID": "101253",
+      "OBJECT_NUMBER": "101253",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246T",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38166",
+      "NORAD_CAT_ID": "101247",
+      "OBJECT_NUMBER": "101247",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246Y",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38485",
+      "NORAD_CAT_ID": "101252",
+      "OBJECT_NUMBER": "101252",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "IT",
+      "CURRENT_DECAY": "2026-10-28",
+      "CURRENT_INTLDES": "2024-149BE",
+      "CURRENT_LAUNCH": "2024-08-16",
+      "CURRENT_NAME": "IPERDRONE.0",
+      "NORAD_CAT_ID": "60520",
+      "OBJECT_NUMBER": "60520",
+      "PREVIOUS_COUNTRY": "IT",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2024-149BE",
+      "PREVIOUS_LAUNCH": "2024-08-16",
+      "PREVIOUS_NAME": "IPERDRONE.0"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246H",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38449",
+      "NORAD_CAT_ID": "101237",
+      "OBJECT_NUMBER": "101237",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246C",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38169",
+      "NORAD_CAT_ID": "101232",
+      "OBJECT_NUMBER": "101232",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246X",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38341",
+      "NORAD_CAT_ID": "101251",
+      "OBJECT_NUMBER": "101251",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "CIS",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "1981-043AC",
+      "CURRENT_LAUNCH": "1981-05-14",
+      "CURRENT_NAME": "METEOR 2-7 DEB",
+      "NORAD_CAT_ID": "101260",
+      "OBJECT_NUMBER": "101260",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246K",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38459",
+      "NORAD_CAT_ID": "101239",
+      "OBJECT_NUMBER": "101239",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246P",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38183",
+      "NORAD_CAT_ID": "101243",
+      "OBJECT_NUMBER": "101243",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246L",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38458",
+      "NORAD_CAT_ID": "101240",
+      "OBJECT_NUMBER": "101240",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246A",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38432",
+      "NORAD_CAT_ID": "101230",
+      "OBJECT_NUMBER": "101230",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "CIS",
+      "CURRENT_DECAY": "2026-10-31",
+      "CURRENT_INTLDES": "1981-053HD",
+      "CURRENT_LAUNCH": "1981-06-04",
+      "CURRENT_NAME": "COSMOS 1275 DEB",
+      "NORAD_CAT_ID": "13809",
+      "OBJECT_NUMBER": "13809",
+      "PREVIOUS_COUNTRY": "CIS",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "1981-053HD",
+      "PREVIOUS_LAUNCH": "1981-06-04",
+      "PREVIOUS_NAME": "COSMOS 1275 DEB"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246AA",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-37806",
+      "NORAD_CAT_ID": "101254",
+      "OBJECT_NUMBER": "101254",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246M",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38240",
+      "NORAD_CAT_ID": "101241",
+      "OBJECT_NUMBER": "101241",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246N",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38250",
+      "NORAD_CAT_ID": "101242",
+      "OBJECT_NUMBER": "101242",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-11-04",
+      "CURRENT_INTLDES": "2020-038AB",
+      "CURRENT_LAUNCH": "2020-06-13",
+      "CURRENT_NAME": "STARLINK-1478",
+      "NORAD_CAT_ID": "45755",
+      "OBJECT_NUMBER": "45755",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2020-038AB",
+      "PREVIOUS_LAUNCH": "2020-06-13",
+      "PREVIOUS_NAME": "STARLINK-1478"
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246E",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38404",
+      "NORAD_CAT_ID": "101234",
+      "OBJECT_NUMBER": "101234",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "CIS",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "1981-043AF",
+      "CURRENT_LAUNCH": "1981-05-14",
+      "CURRENT_NAME": "METEOR 2-7 DEB",
+      "NORAD_CAT_ID": "101263",
+      "OBJECT_NUMBER": "101263",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246S",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38213",
+      "NORAD_CAT_ID": "101246",
+      "OBJECT_NUMBER": "101246",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246W",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38407",
+      "NORAD_CAT_ID": "101250",
+      "OBJECT_NUMBER": "101250",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246R",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38461",
+      "NORAD_CAT_ID": "101245",
+      "OBJECT_NUMBER": "101245",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246J",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38499",
+      "NORAD_CAT_ID": "101238",
+      "OBJECT_NUMBER": "101238",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "CIS",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "1981-043AD",
+      "CURRENT_LAUNCH": "1981-05-14",
+      "CURRENT_NAME": "METEOR 2-7 DEB",
+      "NORAD_CAT_ID": "101261",
+      "OBJECT_NUMBER": "101261",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246D",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38441",
+      "NORAD_CAT_ID": "101233",
+      "OBJECT_NUMBER": "101233",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246AB",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38155",
+      "NORAD_CAT_ID": "101255",
+      "OBJECT_NUMBER": "101255",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    },
+    {
+      "CHANGE_MADE": "2026-11-04 17:16:41",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": null,
+      "CURRENT_INTLDES": "2026-246AC",
+      "CURRENT_LAUNCH": "2026-10-31",
+      "CURRENT_NAME": "STARLINK-38457",
+      "NORAD_CAT_ID": "101256",
+      "OBJECT_NUMBER": "101256",
+      "PREVIOUS_COUNTRY": null,
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": null,
+      "PREVIOUS_LAUNCH": null,
+      "PREVIOUS_NAME": null
+    }
+  ],
+  "schema": "rso-annotations-v2",
+  "source": "space-track.org",
+  "tip_messages": [
+    {
+      "DECAY_EPOCH": "2026-11-04 12:42:00",
+      "DIRECTION": "ascending",
+      "HIGH_INTEREST": "N",
+      "ID": "67516",
+      "INCL": "20.5",
+      "INSERT_EPOCH": "2026-11-04 00:36:21",
+      "LAT": "6.1",
+      "LON": "91.8",
+      "MSG_EPOCH": "2026-11-04 00:25:00",
+      "NEXT_REPORT": "6",
+      "NORAD_CAT_ID": "28485",
+      "OBJECT_NUMBER": "28485",
+      "REV": "20910",
+      "WINDOW": "120"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-04 12:16:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67517",
+      "INCL": "43",
+      "INSERT_EPOCH": "2026-11-04 03:06:54",
+      "LAT": "38.6",
+      "LON": "112.7",
+      "MSG_EPOCH": "2026-11-04 02:23:00",
+      "NEXT_REPORT": "6",
+      "NORAD_CAT_ID": "62204",
+      "OBJECT_NUMBER": "62204",
+      "REV": "10811",
+      "WINDOW": "120"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-05 03:23:00",
+      "DIRECTION": "ascending",
+      "HIGH_INTEREST": "N",
+      "ID": "67518",
+      "INCL": "53.1",
+      "INSERT_EPOCH": "2026-11-04 05:26:28",
+      "LAT": "-41.9",
+      "LON": "98.8",
+      "MSG_EPOCH": "2026-11-04 05:04:00",
+      "NEXT_REPORT": "12",
+      "NORAD_CAT_ID": "48022",
+      "OBJECT_NUMBER": "48022",
+      "REV": "31225",
+      "WINDOW": "240"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-04 12:42:00",
+      "DIRECTION": "ascending",
+      "HIGH_INTEREST": "N",
+      "ID": "67519",
+      "INCL": "20.5",
+      "INSERT_EPOCH": "2026-11-04 07:16:35",
+      "LAT": "6.1",
+      "LON": "91.8",
+      "MSG_EPOCH": "2026-11-04 07:06:00",
+      "NEXT_REPORT": "2",
+      "NORAD_CAT_ID": "28485",
+      "OBJECT_NUMBER": "28485",
+      "REV": "20910",
+      "WINDOW": "60"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-04 00:48:00",
+      "DIRECTION": "ascending",
+      "HIGH_INTEREST": "N",
+      "ID": "67520",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-11-04 08:17:00",
+      "LAT": "9.3",
+      "LON": "201.1",
+      "MSG_EPOCH": "2026-11-04 08:05:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "45755",
+      "OBJECT_NUMBER": "45755",
+      "REV": "35448",
+      "WINDOW": "39"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-04 14:11:00",
+      "DIRECTION": "ascending",
+      "HIGH_INTEREST": "N",
+      "ID": "67521",
+      "INCL": "43",
+      "INSERT_EPOCH": "2026-11-04 09:06:22",
+      "LAT": "3.2",
+      "LON": "201.3",
+      "MSG_EPOCH": "2026-11-04 09:00:00",
+      "NEXT_REPORT": "2",
+      "NORAD_CAT_ID": "62204",
+      "OBJECT_NUMBER": "62204",
+      "REV": "10812",
+      "WINDOW": "60"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-04 12:42:00",
+      "DIRECTION": "ascending",
+      "HIGH_INTEREST": "N",
+      "ID": "67522",
+      "INCL": "20.5",
+      "INSERT_EPOCH": "2026-11-04 12:26:37",
+      "LAT": "6.1",
+      "LON": "91.8",
+      "MSG_EPOCH": "2026-11-04 10:44:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "28485",
+      "OBJECT_NUMBER": "28485",
+      "REV": "20910",
+      "WINDOW": "60"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-04 14:53:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67523",
+      "INCL": "43",
+      "INSERT_EPOCH": "2026-11-04 13:06:34",
+      "LAT": "-5.3",
+      "LON": "8.1",
+      "MSG_EPOCH": "2026-11-04 12:45:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "62204",
+      "OBJECT_NUMBER": "62204",
+      "REV": "10812",
+      "WINDOW": "60"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-06 11:42:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67524",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-11-04 13:36:34",
+      "LAT": "18.3",
+      "LON": "201.1",
+      "MSG_EPOCH": "2026-11-04 13:34:00",
+      "NEXT_REPORT": "24",
+      "NORAD_CAT_ID": "45695",
+      "OBJECT_NUMBER": "45695",
+      "REV": "35748",
+      "WINDOW": "660"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-08 09:32:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67525",
+      "INCL": "53",
+      "INSERT_EPOCH": "2026-11-04 14:57:34",
+      "LAT": "52.1",
+      "LON": "191.8",
+      "MSG_EPOCH": "2026-11-04 14:43:00",
+      "NEXT_REPORT": "72",
+      "NORAD_CAT_ID": "45532",
+      "OBJECT_NUMBER": "45532",
+      "REV": "36384",
+      "WINDOW": "1080"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-05 04:24:00",
+      "DIRECTION": "ascending",
+      "HIGH_INTEREST": "N",
+      "ID": "67526",
+      "INCL": "53.1",
+      "INSERT_EPOCH": "2026-11-04 16:06:39",
+      "LAT": "-10.9",
+      "LON": "313.6",
+      "MSG_EPOCH": "2026-11-04 15:58:00",
+      "NEXT_REPORT": "6",
+      "NORAD_CAT_ID": "48022",
+      "OBJECT_NUMBER": "48022",
+      "REV": "31226",
+      "WINDOW": "120"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-04 12:39:00",
+      "DIRECTION": "ascending",
+      "HIGH_INTEREST": "N",
+      "ID": "67527",
+      "INCL": "20.5",
+      "INSERT_EPOCH": "2026-11-04 17:46:35",
+      "LAT": "3.4",
+      "LON": "98.6",
+      "MSG_EPOCH": "2026-11-04 17:35:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "28485",
+      "OBJECT_NUMBER": "28485",
+      "REV": "20910",
+      "WINDOW": "1"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-04 14:07:00",
+      "DIRECTION": "descending",
+      "HIGH_INTEREST": "N",
+      "ID": "67528",
+      "INCL": "43",
+      "INSERT_EPOCH": "2026-11-04 21:46:37",
+      "LAT": "-17.5",
+      "LON": "222.4",
+      "MSG_EPOCH": "2026-11-04 21:36:00",
+      "NEXT_REPORT": "0",
+      "NORAD_CAT_ID": "62204",
+      "OBJECT_NUMBER": "62204",
+      "REV": "10812",
+      "WINDOW": "1"
+    },
+    {
+      "DECAY_EPOCH": "2026-11-05 02:55:00",
+      "DIRECTION": "ascending",
+      "HIGH_INTEREST": "N",
+      "ID": "67529",
+      "INCL": "53.1",
+      "INSERT_EPOCH": "2026-11-04 22:56:35",
+      "LAT": "-7",
+      "LON": "333.3",
+      "MSG_EPOCH": "2026-11-04 22:52:00",
+      "NEXT_REPORT": "2",
+      "NORAD_CAT_ID": "48022",
+      "OBJECT_NUMBER": "48022",
+      "REV": "31225",
+      "WINDOW": "58"
+    }
+  ],
+  "window_end_utc": "2026-11-05T00:00:00Z",
+  "window_start_utc": "2026-11-04T00:00:00Z"
+}
