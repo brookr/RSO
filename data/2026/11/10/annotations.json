@@ -1,0 +1,168 @@
+{
+  "api_query_paths": [
+    "/class/satcat_change/CHANGE_MADE/2026-11-09T00:00:00--2026-11-10T00:00:00/orderby/CHANGE_MADE%20asc/format/json",
+    "/class/decay/MSG_EPOCH/2026-11-09T00:00:00--2026-11-10T00:00:00/MSG_TYPE/Historical/DECAY_EPOCH/2026-10-10--2026-11-17/orderby/MSG_EPOCH%20asc/format/json",
+    "/class/tip/MSG_EPOCH/2026-11-09T00:00:00--2026-11-10T00:00:00/DECAY_EPOCH/2026-10-10--2027-01-09/orderby/MSG_EPOCH%20asc/format/json"
+  ],
+  "baseline": false,
+  "catalog_changes": [
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "1317",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "2654",
+      "previous": "LARGE"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "28608",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "32308",
+      "previous": "SMALL"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "37749",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "38691",
+      "previous": "LARGE"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "40546",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "SMALL",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "42151",
+      "previous": "MEDIUM"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "43381",
+      "previous": "LARGE"
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "46010",
+      "previous": "SMALL"
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "101159",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "101169",
+      "previous": null
+    },
+    {
+      "current": "LARGE",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "101171",
+      "previous": null
+    },
+    {
+      "current": "MEDIUM",
+      "field": "RCS_SIZE",
+      "first_observation": false,
+      "norad_cat_id": "101294",
+      "previous": null
+    },
+    {
+      "current": "1987-060Z",
+      "field": "OBJECT_ID",
+      "first_observation": false,
+      "norad_cat_id": "270290",
+      "previous": "UNKNOWN"
+    }
+  ],
+  "date": "2026-11-10",
+  "decay_messages": [
+    {
+      "COUNTRY": "US",
+      "DECAY_EPOCH": "2026-11-08 0:00:00",
+      "INTLDES": "2022-107AS",
+      "MSG_EPOCH": "2026-11-09 19:09:23",
+      "MSG_TYPE": "Historical",
+      "NORAD_CAT_ID": "53740",
+      "OBJECT_ID": "2022-107AS",
+      "OBJECT_NAME": "STARLINK-4607",
+      "OBJECT_NUMBER": "53740",
+      "PRECEDENCE": "1",
+      "RCS": "0",
+      "RCS_SIZE": "LARGE",
+      "SOURCE": "satcat"
+    }
+  ],
+  "fields": [
+    "COUNTRY_CODE",
+    "DECAY_DATE",
+    "LAUNCH_DATE",
+    "OBJECT_ID",
+    "OBJECT_NAME",
+    "OBJECT_TYPE",
+    "RCS_SIZE",
+    "SITE",
+    "TLE_LINE0"
+  ],
+  "observation_lag_days": 0,
+  "observed_at_utc": "2026-11-10T07:13:57Z",
+  "satcat_changes": [
+    {
+      "CHANGE_MADE": "2026-11-09 19:09:23",
+      "CURRENT_COUNTRY": "US",
+      "CURRENT_DECAY": "2026-11-08",
+      "CURRENT_INTLDES": "2022-107AS",
+      "CURRENT_LAUNCH": "2022-09-05",
+      "CURRENT_NAME": "STARLINK-4607",
+      "NORAD_CAT_ID": "53740",
+      "OBJECT_NUMBER": "53740",
+      "PREVIOUS_COUNTRY": "US",
+      "PREVIOUS_DECAY": null,
+      "PREVIOUS_INTLDES": "2022-107AS",
+      "PREVIOUS_LAUNCH": "2022-09-05",
+      "PREVIOUS_NAME": "STARLINK-4607"
+    }
+  ],
+  "schema": "rso-annotations-v2",
+  "source": "space-track.org",
+  "tip_messages": [],
+  "window_end_utc": "2026-11-10T00:00:00Z",
+  "window_start_utc": "2026-11-09T00:00:00Z"
+}
