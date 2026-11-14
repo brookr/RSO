@@ -5442,8 +5442,6 @@
       "leo": 30574,
       "meo": 3704
     },
-    "catalog_url": "https://raw.githubusercontent.com/brookr/RSO/node/data/2026/11/12/catalog.json.gz",
-    "catalog_url_kind": "catalog_gz",
     "compressed_bytes": 11619998,
     "content_schema": "rso-core-v1",
     "content_sha256": "fc772cefb64308d823cd870ed4dc25115c0ae2d03a773a1f7e653b3d33e9bb7c",
@@ -5499,6 +5497,41 @@
       "rocket": 2290,
       "tba": 0,
       "unknown": 1220
+    }
+  },
+  {
+    "anno_summary": {
+      "decay_notices": 7,
+      "directory_changes": 20,
+      "tip_count": 14
+    },
+    "band_counts": {
+      "geo": 1862,
+      "leo": 30572,
+      "meo": 3704
+    },
+    "catalog_url": "https://raw.githubusercontent.com/brookr/RSO/node/data/2026/11/14/catalog.json.gz",
+    "catalog_url_kind": "catalog_gz",
+    "compressed_bytes": 11668636,
+    "content_schema": "rso-core-v1",
+    "content_sha256": "f46a339e57a88471019d7d211205d53e877320a35629f966a15ab6fd45df849b",
+    "date": "2026-11-14",
+    "delta": {
+      "decayed": 0,
+      "new": 2,
+      "updated": 30196
+    },
+    "object_count": 69869,
+    "on_orbit_count": 36138,
+    "provenance": "rolling_gp_history_delta",
+    "reentered_count": 33731,
+    "sha256": "74fcc696b2903859aa839382d862523de439be99da2a5025ecf0e92af01c4065",
+    "type_counts": {
+      "debris": 12493,
+      "payload": 20136,
+      "rocket": 2290,
+      "tba": 0,
+      "unknown": 1219
     }
   }
 ]
