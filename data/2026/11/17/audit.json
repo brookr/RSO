@@ -1,0 +1,30 @@
+{
+  "api_class": "gp",
+  "api_query_base": "https://www.space-track.org/basicspacedata/query",
+  "api_query_paths": [
+    "/class/gp/orderby/NORAD_CAT_ID%20asc/format/json"
+  ],
+  "archive_object_count": 69885,
+  "current_gp_object_count": 69886,
+  "date": "2026-11-17",
+  "missing_from_current_gp": [
+    {
+      "consecutive_missing_audits": 8,
+      "first_missing_in_current_gp_audit": "2026-11-10T07:13:57Z",
+      "last_gp_creation_date": "2026-11-08T10:35:09",
+      "norad_cat_id": "54219",
+      "object_name": "LDPE-2"
+    }
+  ],
+  "missing_from_current_gp_count": 1,
+  "observed_at_utc": "2026-11-17T07:52:54Z",
+  "present_ids_sha256": "f9be88b9ad91931e5a4c1a7f522d7220fee82159b503352abfc6310619a8eec7",
+  "present_in_current_gp_not_in_archive": [
+    "101331",
+    "101332"
+  ],
+  "present_in_current_gp_not_in_archive_count": 2,
+  "reappeared_in_current_gp": [],
+  "reappeared_in_current_gp_count": 0,
+  "source": "space-track.org"
+}
